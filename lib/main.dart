@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import 'screens/home_screen.dart';
+import 'routes/app_routes.dart';
 import 'services/api_client.dart';
 
 void main() {
@@ -22,7 +22,8 @@ class JoyeriaApp extends StatelessWidget {
       title: 'Joyería Diana Laura',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(useMaterial3: true),
-      home: const HomeScreen(),
+      initialRoute: AppRoutes.home,
+      routes: AppRoutes.routes,
     );
   }
 }
