@@ -1,29 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import 'providers/auth_provider.dart';
 import 'routes/app_routes.dart';
 import 'services/api_client.dart';
+import 'services/auth_service.dart';
+import 'services/session_storage.dart';
 
 void main() {
-  runApp(
-    Provider<ApiClient>(
-      create: (_) => ApiClient(),
-      child: const JoyeriaApp(),
-    ),
-  );
+  runApp(JoyeriaApp(storage: SecureSessionStorage()));
 }
 
 class JoyeriaApp extends StatelessWidget {
-  const JoyeriaApp({super.key});
+  const JoyeriaApp({super.key, required this.storage, this.authService});
+
+  final SessionStorage storage;
+  final AuthService? authService;
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Joyería Diana Laura',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(useMaterial3: true),
-      initialRoute: AppRoutes.home,
-      routes: AppRoutes.routes,
+    final api = ApiClient(storage: storage);
+    return MultiProvider(
+      providers: [
+        Provider<ApiClient>.value(value: api),
+        ChangeNotifierProvider<AuthProvider>(
+          create: (_) => AuthProvider(authService ?? AuthService(api: api, storage: storage))..restaurarSesion(),
+        ),
+      ],
+      child: MaterialApp(
+        title: 'Joyería Diana Laura',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(useMaterial3: true),
+        initialRoute: AppRoutes.home,
+        routes: AppRoutes.routes,
+      ),
     );
   }
 }

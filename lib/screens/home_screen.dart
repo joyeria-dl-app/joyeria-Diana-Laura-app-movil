@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../providers/auth_provider.dart';
 import '../routes/app_routes.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -7,6 +9,9 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+    final usuario = auth.usuario;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Joyería Diana Laura')),
       body: Center(
@@ -15,19 +20,28 @@ class HomeScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text('Bienvenido', textAlign: TextAlign.center),
-              const SizedBox(height: 24),
-              FilledButton(
-                onPressed: () => Navigator.pushNamed(context, AppRoutes.login),
-                child: const Text('Iniciar sesión'),
-              ),
-              const SizedBox(height: 12),
-              OutlinedButton(
-                onPressed: () => Navigator.pushNamed(context, AppRoutes.register),
-                child: const Text('Crear cuenta'),
-              ),
-            ],
+            children: usuario == null
+                ? [
+                    const Text('Bienvenido', textAlign: TextAlign.center),
+                    const SizedBox(height: 24),
+                    FilledButton(
+                      onPressed: () => Navigator.pushNamed(context, AppRoutes.login),
+                      child: const Text('Iniciar sesión'),
+                    ),
+                    const SizedBox(height: 12),
+                    OutlinedButton(
+                      onPressed: () => Navigator.pushNamed(context, AppRoutes.register),
+                      child: const Text('Crear cuenta'),
+                    ),
+                  ]
+                : [
+                    Text('Hola, ${usuario.nombre}', textAlign: TextAlign.center),
+                    const SizedBox(height: 24),
+                    OutlinedButton(
+                      onPressed: auth.cerrarSesion,
+                      child: const Text('Cerrar sesión'),
+                    ),
+                  ],
           ),
         ),
       ),
