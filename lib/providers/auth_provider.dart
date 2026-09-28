@@ -38,6 +38,45 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  Future<List<String>> preguntasSecretas() => _service.preguntasSecretas();
+
+  Future<bool> registrarse({
+    required String nombre,
+    required String email,
+    required String password,
+    required String tipoPregunta,
+    String? preguntaPersonalizada,
+    required String respuesta,
+  }) async {
+    _cargando = true;
+    _error = null;
+    notifyListeners();
+    try {
+      await _service.registrarse(
+        nombre: nombre,
+        email: email,
+        password: password,
+        tipoPregunta: tipoPregunta,
+        preguntaPersonalizada: preguntaPersonalizada,
+        respuesta: respuesta,
+      );
+      return true;
+    } on AuthException catch (e) {
+      _error = e.mensaje;
+      return false;
+    } finally {
+      _cargando = false;
+      notifyListeners();
+    }
+  }
+
+  // El error es compartido por login y registro; se limpia al cambiar de pantalla.
+  void limpiarError() {
+    if (_error == null) return;
+    _error = null;
+    notifyListeners();
+  }
+
   Future<void> cerrarSesion() async {
     await _service.cerrarSesion();
     _usuario = null;

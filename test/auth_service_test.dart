@@ -35,13 +35,16 @@ class _AdaptadorFalso implements HttpClientAdapter {
 
 void main() {
   late MemorySessionStorage storage;
+  late _AdaptadorFalso backendFalso;
+  late _AdaptadorFalso firebaseFalso;
 
   AuthService crear(Map<String, _Respuesta> firebase, Map<String, _Respuesta> backend) {
     storage = MemorySessionStorage();
     final dioBackend = Dio(BaseOptions(baseUrl: 'https://api.test'));
-    final adaptador = _AdaptadorFalso(backend);
-    dioBackend.httpClientAdapter = adaptador;
-    final dioFirebase = Dio(BaseOptions(baseUrl: 'https://firebase.test'))..httpClientAdapter = _AdaptadorFalso(firebase);
+    backendFalso = _AdaptadorFalso(backend);
+    dioBackend.httpClientAdapter = backendFalso;
+    firebaseFalso = _AdaptadorFalso(firebase);
+    final dioFirebase = Dio(BaseOptions(baseUrl: 'https://firebase.test'))..httpClientAdapter = firebaseFalso;
     return AuthService(
       api: ApiClient(dio: dioBackend),
       storage: storage,
@@ -132,5 +135,58 @@ void main() {
 
     expect(await service.sesionGuardada(), isNull);
     expect(await storage.leerToken(), isNull);
+  });
+
+  group('Registro', () {
+    const firebaseOk = {
+      '/accounts:signUp': _Respuesta(200, {'idToken': 'token-nuevo'}),
+      '/accounts:update': _Respuesta(200, {}),
+      '/accounts:sendOobCode': _Respuesta(200, {}),
+    };
+    const backendOk = {
+      '/auth/sync-user/movil': _Respuesta(200, {'success': true}),
+      '/security/set-security-question': _Respuesta(200, {'success': true}),
+    };
+
+    Future<void> registrar(AuthService s) => s.registrarse(
+          nombre: 'Ana Martínez',
+          email: ' ana@correo.com ',
+          password: 'Clave1234',
+          tipoPregunta: '2',
+          respuesta: 'Rosa',
+        );
+
+    test('Crea la cuenta, envía la verificación y guarda la pregunta secreta con el token', () async {
+      final service = crear(firebaseOk, backendOk);
+
+      await registrar(service);
+
+      expect(firebaseFalso.peticiones.map((p) => p.path),
+          ['/accounts:signUp', '/accounts:update', '/accounts:sendOobCode']);
+      expect(firebaseFalso.peticiones[2].data, {'requestType': 'VERIFY_EMAIL', 'idToken': 'token-nuevo'});
+      expect(backendFalso.peticiones.map((p) => p.path), ['/auth/sync-user/movil', '/security/set-security-question']);
+      expect(backendFalso.peticiones[1].data, {
+        'email': 'ana@correo.com',
+        'questionType': '2',
+        'customQuestion': '',
+        'answer': 'Rosa',
+        'idToken': 'token-nuevo',
+      });
+      expect(await storage.leerToken(), isNull, reason: 'no se abre sesión hasta verificar el correo');
+    });
+
+    test('Si el correo ya existe muestra un mensaje claro y no llama al backend', () async {
+      final service = crear({
+        '/accounts:signUp': const _Respuesta(400, {
+          'error': {'message': 'EMAIL_EXISTS'},
+        }),
+      }, backendOk);
+
+      await expectLater(
+        registrar(service),
+        throwsA(isA<AuthException>().having((e) => e.mensaje, 'mensaje', contains('ya tiene una cuenta'))),
+      );
+      expect(backendFalso.peticiones, isEmpty);
+    });
   });
 }

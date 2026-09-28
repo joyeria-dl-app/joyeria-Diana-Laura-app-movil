@@ -71,10 +71,79 @@ class AuthService {
 
   Future<void> cerrarSesion() => _storage.borrar();
 
-  Future<String> _validarConFirebase(String email, String password) async {
+  Future<List<String>> preguntasSecretas() async {
+    try {
+      final respuesta = await _api.dio.get('/security/secure-questions');
+      return List<String>.from((respuesta.data as Map<String, dynamic>)['data']['questions'] as List);
+    } on DioException catch (e) {
+      throw AuthException(_mensajeBackend(e));
+    }
+  }
+
+  // Mismo flujo que el registro del sitio web: cuenta en Firebase con su nombre,
+  // correo de verificación, alta en la base de datos y pregunta secreta.
+  // `tipoPregunta` es el índice de la lista o 'custom'. La sesión no se abre:
+  // primero hay que confirmar el correo.
+  Future<void> registrarse({
+    required String nombre,
+    required String email,
+    required String password,
+    required String tipoPregunta,
+    String? preguntaPersonalizada,
+    required String respuesta,
+  }) async {
+    _revisarConfiguracion();
+    final correo = email.trim();
+
+    final String idToken;
+    try {
+      final r = await _firebase.post(
+        '/accounts:signUp',
+        queryParameters: {'key': _apiKey},
+        data: {'email': correo, 'password': password, 'returnSecureToken': true},
+      );
+      idToken = (r.data as Map<String, dynamic>)['idToken'] as String;
+    } on DioException catch (e) {
+      throw AuthException(switch (_codigoFirebase(e)) {
+        'EMAIL_EXISTS' => 'Este correo ya tiene una cuenta. Inicia sesión o recupera tu contraseña.',
+        'INVALID_EMAIL' => 'El formato del correo no es válido.',
+        'WEAK_PASSWORD' => 'La contraseña es demasiado débil.',
+        'TOO_MANY_ATTEMPTS_TRY_LATER' => 'Demasiados intentos. Espera unos minutos e intenta de nuevo.',
+        _ => 'Revisa tu conexión a internet e intenta de nuevo.',
+      });
+    }
+
+    try {
+      await _firebase.post('/accounts:update',
+          queryParameters: {'key': _apiKey}, data: {'idToken': idToken, 'displayName': nombre.trim()});
+      await _firebase.post('/accounts:sendOobCode',
+          queryParameters: {'key': _apiKey}, data: {'requestType': 'VERIFY_EMAIL', 'idToken': idToken});
+    } on DioException {
+      throw const AuthException('Tu cuenta se creó, pero no pudimos enviar el correo de verificación. Intenta iniciar sesión más tarde.');
+    }
+
+    try {
+      await _api.dio.post('/auth/sync-user/movil', data: {'idToken': idToken, 'nombre': nombre.trim()});
+      await _api.dio.post('/security/set-security-question', data: {
+        'email': correo,
+        'questionType': tipoPregunta,
+        'customQuestion': preguntaPersonalizada ?? '',
+        'answer': respuesta.trim(),
+        'idToken': idToken,
+      });
+    } on DioException catch (e) {
+      throw AuthException(_mensajeBackend(e));
+    }
+  }
+
+  void _revisarConfiguracion() {
     if (_apiKey.isEmpty) {
       throw const AuthException('Falta la configuración de Firebase (env.json).');
     }
+  }
+
+  Future<String> _validarConFirebase(String email, String password) async {
+    _revisarConfiguracion();
     try {
       final respuesta = await _firebase.post(
         '/accounts:signInWithPassword',
