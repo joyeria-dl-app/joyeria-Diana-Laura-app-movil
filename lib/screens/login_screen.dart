@@ -32,6 +32,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => context.read<AuthProvider>().limpiarError());
     _email.addListener(() {
       final valido = _patronCorreo.hasMatch(_email.text.trim());
       if (valido != _correoValido) setState(() => _correoValido = valido);
