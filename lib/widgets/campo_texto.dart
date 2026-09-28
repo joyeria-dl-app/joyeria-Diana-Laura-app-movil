@@ -14,6 +14,7 @@ class CampoTexto extends StatefulWidget {
     this.teclado,
     this.autofill,
     this.validator,
+    this.mayusculas = TextCapitalization.none,
   });
 
   final TextEditingController controller;
@@ -24,6 +25,7 @@ class CampoTexto extends StatefulWidget {
   final TextInputType? teclado;
   final Iterable<String>? autofill;
   final FormFieldValidator<String>? validator;
+  final TextCapitalization mayusculas;
 
   static const double alto = 58;
 
@@ -61,7 +63,21 @@ class _CampoTextoState extends State<CampoTexto> {
             keyboardType: widget.teclado,
             autofillHints: widget.autofill,
             validator: widget.validator,
-            style: const TextStyle(color: AppColors.texto, fontSize: 14),
+            textCapitalization: widget.mayusculas,
+            // Mensaje con ícono, como .errtx de los bocetos.
+            errorBuilder: (context, mensaje) => Padding(
+              padding: const EdgeInsets.only(top: 3),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.error_rounded, size: 15, color: AppColors.error),
+                  const SizedBox(width: 5),
+                  Expanded(child: Text(mensaje, style: const TextStyle(color: AppColors.error, fontSize: 11.5))),
+                ],
+              ),
+            ),
+            // Peso 500: en Android, Poppins 400 se ve más delgada que en el navegador del boceto.
+            style: const TextStyle(color: AppColors.texto, fontSize: 14, fontWeight: FontWeight.w500),
             decoration: InputDecoration(
               constraints: const BoxConstraints(minHeight: CampoTexto.alto),
               hintText: widget.hint,
