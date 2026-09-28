@@ -10,9 +10,10 @@ void main() {
 
     await tester.tap(find.widgetWithText(FilledButton, 'Iniciar sesión'));
     await tester.pumpAndSettle();
-    expect(find.widgetWithText(AppBar, 'Iniciar sesión'), findsOneWidget);
+    expect(find.text('Tu brillo,\nen tu bolsillo.'), findsOneWidget);
 
-    await tester.tap(find.text('¿No tienes cuenta? Regístrate'));
+    await tester.ensureVisible(find.text('Crea tu cuenta'));
+    await tester.tap(find.text('Crea tu cuenta'));
     await tester.pumpAndSettle();
     expect(find.widgetWithText(AppBar, 'Crear cuenta'), findsOneWidget);
   });

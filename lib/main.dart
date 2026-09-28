@@ -6,6 +6,7 @@ import 'routes/app_routes.dart';
 import 'services/api_client.dart';
 import 'services/auth_service.dart';
 import 'services/session_storage.dart';
+import 'theme/app_theme.dart';
 
 void main() {
   runApp(JoyeriaApp(storage: SecureSessionStorage()));
@@ -30,7 +31,7 @@ class JoyeriaApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Joyería Diana Laura',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(useMaterial3: true),
+        theme: AppTheme.oscuro(),
         initialRoute: AppRoutes.home,
         routes: AppRoutes.routes,
       ),
