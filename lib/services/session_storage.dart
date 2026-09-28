@@ -5,9 +5,10 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/usuario.dart';
 
 abstract class SessionStorage {
-  Future<void> guardar(String token, Usuario usuario);
+  Future<void> guardar(String token, Usuario usuario, {bool recordar = true});
   Future<String?> leerToken();
   Future<Usuario?> leerUsuario();
+  Future<bool> leerRecordar();
   Future<void> borrar();
 }
 
@@ -19,11 +20,13 @@ class SecureSessionStorage implements SessionStorage {
 
   static const _claveToken = 'auth_token';
   static const _claveUsuario = 'auth_usuario';
+  static const _claveRecordar = 'auth_recordar';
 
   @override
-  Future<void> guardar(String token, Usuario usuario) async {
+  Future<void> guardar(String token, Usuario usuario, {bool recordar = true}) async {
     await _storage.write(key: _claveToken, value: token);
     await _storage.write(key: _claveUsuario, value: jsonEncode(usuario.toJson()));
+    await _storage.write(key: _claveRecordar, value: recordar.toString());
   }
 
   @override
@@ -36,20 +39,26 @@ class SecureSessionStorage implements SessionStorage {
   }
 
   @override
+  Future<bool> leerRecordar() async => await _storage.read(key: _claveRecordar) != 'false';
+
+  @override
   Future<void> borrar() async {
     await _storage.delete(key: _claveToken);
     await _storage.delete(key: _claveUsuario);
+    await _storage.delete(key: _claveRecordar);
   }
 }
 
 class MemorySessionStorage implements SessionStorage {
   String? _token;
   Usuario? _usuario;
+  bool _recordar = true;
 
   @override
-  Future<void> guardar(String token, Usuario usuario) async {
+  Future<void> guardar(String token, Usuario usuario, {bool recordar = true}) async {
     _token = token;
     _usuario = usuario;
+    _recordar = recordar;
   }
 
   @override
@@ -59,8 +68,12 @@ class MemorySessionStorage implements SessionStorage {
   Future<Usuario?> leerUsuario() async => _usuario;
 
   @override
+  Future<bool> leerRecordar() async => _recordar;
+
+  @override
   Future<void> borrar() async {
     _token = null;
     _usuario = null;
+    _recordar = true;
   }
 }

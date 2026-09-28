@@ -37,6 +37,7 @@ dependencies:
   dio: ^5.11.1
   provider: ^6.1.5+1
   flutter_secure_storage: ^11.2.0
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:
@@ -59,6 +60,20 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  assets:
+    - assets/images/
+
+  fonts:
+    - family: Poppins
+      fonts:
+        - asset: assets/fonts/Poppins-Regular.ttf
+        - asset: assets/fonts/Poppins-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Poppins-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Poppins-Bold.ttf
+          weight: 700
 
   # To add assets to your application, add an assets section, like this:
   # assets:

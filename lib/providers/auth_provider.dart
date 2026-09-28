@@ -22,12 +22,12 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> iniciarSesion(String email, String password) async {
+  Future<bool> iniciarSesion(String email, String password, {bool recordar = true}) async {
     _cargando = true;
     _error = null;
     notifyListeners();
     try {
-      _usuario = await _service.iniciarSesion(email, password);
+      _usuario = await _service.iniciarSesion(email, password, recordar: recordar);
       return true;
     } on AuthException catch (e) {
       _error = e.mensaje;

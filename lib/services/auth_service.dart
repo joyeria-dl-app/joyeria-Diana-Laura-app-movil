@@ -28,7 +28,7 @@ class AuthService {
   final Dio _firebase;
   final String _apiKey;
 
-  Future<Usuario> iniciarSesion(String email, String password) async {
+  Future<Usuario> iniciarSesion(String email, String password, {bool recordar = true}) async {
     final correo = email.trim();
     final idToken = await _validarConFirebase(correo, password);
 
@@ -54,13 +54,19 @@ class AuthService {
     }
 
     final usuario = Usuario.fromJson(datos!['user'] as Map<String, dynamic>);
-    await _storage.guardar(token, usuario);
+    await _storage.guardar(token, usuario, recordar: recordar);
     return usuario;
   }
 
+  // Se llama al abrir la app: una sesión sin "Recordarme" no se conserva.
   Future<Usuario?> sesionGuardada() async {
     final token = await _storage.leerToken();
-    return token == null ? null : _storage.leerUsuario();
+    if (token == null) return null;
+    if (!await _storage.leerRecordar()) {
+      await _storage.borrar();
+      return null;
+    }
+    return _storage.leerUsuario();
   }
 
   Future<void> cerrarSesion() => _storage.borrar();
@@ -98,7 +104,10 @@ class AuthService {
       if (data is Map) {
         if (e.response?.statusCode == 423) return data['message'] as String? ?? 'Tu cuenta está bloqueada.';
         final restantes = data['remainingAttempts'];
-        if (restantes is int) return 'Correo o contraseña incorrectos. Te quedan $restantes intentos.';
+        if (restantes is int) {
+          final intentos = restantes == 1 ? 'Te queda 1 intento' : 'Te quedan $restantes intentos';
+          return 'Correo o contraseña incorrectos. $intentos.';
+        }
       }
     }
     return 'Correo o contraseña incorrectos.';

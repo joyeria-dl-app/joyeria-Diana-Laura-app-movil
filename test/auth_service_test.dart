@@ -116,4 +116,21 @@ void main() {
 
     expect(await service.sesionGuardada(), isNull);
   });
+
+  test('Sin "Recordarme" la sesión no se conserva al volver a abrir la app', () async {
+    final service = crear(
+      {'/accounts:signInWithPassword': const _Respuesta(200, {'idToken': 'id-token'})},
+      {
+        '/auth/login/movil': const _Respuesta(200, {
+          'success': true,
+          'data': {'token': 'jwt-sesion', 'user': {'email': 'a@b.com', 'nombre': 'A', 'rol': 'cliente'}},
+        }),
+      },
+    );
+    await service.iniciarSesion('a@b.com', 'x', recordar: false);
+    expect(await storage.leerToken(), 'jwt-sesion');
+
+    expect(await service.sesionGuardada(), isNull);
+    expect(await storage.leerToken(), isNull);
+  });
 }
