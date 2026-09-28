@@ -7,6 +7,7 @@ import '../routes/app_routes.dart';
 import '../theme/app_theme.dart';
 import '../widgets/boton_primario.dart';
 import '../widgets/campo_texto.dart';
+import '../widgets/decoracion.dart';
 
 // La recuperación de contraseña se hace en el sitio web.
 final Uri _urlRecuperar = Uri.parse('https://joyeria-diana-laura.vercel.app/olvide');
@@ -62,7 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
       body: Stack(
         children: [
           const _FotoSuperior(),
-          const _Destellos(),
+          const Destellos(),
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -91,16 +92,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: TextStyle(color: AppColors.primario, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 2),
                     ),
                     const SizedBox(height: 6),
-                    ShaderMask(
-                      shaderCallback: (r) => const LinearGradient(
-                        colors: [AppColors.texto, AppColors.texto, AppColors.primario],
-                        stops: [0, 0.6, 0.95],
-                      ).createShader(r),
-                      child: const Text(
-                        'Tu brillo,\nen tu bolsillo.',
-                        style: TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.w700, letterSpacing: -1, height: 1.08),
-                      ),
-                    ),
+                    const TituloDegradado('Tu brillo,\nen tu bolsillo.'),
                     const SizedBox(height: 18),
                     CampoTexto(
                       key: const Key('login_email'),
@@ -199,28 +191,6 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
-// Destellos decorativos del fondo de los bocetos (.phone::after).
-class _Destellos extends StatelessWidget {
-  const _Destellos();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Positioned(
-      top: 70,
-      left: 24,
-      right: 0,
-      child: IgnorePointer(
-        child: Opacity(
-          opacity: 0.14,
-          child: Text(
-            '✦   ·   ✧        ·\n      ·        ✦    ·\n  ✧      ·            ✦',
-            style: TextStyle(color: AppColors.primario, fontSize: 12, height: 46 / 12, letterSpacing: 6),
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 class _FotoSuperior extends StatelessWidget {
   const _FotoSuperior();

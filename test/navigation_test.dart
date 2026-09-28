@@ -15,7 +15,7 @@ void main() {
     await tester.ensureVisible(find.text('Crea tu cuenta'));
     await tester.tap(find.text('Crea tu cuenta'));
     await tester.pumpAndSettle();
-    expect(find.widgetWithText(AppBar, 'Crear cuenta'), findsOneWidget);
+    expect(find.byKey(const Key('registro_titulo')), findsOneWidget);
   });
 
   testWidgets('Desde inicio se navega a crear cuenta', (tester) async {
@@ -23,6 +23,6 @@ void main() {
 
     await tester.tap(find.widgetWithText(OutlinedButton, 'Crear cuenta'));
     await tester.pumpAndSettle();
-    expect(find.widgetWithText(AppBar, 'Crear cuenta'), findsOneWidget);
+    expect(find.byKey(const Key('registro_titulo')), findsOneWidget);
   });
 }
