@@ -1,0 +1,59 @@
+name: Publicar APK
+
+on:
+  release:
+    types: [published]
+  # Permite compilar el APK de una versión ya publicada.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Etiqueta de la versión (por ejemplo v0.1.0)
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  compilar-apk:
+    name: Compilar y adjuntar APK
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+    steps:
+      - name: Descargar el código de la versión
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+
+      - name: Instalar Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Instalar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.5'
+          channel: stable
+          cache: true
+
+      - name: Instalar dependencias
+        run: flutter pub get
+
+      - name: Ejecutar pruebas
+        run: flutter test
+
+      # La clave pública de Firebase se guarda como secreto del repositorio, no en el código.
+      - name: Crear env.json
+        run: echo '{"FIREBASE_API_KEY":"${{ secrets.FIREBASE_API_KEY }}"}' > env.json
+
+      - name: Compilar APK
+        run: flutter build apk --release --dart-define-from-file=env.json
+
+      - name: Adjuntar el APK a la versión
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp build/app/outputs/flutter-apk/app-release.apk "joyeria-diana-laura-${TAG}.apk"
+          gh release upload "$TAG" "joyeria-diana-laura-${TAG}.apk" --clobber

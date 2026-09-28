@@ -67,9 +67,24 @@ Reglas:
 - La descripción del Pull Request incluye `Closes #N` para cerrar su tarea del tablero.
 - Cada integrante trabaja sus tareas con su propia cuenta.
 
+## CI/CD
+
+| Workflow | Cuándo se ejecuta | Qué hace |
+|---|---|---|
+| `flutter-ci.yml` (integración continua) | En cada Pull Request y push a `develop` y `main` | Analiza el código (`flutter analyze`) y corre las pruebas (`flutter test`). Si falla, el Pull Request no se puede integrar. |
+| `release-apk.yml` (entrega continua) | Al publicar una versión | Corre las pruebas, compila el APK y lo adjunta a la versión para descargarlo e instalarlo. |
+
+## Seguridad
+
+- **Dependabot:** revisa cada semana que las librerías no tengan vulnerabilidades conocidas y abre Pull Requests para actualizarlas.
+- **Secret scanning con push protection:** bloquea cualquier push que contenga claves o contraseñas.
+- La clave de Firebase no está en el código: se usa `env.json` en local (ignorado por Git) y un secreto del repositorio en GitHub Actions.
+- La sesión se guarda cifrada en el celular con `flutter_secure_storage`.
+- Las pruebas de seguridad y las pruebas funcionales de cada historia están planeadas en el tablero (HU-19 y las tareas "Pruebas funcionales automatizadas").
+
 ## Versionamiento
 
-Usamos versionamiento semántico (`MAYOR.MENOR.PARCHE`). Al cerrar cada sprint se integra `develop` en `main`, se crea una etiqueta y se publica en [Releases](https://github.com/joyeria-dl-app/joyeria-Diana-Laura-app-movil/releases):
+Usamos versionamiento semántico (`MAYOR.MENOR.PARCHE`). Al cerrar cada sprint se integra `develop` en `main`, se crea una etiqueta y se publica en [Releases](https://github.com/joyeria-dl-app/joyeria-Diana-Laura-app-movil/releases), donde el APK de cada versión se adjunta automáticamente:
 
 | Versión | Sprint | Contenido |
 |---|---|---|
