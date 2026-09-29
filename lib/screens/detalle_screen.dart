@@ -8,6 +8,7 @@ import '../services/producto_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/formato.dart';
 import '../widgets/decoracion.dart';
+import '../widgets/galeria_fotos.dart';
 
 // Color de "Quedan N" en los bocetos (--warn).
 const _aviso = Color(0xFFF6A723);
@@ -62,7 +63,13 @@ class _DetalleScreenState extends State<DetalleScreen> {
             left: 0,
             right: 0,
             height: altoFoto,
-            child: _Foto(url: detalle?.imagenes.firstOrNull, cargando: detalle == null, apagada: detalle?.producto.agotado ?? false),
+            child: (detalle != null && detalle.imagenes.length > 1)
+                ? GaleriaFotos(
+                    imagenes: detalle.imagenes,
+                    topMiniaturas: altoFoto * 0.48,
+                    foto: (url) => _Foto(url: url, cargando: false, apagada: detalle.producto.agotado),
+                  )
+                : _Foto(url: detalle?.imagenes.firstOrNull, cargando: detalle == null, apagada: detalle?.producto.agotado ?? false),
           ),
           Positioned(
             top: altoFoto - 40,
