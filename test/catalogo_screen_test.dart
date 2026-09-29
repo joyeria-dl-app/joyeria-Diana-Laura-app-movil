@@ -24,8 +24,8 @@ class _ServicioFalso extends ProductoService {
   }
 }
 
-Producto _pieza(int id, {double precio = 890, double? promocion, int stock = 5, bool nuevo = false}) =>
-    Producto(id: id, nombre: 'Anillo $id', precioVenta: precio, precioPromocion: promocion, stock: stock, esNuevo: nuevo);
+Producto _pieza(int id, {double precio = 890, double? promocion, int stock = 5, bool personalizable = false}) => Producto(
+    id: id, nombre: 'Anillo $id', precioVenta: precio, precioPromocion: promocion, stock: stock, personalizable: personalizable);
 
 Future<void> _abrir(WidgetTester tester, ProductoService servicio) async {
   await tester.pumpWidget(
@@ -47,15 +47,31 @@ void main() {
 
   testWidgets('Muestra las piezas con su nombre y precio', (tester) async {
     await _abrir(tester, _ServicioFalso([
-      [_pieza(1, precio: 890), _pieza(2, precio: 1100, nuevo: true)],
+      [_pieza(1, precio: 890), _pieza(2, precio: 1100, personalizable: true)],
     ]));
 
     expect(find.text('CATÁLOGO'), findsOneWidget);
     expect(find.text('Anillo 1'), findsOneWidget);
     expect(find.text('\$890'), findsOneWidget);
     expect(find.text('\$1,100'), findsOneWidget);
-    expect(find.text('Nuevo'), findsOneWidget);
+    expect(find.text('Personalizable'), findsOneWidget);
     expect(find.text('2 piezas'), findsOneWidget);
+  });
+
+  testWidgets('La barra inferior marca el catálogo como sección activa', (tester) async {
+    final semantica = tester.ensureSemantics();
+    await _abrir(tester, _ServicioFalso([
+      [_pieza(1)],
+    ]));
+
+    expect(find.bySemanticsLabel('Catálogo'), findsOneWidget);
+    expect(tester.getSemantics(find.bySemanticsLabel('Catálogo')), isSemantics(isSelected: true, isButton: true));
+    expect(tester.getSemantics(find.bySemanticsLabel('Carrito')), isSemantics(isSelected: false, isButton: true));
+
+    await tester.tap(find.bySemanticsLabel('Carrito'));
+    await tester.pump();
+    expect(find.text('Disponible muy pronto'), findsOneWidget);
+    semantica.dispose();
   });
 
   testWidgets('Marca las piezas agotadas y tacha el precio con descuento', (tester) async {
@@ -89,7 +105,7 @@ void main() {
     ], falla: true);
     await _abrir(tester, servicio);
 
-    expect(find.text('No se pudo cargar el catálogo.'), findsOneWidget);
+    expect(find.text('Sin conexión'), findsOneWidget);
 
     servicio.falla = false;
     await tester.tap(find.text('Reintentar'));
@@ -100,6 +116,6 @@ void main() {
 
   testWidgets('Sin piezas muestra un aviso', (tester) async {
     await _abrir(tester, _ServicioFalso([[]]));
-    expect(find.text('Por ahora no hay piezas en el catálogo.'), findsOneWidget);
+    expect(find.text('Aún no hay piezas'), findsOneWidget);
   });
 }
