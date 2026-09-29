@@ -71,3 +71,47 @@ class Categoria {
   // En el panel algunas se capturaron en minúsculas ("esclavas").
   String get nombreVisible => nombre.isEmpty ? nombre : nombre[0].toUpperCase() + nombre.substring(1);
 }
+
+// Lo que muestra la pantalla de detalle (GET /products/:id).
+class DetalleProducto {
+  const DetalleProducto({
+    required this.producto,
+    this.descripcion,
+    this.codigo,
+    this.genero,
+    this.pesoGramos,
+    this.medidas,
+    this.precioPersonalizacion = 0,
+    this.imagenes = const [],
+  });
+
+  factory DetalleProducto.fromJson(Map<String, dynamic> json) {
+    // La foto principal va primero y luego la galería, sin repetir.
+    final imagenes = <String>[
+      if (json['imagen_principal'] case final String url when url.isNotEmpty) url,
+    ];
+    for (final foto in (json['galeria'] as List<dynamic>? ?? const []).cast<Map<String, dynamic>>()) {
+      final url = foto['url_imagen'] as String?;
+      if (url != null && url.isNotEmpty && !imagenes.contains(url)) imagenes.add(url);
+    }
+    return DetalleProducto(
+      producto: Producto.fromJson(json),
+      descripcion: json['descripcion'] as String?,
+      codigo: json['codigo'] as String?,
+      genero: json['genero'] as String?,
+      pesoGramos: _aNumero(json['peso_gramos']),
+      medidas: json['tiene_medidas'] == true ? json['medidas'] as String? : null,
+      precioPersonalizacion: _aNumero(json['precio_personalizacion']) ?? 0,
+      imagenes: imagenes,
+    );
+  }
+
+  final Producto producto;
+  final String? descripcion;
+  final String? codigo;
+  final String? genero;
+  final double? pesoGramos;
+  final String? medidas;
+  final double precioPersonalizacion;
+  final List<String> imagenes;
+}

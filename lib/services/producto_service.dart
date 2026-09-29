@@ -41,15 +41,26 @@ class ProductoService {
         .toList();
   }
 
-  Future<List<dynamic>> _obtener(String ruta, [Map<String, dynamic>? parametros]) async {
+  // Detalle de una pieza con su galería de imágenes.
+  Future<DetalleProducto> detalle(int id) async {
+    final data = await _pedir('/products/$id', noEncontrado: 'Esta pieza ya no está disponible.');
+    return DetalleProducto.fromJson(data as Map<String, dynamic>);
+  }
+
+  Future<List<dynamic>> _obtener(String ruta, [Map<String, dynamic>? parametros]) async =>
+      await _pedir(ruta, parametros: parametros) as List<dynamic>;
+
+  Future<Object?> _pedir(String ruta, {Map<String, dynamic>? parametros, String? noEncontrado}) async {
     try {
       final respuesta = await _api.dio.get(ruta, queryParameters: parametros);
       final data = respuesta.data as Map<String, dynamic>;
       if (data['success'] != true) {
         throw ProductoException(data['message'] as String? ?? 'No se pudo cargar el catálogo.');
       }
-      return data['data'] as List<dynamic>;
-    } on DioException {
+      return data['data'];
+    } on DioException catch (e) {
+      // El backend responde 404 si la pieza no existe o se desactivó.
+      if (noEncontrado != null && e.response?.statusCode == 404) throw ProductoException(noEncontrado);
       throw const ProductoException('No se pudo cargar el catálogo. Revisa tu conexión e intenta de nuevo.');
     }
   }
