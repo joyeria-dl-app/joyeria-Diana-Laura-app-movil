@@ -116,4 +116,60 @@ void main() {
       throwsA(isA<ProductoException>().having((e) => e.mensaje, 'mensaje', contains('No se pudo cargar el catálogo'))),
     );
   });
+
+  test('Pide el detalle de una pieza con la foto principal y su galería', () async {
+    final service = crear({
+      '/products/58': {
+        'success': true,
+        'data': {
+          ..._anillo,
+          'descripcion': 'Anillo delicado con circonia.',
+          'codigo': 'PROD-58',
+          'peso_gramos': '4.673',
+          'tiene_medidas': true,
+          'medidas': 'Talla 7',
+          'permite_personalizacion': true,
+          'precio_personalizacion': '120.00',
+          'imagen_principal': 'https://img.test/principal.jpg',
+          'galeria': [
+            {'id': 1, 'url_imagen': 'https://img.test/lado.jpg', 'orden': 1},
+            {'id': 2, 'url_imagen': 'https://img.test/principal.jpg', 'orden': 2},
+          ],
+        },
+      },
+    });
+
+    final detalle = await service.detalle(58);
+
+    expect(detalle.producto.nombre, 'Anillo con circonia');
+    expect(detalle.producto.personalizable, isTrue);
+    expect(detalle.descripcion, 'Anillo delicado con circonia.');
+    expect(detalle.pesoGramos, 4.673);
+    expect(detalle.medidas, 'Talla 7');
+    expect(detalle.precioPersonalizacion, 120);
+    // La principal primero y sin repetirla aunque también venga en la galería.
+    expect(detalle.imagenes, ['https://img.test/principal.jpg', 'https://img.test/lado.jpg']);
+  });
+
+  test('Una pieza sin fotos ni galería queda con la lista de imágenes vacía', () async {
+    final service = crear({
+      '/products/58': {'success': true, 'data': {..._anillo, 'galeria': null}},
+    });
+
+    final detalle = await service.detalle(58);
+
+    expect(detalle.imagenes, isEmpty);
+    expect(detalle.medidas, isNull);
+  });
+
+  test('Si la pieza ya no existe avisa que no está disponible', () async {
+    final service = crear({
+      '/products/999': {'success': false, 'message': 'Producto no encontrado'},
+    }, status: 404);
+
+    expect(
+      service.detalle(999),
+      throwsA(isA<ProductoException>().having((e) => e.mensaje, 'mensaje', 'Esta pieza ya no está disponible.')),
+    );
+  });
 }
