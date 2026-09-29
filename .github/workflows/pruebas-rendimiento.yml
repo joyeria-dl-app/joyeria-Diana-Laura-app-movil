@@ -1,0 +1,83 @@
+# PRUEBAS DE RENDIMIENTO: tamaño del APK y tiempos de carga y scroll en el emulador.
+name: Pruebas de rendimiento
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+jobs:
+  tamano:
+    name: Tamaño del APK de producción
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v7
+
+      - name: Instalar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.5'
+          channel: stable
+          cache: true
+
+      - name: Instalar dependencias
+        run: flutter pub get
+
+      - name: Instalar Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Compilar y analizar tamaño
+        run: flutter build apk --release --target-platform android-arm64 --analyze-size
+
+      - name: Revisar límite de 30 MB
+        run: |
+          tamano=$(stat -c%s build/app/outputs/flutter-apk/app-release.apk)
+          mb=$((tamano / 1024 / 1024))
+          echo "## Rendimiento" >> $GITHUB_STEP_SUMMARY
+          echo "Tamaño del APK (arm64): $mb MB" >> $GITHUB_STEP_SUMMARY
+          test $mb -lt 30
+
+  tiempos:
+    name: Tiempos de carga y scroll
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v7
+
+      - name: Instalar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.5'
+          channel: stable
+          cache: true
+
+      - name: Instalar dependencias
+        run: flutter pub get
+
+      - name: Instalar Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      # Permite al emulador usar la aceleración por hardware del runner.
+      - name: Habilitar KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Medir tiempos en el emulador
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          script: flutter test integration_test/rendimiento_test.dart --reporter expanded
