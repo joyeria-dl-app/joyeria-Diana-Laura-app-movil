@@ -235,7 +235,8 @@ class _Contenido extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = detalle.producto;
     final datos = [
-      ?p.categoriaNombre,
+      // En el panel algunas categorías se capturaron en minúsculas ("esclavas").
+      if (p.categoriaNombre case final c? when c.isNotEmpty) c[0].toUpperCase() + c.substring(1),
       ?p.material,
       if (detalle.pesoGramos case final peso?) '${peso.toStringAsFixed(1)} g',
     ];
