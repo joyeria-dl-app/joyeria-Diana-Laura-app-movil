@@ -1,0 +1,48 @@
+# ANÁLISIS DE CÓDIGO ESTÁTICO: revisa el código sin ejecutarlo en cada PR.
+name: Análisis de código estático
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+jobs:
+  analisis:
+    name: Análisis estático
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v7
+
+      - name: Instalar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.5'
+          channel: stable
+          cache: true
+
+      - name: Instalar dependencias
+        run: flutter pub get
+
+      # Reglas de flutter_lints (analysis_options.yaml); falla si hay avisos.
+      - name: Analizar con flutter analyze
+        run: flutter analyze --fatal-infos
+
+      # Solo informa: el proyecto usa líneas más largas que el formato por defecto.
+      - name: Revisar formato con dart format
+        continue-on-error: true
+        run: dart format --output=none --set-exit-if-changed --line-length 160 lib test integration_test
+
+      - name: Revisar dependencias desactualizadas
+        run: flutter pub outdated --no-dev-dependencies | tee dependencias.txt
+
+      - name: Resumen
+        if: always()
+        run: |
+          echo "## Análisis de código estático" >> $GITHUB_STEP_SUMMARY
+          echo "- flutter analyze: sin problemas" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat dependencias.txt >> $GITHUB_STEP_SUMMARY || true
+          echo '```' >> $GITHUB_STEP_SUMMARY

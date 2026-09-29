@@ -1,0 +1,43 @@
+# PRUEBAS UNITARIAS: modelos, servicios y widgets con respuestas simuladas del backend.
+name: Pruebas unitarias
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+jobs:
+  unitarias:
+    name: Pruebas unitarias y de widgets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v7
+
+      - name: Instalar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.5'
+          channel: stable
+          cache: true
+
+      - name: Instalar dependencias
+        run: flutter pub get
+
+      - name: Ejecutar pruebas con cobertura
+        run: flutter test --coverage --reporter expanded
+
+      - name: Calcular cobertura
+        run: |
+          total=$(grep -c '^DA:' coverage/lcov.info)
+          cubiertas=$(grep '^DA:' coverage/lcov.info | grep -vc ',0$')
+          echo "## Pruebas unitarias" >> $GITHUB_STEP_SUMMARY
+          echo "Cobertura de líneas: $((100 * cubiertas / total)) % ($cubiertas de $total)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Guardar reporte de cobertura
+        uses: actions/upload-artifact@v4
+        with:
+          name: cobertura-pruebas-unitarias
+          path: coverage/lcov.info
