@@ -171,4 +171,71 @@ void main() {
     expect(find.text('Anillo 1'), findsOneWidget);
     expect(find.text('Anillos'), findsOneWidget);
   });
+
+  testWidgets('Con un filtro activo las páginas siguientes siguen siendo de esa categoría', (tester) async {
+    final servicio = _ServicioFalso(
+      [
+        List.generate(ProductoService.porPagina, (i) => _pieza(i)),
+        [_pieza(100)],
+      ],
+      listaCategorias: const [Categoria(id: 3, nombre: 'Pulseras')],
+    );
+    await _abrir(tester, servicio);
+    await tester.tap(find.text('Pulseras'));
+    await tester.pumpAndSettle();
+
+    await tester.dragUntilVisible(find.text('Anillo 100'), find.byType(CustomScrollView), const Offset(0, -500));
+    await tester.pumpAndSettle();
+
+    // Última petición: página 1 de la categoría 3.
+    expect(servicio.pedidas.last, 1);
+    expect(servicio.categoriasPedidas.last, 3);
+  });
+
+  testWidgets('Una categoría sin piezas muestra el aviso y conserva la fila de categorías', (tester) async {
+    final servicio = _ServicioFalso(
+      [
+        [_pieza(1)],
+      ],
+      listaCategorias: const [Categoria(id: 24, nombre: 'Cadenas')],
+    );
+    await _abrir(tester, servicio);
+    servicio.paginas.clear();
+    await tester.tap(find.text('Cadenas'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Aún no hay piezas'), findsOneWidget);
+    expect(find.text('Cadenas'), findsNWidgets(2));
+  });
+
+  testWidgets('Si fallan las categorías el catálogo se sigue mostrando', (tester) async {
+    await _abrir(tester, _ServicioCategoriasFallan([
+      [_pieza(1)],
+    ]));
+
+    expect(find.text('Anillo 1'), findsOneWidget);
+    expect(find.text('Nuestras joyas'), findsOneWidget);
+  });
+
+  testWidgets('Cuando ya no hay más páginas muestra el total exacto', (tester) async {
+    await _abrir(tester, _ServicioFalso([
+      [_pieza(1), _pieza(2), _pieza(3)],
+    ]));
+    expect(find.text('3 piezas'), findsOneWidget);
+  });
+
+  testWidgets('Una pieza agotada no muestra la etiqueta Personalizable', (tester) async {
+    await _abrir(tester, _ServicioFalso([
+      [_pieza(1, stock: 0, personalizable: true)],
+    ]));
+    expect(find.text('Agotado'), findsOneWidget);
+    expect(find.text('Personalizable'), findsNothing);
+  });
+}
+
+class _ServicioCategoriasFallan extends _ServicioFalso {
+  _ServicioCategoriasFallan(super.paginas);
+
+  @override
+  Future<List<Categoria>> categorias() async => throw const ProductoException('No se pudo cargar el catálogo.');
 }
