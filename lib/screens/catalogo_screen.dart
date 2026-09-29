@@ -7,6 +7,7 @@ import '../theme/app_theme.dart';
 import '../widgets/barra_navegacion.dart';
 import '../widgets/decoracion.dart';
 import '../widgets/tarjeta_producto.dart';
+import 'detalle_screen.dart';
 
 // Catálogo de piezas (boceto P6). Carga 20 productos y pide más al llegar al final.
 class CatalogoScreen extends StatefulWidget {
@@ -173,7 +174,16 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
       ];
     }
     return [
-      _cuadricula(_productos.length, (i) => TarjetaProducto(producto: _productos[i])),
+      _cuadricula(
+        _productos.length,
+        (i) => TarjetaProducto(
+          producto: _productos[i],
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute<void>(builder: (_) => DetalleScreen(productoId: _productos[i].id)),
+          ),
+        ),
+      ),
       // Boceto 4d: aviso al pie mientras llega la siguiente página.
       if (_cargando || _error != null)
         SliverToBoxAdapter(

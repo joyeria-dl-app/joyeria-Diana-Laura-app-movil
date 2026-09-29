@@ -231,6 +231,17 @@ void main() {
     expect(find.text('Agotado'), findsOneWidget);
     expect(find.text('Personalizable'), findsNothing);
   });
+
+  testWidgets('Al tocar una pieza abre su detalle', (tester) async {
+    await _abrir(tester, _ServicioDetalle([
+      [_pieza(7)],
+    ]));
+
+    await tester.tap(find.text('Anillo 7'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Detalle 7'), findsOneWidget);
+  });
 }
 
 class _ServicioCategoriasFallan extends _ServicioFalso {
@@ -238,4 +249,12 @@ class _ServicioCategoriasFallan extends _ServicioFalso {
 
   @override
   Future<List<Categoria>> categorias() async => throw const ProductoException('No se pudo cargar el catálogo.');
+}
+
+class _ServicioDetalle extends _ServicioFalso {
+  _ServicioDetalle(super.paginas);
+
+  @override
+  Future<DetalleProducto> detalle(int id) async =>
+      DetalleProducto(producto: Producto(id: id, nombre: 'Detalle $id', precioVenta: 890, stock: 5));
 }
