@@ -4,8 +4,10 @@ import '../models/producto.dart';
 import 'api_client.dart';
 
 class ProductoException implements Exception {
-  const ProductoException(this.mensaje);
+  const ProductoException(this.mensaje, {this.noEncontrado = false});
   final String mensaje;
+  // La pieza no existe o se desactivó; no sirve reintentar.
+  final bool noEncontrado;
 
   @override
   String toString() => mensaje;
@@ -60,7 +62,7 @@ class ProductoService {
       return data['data'];
     } on DioException catch (e) {
       // El backend responde 404 si la pieza no existe o se desactivó.
-      if (noEncontrado != null && e.response?.statusCode == 404) throw ProductoException(noEncontrado);
+      if (noEncontrado != null && e.response?.statusCode == 404) throw ProductoException(noEncontrado, noEncontrado: true);
       throw const ProductoException('No se pudo cargar el catálogo. Revisa tu conexión e intenta de nuevo.');
     }
   }
