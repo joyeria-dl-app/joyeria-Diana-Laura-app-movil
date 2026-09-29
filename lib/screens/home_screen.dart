@@ -33,10 +33,21 @@ class HomeScreen extends StatelessWidget {
                       onPressed: () => Navigator.pushNamed(context, AppRoutes.register),
                       child: const Text('Crear cuenta'),
                     ),
+                    const SizedBox(height: 12),
+                    // El catálogo es público, como "explora sin cuenta" en los bocetos.
+                    TextButton(
+                      onPressed: () => Navigator.pushNamed(context, AppRoutes.catalogo),
+                      child: const Text('Explorar sin cuenta'),
+                    ),
                   ]
                 : [
                     Text('Hola, ${usuario.nombre}', textAlign: TextAlign.center),
                     const SizedBox(height: 24),
+                    FilledButton(
+                      onPressed: () => Navigator.pushNamed(context, AppRoutes.catalogo),
+                      child: const Text('Ver catálogo'),
+                    ),
+                    const SizedBox(height: 12),
                     OutlinedButton(
                       onPressed: auth.cerrarSesion,
                       child: const Text('Cerrar sesión'),

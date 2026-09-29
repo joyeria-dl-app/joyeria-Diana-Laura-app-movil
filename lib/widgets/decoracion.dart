@@ -68,11 +68,13 @@ class Destellos extends StatelessWidget {
 // Como en el CSS, el degradado abarca todo el ancho disponible y no solo el
 // del texto; así casi todo queda blanco y solo el final se vuelve rosa.
 class TituloDegradado extends StatelessWidget {
-  const TituloDegradado(this.texto, {super.key, this.adorno});
+  const TituloDegradado(this.texto, {super.key, this.adorno, this.tamano = 30});
 
   final String texto;
   // Símbolo al final que conserva el rosa, como la ✦ de "Crea tu cuenta".
   final String? adorno;
+  // 30 en registro; el catálogo usa 28.
+  final double tamano;
 
   static const estilo = TextStyle(fontSize: 30, fontWeight: FontWeight.w700, letterSpacing: -1, height: 1.08);
 
@@ -87,7 +89,7 @@ class TituloDegradado extends StatelessWidget {
           ).createShader(Rect.fromLTWH(0, 0, limites.maxWidth, 70));
         return Text.rich(
           TextSpan(
-            style: estilo.copyWith(foreground: pintura),
+            style: estilo.copyWith(foreground: pintura, fontSize: tamano),
             children: [
               TextSpan(text: texto),
               if (adorno != null)
@@ -99,6 +101,23 @@ class TituloDegradado extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+// Texto pequeño en mayúsculas con degradado rosa a lila (.eyebrow), por ejemplo "CATÁLOGO".
+class Antetitulo extends StatelessWidget {
+  const Antetitulo(this.texto, {super.key});
+  final String texto;
+
+  @override
+  Widget build(BuildContext context) {
+    return ShaderMask(
+      shaderCallback: (r) => const LinearGradient(colors: [AppColors.primario, AppColors.lila]).createShader(r),
+      child: Text(
+        texto.toUpperCase(),
+        style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 2),
+      ),
     );
   }
 }

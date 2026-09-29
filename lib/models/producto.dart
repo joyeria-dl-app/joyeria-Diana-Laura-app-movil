@@ -18,6 +18,7 @@ class Producto {
     this.material,
     this.stock = 0,
     this.esNuevo = false,
+    this.personalizable = false,
   });
 
   factory Producto.fromJson(Map<String, dynamic> json) => Producto(
@@ -32,6 +33,7 @@ class Producto {
         material: json['material_principal'] as String?,
         stock: json['stock_actual'] as int? ?? 0,
         esNuevo: json['es_nuevo'] as bool? ?? false,
+        personalizable: json['permite_personalizacion'] as bool? ?? false,
       );
 
   final int id;
@@ -45,6 +47,7 @@ class Producto {
   final String? material;
   final int stock;
   final bool esNuevo;
+  final bool personalizable;
 
   // Mismo criterio que el sitio web: la promoción vigente gana a la oferta.
   double get precioFinal => precioPromocion ?? precioOferta ?? precioVenta;
