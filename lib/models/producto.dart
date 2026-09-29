@@ -67,4 +67,7 @@ class Categoria {
   final int id;
   final String nombre;
   final String? imagen;
+
+  // En el panel algunas se capturaron en minúsculas ("esclavas").
+  String get nombreVisible => nombre.isEmpty ? nombre : nombre[0].toUpperCase() + nombre.substring(1);
 }

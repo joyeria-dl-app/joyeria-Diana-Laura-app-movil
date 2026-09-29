@@ -23,6 +23,10 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
   bool _cargando = false;
   bool _hayMas = true;
   String? _error;
+  List<Categoria> _categorias = [];
+  Categoria? _categoria;
+  // Cambia al elegir otra categoría; así se descartan respuestas de la anterior.
+  int _consulta = 0;
 
   @override
   void initState() {
@@ -30,7 +34,18 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
     _scroll.addListener(() {
       if (_scroll.position.extentAfter < 400) _cargarMas();
     });
+    _cargarCategorias();
     _cargarMas();
+  }
+
+  // Si fallan, el catálogo se sigue viendo sin la fila de categorías.
+  Future<void> _cargarCategorias() async {
+    try {
+      final categorias = await context.read<ProductoService>().categorias();
+      if (mounted) setState(() => _categorias = categorias);
+    } on ProductoException {
+      return;
+    }
   }
 
   @override
@@ -41,32 +56,42 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
 
   Future<void> _cargarMas() async {
     if (_cargando || !_hayMas) return;
+    final consulta = _consulta;
     setState(() {
       _cargando = true;
       _error = null;
     });
     try {
-      final nuevos = await context.read<ProductoService>().productos(pagina: _pagina);
-      if (!mounted) return;
+      final nuevos = await context.read<ProductoService>().productos(categoriaId: _categoria?.id, pagina: _pagina);
+      if (!mounted || consulta != _consulta) return;
       setState(() {
         _productos.addAll(nuevos);
         _pagina++;
         _hayMas = nuevos.length == ProductoService.porPagina;
       });
     } on ProductoException catch (e) {
-      if (mounted) setState(() => _error = e.mensaje);
+      if (mounted && consulta == _consulta) setState(() => _error = e.mensaje);
     } finally {
-      if (mounted) setState(() => _cargando = false);
+      if (mounted && consulta == _consulta) setState(() => _cargando = false);
     }
   }
 
   Future<void> _recargar() async {
     setState(() {
+      _consulta++;
       _productos.clear();
       _pagina = 0;
       _hayMas = true;
+      _cargando = false;
     });
     await _cargarMas();
+  }
+
+  // Tocar la categoría activa la quita y vuelve a mostrar todas las piezas.
+  void _elegir(Categoria categoria) {
+    _categoria = categoria.id == _categoria?.id ? null : categoria;
+    if (_scroll.hasClients) _scroll.jumpTo(0);
+    _recargar();
   }
 
   @override
@@ -85,7 +110,16 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
                 controller: _scroll,
                 physics: const AlwaysScrollableScrollPhysics(),
                 slivers: [
-                  SliverToBoxAdapter(child: _Encabezado(total: _productos.length, completo: !_hayMas)),
+                  SliverToBoxAdapter(
+                    child: _Encabezado(
+                      titulo: _categoria?.nombreVisible ?? 'Nuestras joyas',
+                      total: _productos.length,
+                      completo: !_hayMas,
+                      categorias: _categorias,
+                      activa: _categoria,
+                      onElegir: _elegir,
+                    ),
+                  ),
                   ..._contenido(),
                   // Espacio para que la última fila no quede debajo de la barra.
                   const SliverToBoxAdapter(child: SizedBox(height: 110)),
@@ -112,7 +146,7 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
           child: _Aviso(
             icono: Icons.wifi_off_rounded,
             titulo: 'Sin conexión',
-            texto: '$_error Revisa tu conexión e intenta de nuevo.',
+            texto: _error!,
             onReintentar: _cargarMas,
           ),
         ),
@@ -208,29 +242,126 @@ class _TarjetaCargando extends StatelessWidget {
 }
 
 class _Encabezado extends StatelessWidget {
-  const _Encabezado({required this.total, required this.completo});
+  const _Encabezado({
+    required this.titulo,
+    required this.total,
+    required this.completo,
+    required this.categorias,
+    required this.activa,
+    required this.onElegir,
+  });
+  final String titulo;
   final int total;
   final bool completo;
+  final List<Categoria> categorias;
+  final Categoria? activa;
+  final ValueChanged<Categoria> onElegir;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+      padding: const EdgeInsets.fromLTRB(0, 8, 0, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Antetitulo('Catálogo'),
-          const SizedBox(height: 2),
-          const TituloDegradado('Nuestras joyas', tamano: 28),
-          if (total > 0) ...[
-            const SizedBox(height: 16),
-            // Mientras falten páginas por cargar no se conoce el total exacto.
-            Text(
-              completo ? '$total piezas' : '$total+ piezas',
-              style: const TextStyle(color: AppColors.textoSuave, fontSize: 12),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Antetitulo('Catálogo'),
+                const SizedBox(height: 2),
+                TituloDegradado(titulo, tamano: 28),
+              ],
+            ),
+          ),
+          if (categorias.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            SizedBox(
+              height: 90,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                itemCount: categorias.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 10),
+                itemBuilder: (_, i) => _CirculoCategoria(
+                  categoria: categorias[i],
+                  activa: categorias[i].id == activa?.id,
+                  onTap: () => onElegir(categorias[i]),
+                ),
+              ),
             ),
           ],
+          if (total > 0)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+              // Mientras falten páginas por cargar no se conoce el total exacto.
+              child: Text(
+                completo ? '$total piezas' : '$total+ piezas',
+                style: const TextStyle(color: AppColors.textoSuave, fontSize: 12),
+              ),
+            ),
         ],
+      ),
+    );
+  }
+}
+
+// Categoría del boceto P6: foto de 62 px con esquinas de 22 y anillo rosa si está activa.
+class _CirculoCategoria extends StatelessWidget {
+  const _CirculoCategoria({required this.categoria, required this.activa, required this.onTap});
+  final Categoria categoria;
+  final bool activa;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    const sinFoto = ColoredBox(
+      color: AppColors.superficie2,
+      child: Center(child: Icon(Icons.diamond_outlined, size: 26, color: AppColors.textoSuave)),
+    );
+    final url = categoria.imagen;
+    return Semantics(
+      button: true,
+      selected: activa,
+      label: categoria.nombreVisible,
+      excludeSemantics: true,
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: SizedBox(
+          width: 66,
+          child: Column(
+            children: [
+              Container(
+                width: 66,
+                height: 66,
+                padding: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: activa ? AppColors.primario : Colors.transparent, width: 2),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: (url == null || url.isEmpty)
+                      ? sinFoto
+                      : Image.network(url, fit: BoxFit.cover, errorBuilder: (_, _, _) => sinFoto),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                categoria.nombreVisible,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: activa ? FontWeight.w600 : FontWeight.w400,
+                  color: activa ? AppColors.texto : AppColors.textoSuave,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

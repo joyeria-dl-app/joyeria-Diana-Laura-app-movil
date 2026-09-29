@@ -11,17 +11,23 @@ import 'package:joyeria_diana_laura/utils/formato.dart';
 
 // Devuelve productos de prueba sin llamar al backend.
 class _ServicioFalso extends ProductoService {
-  _ServicioFalso(this.paginas, {this.falla = false}) : super(api: ApiClient());
+  _ServicioFalso(this.paginas, {this.falla = false, this.listaCategorias = const []}) : super(api: ApiClient());
   final List<List<Producto>> paginas;
+  final List<Categoria> listaCategorias;
   bool falla;
   final List<int> pedidas = [];
+  final List<int?> categoriasPedidas = [];
 
   @override
   Future<List<Producto>> productos({int? categoriaId, String? busqueda, int pagina = 0}) async {
     pedidas.add(pagina);
+    categoriasPedidas.add(categoriaId);
     if (falla) throw const ProductoException('No se pudo cargar el catálogo.');
     return pagina < paginas.length ? paginas[pagina] : [];
   }
+
+  @override
+  Future<List<Categoria>> categorias() async => listaCategorias;
 }
 
 Producto _pieza(int id, {double precio = 890, double? promocion, int stock = 5, bool personalizable = false}) => Producto(
@@ -117,5 +123,29 @@ void main() {
   testWidgets('Sin piezas muestra un aviso', (tester) async {
     await _abrir(tester, _ServicioFalso([[]]));
     expect(find.text('Aún no hay piezas'), findsOneWidget);
+  });
+
+  testWidgets('Al elegir una categoría filtra las piezas y la usa como título', (tester) async {
+    final servicio = _ServicioFalso(
+      [
+        [_pieza(1)],
+      ],
+      listaCategorias: const [Categoria(id: 1, nombre: 'Anillos'), Categoria(id: 14, nombre: 'esclavas')],
+    );
+    await _abrir(tester, servicio);
+
+    expect(find.text('Nuestras joyas'), findsOneWidget);
+    expect(find.text('Esclavas'), findsOneWidget);
+
+    await tester.tap(find.text('Anillos'));
+    await tester.pumpAndSettle();
+    expect(servicio.categoriasPedidas.last, 1);
+    expect(find.text('Anillos'), findsNWidgets(2));
+
+    // Tocar otra vez la categoría activa vuelve a mostrar todo el catálogo.
+    await tester.tap(find.text('Anillos').last);
+    await tester.pumpAndSettle();
+    expect(servicio.categoriasPedidas.last, isNull);
+    expect(find.text('Nuestras joyas'), findsOneWidget);
   });
 }
