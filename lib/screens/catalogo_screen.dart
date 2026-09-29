@@ -76,7 +76,14 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
     }
   }
 
+  // Si se abrió sin internet, las categorías tampoco llegaron: se piden de nuevo.
+  Future<void> _reintentar() async {
+    if (_categorias.isEmpty) _cargarCategorias();
+    await _cargarMas();
+  }
+
   Future<void> _recargar() async {
+    if (_categorias.isEmpty) _cargarCategorias();
     setState(() {
       _consulta++;
       _productos.clear();
@@ -147,7 +154,7 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
             icono: Icons.wifi_off_rounded,
             titulo: 'Sin conexión',
             texto: _error!,
-            onReintentar: _cargarMas,
+            onReintentar: _reintentar,
           ),
         ),
       ];
