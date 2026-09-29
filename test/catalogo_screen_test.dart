@@ -27,7 +27,10 @@ class _ServicioFalso extends ProductoService {
   }
 
   @override
-  Future<List<Categoria>> categorias() async => listaCategorias;
+  Future<List<Categoria>> categorias() async {
+    if (falla) throw const ProductoException('No se pudo cargar el catálogo.');
+    return listaCategorias;
+  }
 }
 
 Producto _pieza(int id, {double precio = 890, double? promocion, int stock = 5, bool personalizable = false}) => Producto(
@@ -147,5 +150,25 @@ void main() {
     await tester.pumpAndSettle();
     expect(servicio.categoriasPedidas.last, isNull);
     expect(find.text('Nuestras joyas'), findsOneWidget);
+  });
+
+  testWidgets('Al reintentar sin conexión también vuelven las categorías', (tester) async {
+    final servicio = _ServicioFalso(
+      [
+        [_pieza(1)],
+      ],
+      falla: true,
+      listaCategorias: const [Categoria(id: 1, nombre: 'Anillos')],
+    );
+    await _abrir(tester, servicio);
+    expect(find.text('Sin conexión'), findsOneWidget);
+    expect(find.text('Anillos'), findsNothing);
+
+    servicio.falla = false;
+    await tester.tap(find.text('Reintentar'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Anillo 1'), findsOneWidget);
+    expect(find.text('Anillos'), findsOneWidget);
   });
 }
