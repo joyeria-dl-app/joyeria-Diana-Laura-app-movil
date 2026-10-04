@@ -64,13 +64,7 @@ class _FavoritosFalso extends FavoritoService {
   }
 }
 
-DetalleProducto _anillo({
-  int stock = 3,
-  bool personalizable = true,
-  String? medidas = 'Talla 7',
-  double? promocion,
-  List<String> imagenes = const [],
-}) =>
+DetalleProducto _anillo({int stock = 3, bool personalizable = true, String? medidas = 'Talla 7', double? promocion, List<String> imagenes = const []}) =>
     DetalleProducto(
       producto: Producto(
         id: 58,
@@ -218,10 +212,7 @@ void main() {
   });
 
   testWidgets('Si la pieza ya no existe ofrece volver al catálogo', (tester) async {
-    await _abrir(
-      tester,
-      _ServicioFalso(error: const ProductoException('Esta pieza ya no está disponible.', noEncontrado: true)),
-    );
+    await _abrir(tester, _ServicioFalso(error: const ProductoException('Esta pieza ya no está disponible.', noEncontrado: true)));
 
     expect(find.text('Pieza no disponible'), findsOneWidget);
     expect(find.text('Ver catálogo'), findsOneWidget);

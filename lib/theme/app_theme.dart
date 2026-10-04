@@ -15,11 +15,7 @@ class AppColors {
   static const exito = Color(0xFF2EBD85);
   static const error = Color(0xFFEF4B5B);
 
-  static const degradado = LinearGradient(
-    begin: Alignment.centerLeft,
-    end: Alignment.centerRight,
-    colors: [primario, primario2, lila],
-  );
+  static const degradado = LinearGradient(begin: Alignment.centerLeft, end: Alignment.centerRight, colors: [primario, primario2, lila]);
 }
 
 class AppTheme {
@@ -38,11 +34,7 @@ class AppTheme {
         onSurface: AppColors.texto,
         error: AppColors.error,
       ),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.transparent,
-        foregroundColor: AppColors.texto,
-        elevation: 0,
-      ),
+      appBarTheme: const AppBarTheme(backgroundColor: Colors.transparent, foregroundColor: AppColors.texto, elevation: 0),
       inputDecorationTheme: const InputDecorationTheme(
         filled: true,
         fillColor: AppColors.superficie,
@@ -50,15 +42,33 @@ class AppTheme {
         hintStyle: TextStyle(color: AppColors.textoSuave, fontSize: 14),
         prefixIconColor: AppColors.textoSuave,
         suffixIconColor: AppColors.textoSuave,
-        border: OutlineInputBorder(borderRadius: esquinas, borderSide: BorderSide(color: AppColors.borde, width: 1.5)),
-        enabledBorder: OutlineInputBorder(borderRadius: esquinas, borderSide: BorderSide(color: AppColors.borde, width: 1.5)),
-        focusedBorder: OutlineInputBorder(borderRadius: esquinas, borderSide: BorderSide(color: AppColors.primario, width: 1.5)),
-        errorBorder: OutlineInputBorder(borderRadius: esquinas, borderSide: BorderSide(color: AppColors.error, width: 1.5)),
-        focusedErrorBorder: OutlineInputBorder(borderRadius: esquinas, borderSide: BorderSide(color: AppColors.error, width: 1.5)),
+        border: OutlineInputBorder(
+          borderRadius: esquinas,
+          borderSide: BorderSide(color: AppColors.borde, width: 1.5),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: esquinas,
+          borderSide: BorderSide(color: AppColors.borde, width: 1.5),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: esquinas,
+          borderSide: BorderSide(color: AppColors.primario, width: 1.5),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: esquinas,
+          borderSide: BorderSide(color: AppColors.error, width: 1.5),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: esquinas,
+          borderSide: BorderSide(color: AppColors.error, width: 1.5),
+        ),
         errorStyle: TextStyle(color: AppColors.error, fontSize: 11.5),
       ),
       textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(foregroundColor: AppColors.primario, textStyle: const TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w600)),
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.primario,
+          textStyle: const TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w600),
+        ),
       ),
     );
   }

@@ -17,9 +17,13 @@ class _AdaptadorFalso implements HttpClientAdapter {
   @override
   Future<ResponseBody> fetch(RequestOptions options, Stream<Uint8List>? requestStream, Future<void>? cancelFuture) async {
     peticiones.add(options);
-    return ResponseBody.fromString(jsonEncode(respuesta), status, headers: {
-      Headers.contentTypeHeader: [Headers.jsonContentType],
-    });
+    return ResponseBody.fromString(
+      jsonEncode(respuesta),
+      status,
+      headers: {
+        Headers.contentTypeHeader: [Headers.jsonContentType],
+      },
+    );
   }
 
   @override
@@ -54,7 +58,12 @@ void main() {
   test('Consulta el carrito con sus piezas y el total del backend', () async {
     final servicio = crear({
       'success': true,
-      'data': {'items': [_anillo], 'total': 2000, 'count': 1, 'promo_no_aplica': null},
+      'data': {
+        'items': [_anillo],
+        'total': 2000,
+        'count': 1,
+        'promo_no_aplica': null,
+      },
     });
 
     final carrito = await servicio.obtener();
@@ -116,7 +125,14 @@ void main() {
     await servicio.vaciar();
 
     final p = backend.peticiones;
-    expect([p[0].method, p[0].path, p[0].data], ['PUT', '/carrito/301', {'cantidad': 3}]);
+    expect(
+      [p[0].method, p[0].path, p[0].data],
+      [
+        'PUT',
+        '/carrito/301',
+        {'cantidad': 3},
+      ],
+    );
     expect([p[1].method, p[1].path], ['DELETE', '/carrito/301']);
     expect([p[2].method, p[2].path], ['DELETE', '/carrito/vaciar']);
   });
@@ -133,19 +149,13 @@ void main() {
   test('Sin sesión avisa que hay que iniciar sesión', () async {
     final servicio = crear({'success': false, 'message': 'No autenticado'}, status: 401);
 
-    await expectLater(
-      servicio.obtener(),
-      throwsA(isA<CarritoException>().having((e) => e.sinSesion, 'sinSesion', isTrue)),
-    );
+    await expectLater(servicio.obtener(), throwsA(isA<CarritoException>().having((e) => e.sinSesion, 'sinSesion', isTrue)));
   });
 
   test('Si no hay existencias muestra el mensaje del backend', () async {
     final servicio = crear({'success': false, 'message': 'Stock insuficiente'}, status: 400);
 
-    await expectLater(
-      servicio.agregar(58, cantidad: 9),
-      throwsA(isA<CarritoException>().having((e) => e.mensaje, 'mensaje', 'Stock insuficiente')),
-    );
+    await expectLater(servicio.agregar(58, cantidad: 9), throwsA(isA<CarritoException>().having((e) => e.mensaje, 'mensaje', 'Stock insuficiente')));
   });
 
   test('Si el servidor falla muestra un mensaje entendible', () async {
@@ -153,9 +163,7 @@ void main() {
 
     await expectLater(
       servicio.obtener(),
-      throwsA(isA<CarritoException>()
-          .having((e) => e.mensaje, 'mensaje', contains('Revisa tu conexión'))
-          .having((e) => e.sinSesion, 'sinSesion', isFalse)),
+      throwsA(isA<CarritoException>().having((e) => e.mensaje, 'mensaje', contains('Revisa tu conexión')).having((e) => e.sinSesion, 'sinSesion', isFalse)),
     );
   });
 }

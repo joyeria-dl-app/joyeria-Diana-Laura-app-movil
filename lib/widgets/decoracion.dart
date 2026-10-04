@@ -32,10 +32,7 @@ class _Mancha extends StatelessWidget {
       height: tamano,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: RadialGradient(
-          colors: [color.withValues(alpha: 0.28), color.withValues(alpha: 0.12), color.withValues(alpha: 0)],
-          stops: const [0, 0.45, 1],
-        ),
+        gradient: RadialGradient(colors: [color.withValues(alpha: 0.28), color.withValues(alpha: 0.12), color.withValues(alpha: 0)], stops: const [0, 0.45, 1]),
       ),
     );
   }
@@ -160,7 +157,10 @@ class Etiqueta extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(color: AppColors.suave, borderRadius: BorderRadius.circular(20)),
-      child: Text(texto, style: const TextStyle(color: AppColors.primario, fontSize: 10.5, fontWeight: FontWeight.w600)),
+      child: Text(
+        texto,
+        style: const TextStyle(color: AppColors.primario, fontSize: 10.5, fontWeight: FontWeight.w600),
+      ),
     );
   }
 }

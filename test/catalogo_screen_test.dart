@@ -33,8 +33,8 @@ class _ServicioFalso extends ProductoService {
   }
 }
 
-Producto _pieza(int id, {double precio = 890, double? promocion, int stock = 5, bool personalizable = false}) => Producto(
-    id: id, nombre: 'Anillo $id', precioVenta: precio, precioPromocion: promocion, stock: stock, personalizable: personalizable);
+Producto _pieza(int id, {double precio = 890, double? promocion, int stock = 5, bool personalizable = false}) =>
+    Producto(id: id, nombre: 'Anillo $id', precioVenta: precio, precioPromocion: promocion, stock: stock, personalizable: personalizable);
 
 Future<void> _abrir(WidgetTester tester, ProductoService servicio) async {
   await tester.pumpWidget(
@@ -55,9 +55,12 @@ void main() {
   });
 
   testWidgets('Muestra las piezas con su nombre y precio', (tester) async {
-    await _abrir(tester, _ServicioFalso([
-      [_pieza(1, precio: 890), _pieza(2, precio: 1100, personalizable: true)],
-    ]));
+    await _abrir(
+      tester,
+      _ServicioFalso([
+        [_pieza(1, precio: 890), _pieza(2, precio: 1100, personalizable: true)],
+      ]),
+    );
 
     expect(find.text('CATÁLOGO'), findsOneWidget);
     expect(find.text('Anillo 1'), findsOneWidget);
@@ -69,9 +72,12 @@ void main() {
 
   testWidgets('La barra inferior marca el catálogo como sección activa', (tester) async {
     final semantica = tester.ensureSemantics();
-    await _abrir(tester, _ServicioFalso([
-      [_pieza(1)],
-    ]));
+    await _abrir(
+      tester,
+      _ServicioFalso([
+        [_pieza(1)],
+      ]),
+    );
 
     expect(find.bySemanticsLabel('Catálogo'), findsOneWidget);
     expect(tester.getSemantics(find.bySemanticsLabel('Catálogo')), isSemantics(isSelected: true, isButton: true));
@@ -85,9 +91,12 @@ void main() {
   });
 
   testWidgets('Marca las piezas agotadas y tacha el precio con descuento', (tester) async {
-    await _abrir(tester, _ServicioFalso([
-      [_pieza(1, precio: 1000, promocion: 800), _pieza(2, stock: 0)],
-    ]));
+    await _abrir(
+      tester,
+      _ServicioFalso([
+        [_pieza(1, precio: 1000, promocion: 800), _pieza(2, stock: 0)],
+      ]),
+    );
 
     expect(find.text('\$800'), findsOneWidget);
     final tachado = tester.widget<Text>(find.text('\$1,000'));
@@ -134,7 +143,10 @@ void main() {
       [
         [_pieza(1)],
       ],
-      listaCategorias: const [Categoria(id: 1, nombre: 'Anillos'), Categoria(id: 14, nombre: 'esclavas')],
+      listaCategorias: const [
+        Categoria(id: 1, nombre: 'Anillos'),
+        Categoria(id: 14, nombre: 'esclavas'),
+      ],
     );
     await _abrir(tester, servicio);
 
@@ -210,33 +222,45 @@ void main() {
   });
 
   testWidgets('Si fallan las categorías el catálogo se sigue mostrando', (tester) async {
-    await _abrir(tester, _ServicioCategoriasFallan([
-      [_pieza(1)],
-    ]));
+    await _abrir(
+      tester,
+      _ServicioCategoriasFallan([
+        [_pieza(1)],
+      ]),
+    );
 
     expect(find.text('Anillo 1'), findsOneWidget);
     expect(find.text('Nuestras joyas'), findsOneWidget);
   });
 
   testWidgets('Cuando ya no hay más páginas muestra el total exacto', (tester) async {
-    await _abrir(tester, _ServicioFalso([
-      [_pieza(1), _pieza(2), _pieza(3)],
-    ]));
+    await _abrir(
+      tester,
+      _ServicioFalso([
+        [_pieza(1), _pieza(2), _pieza(3)],
+      ]),
+    );
     expect(find.text('3 piezas'), findsOneWidget);
   });
 
   testWidgets('Una pieza agotada no muestra la etiqueta Personalizable', (tester) async {
-    await _abrir(tester, _ServicioFalso([
-      [_pieza(1, stock: 0, personalizable: true)],
-    ]));
+    await _abrir(
+      tester,
+      _ServicioFalso([
+        [_pieza(1, stock: 0, personalizable: true)],
+      ]),
+    );
     expect(find.text('Agotado'), findsOneWidget);
     expect(find.text('Personalizable'), findsNothing);
   });
 
   testWidgets('Al tocar una pieza abre su detalle', (tester) async {
-    await _abrir(tester, _ServicioDetalle([
-      [_pieza(7)],
-    ]));
+    await _abrir(
+      tester,
+      _ServicioDetalle([
+        [_pieza(7)],
+      ]),
+    );
 
     await tester.tap(find.text('Anillo 7'));
     await tester.pumpAndSettle();
@@ -256,6 +280,7 @@ class _ServicioDetalle extends _ServicioFalso {
   _ServicioDetalle(super.paginas);
 
   @override
-  Future<DetalleProducto> detalle(int id) async =>
-      DetalleProducto(producto: Producto(id: id, nombre: 'Detalle $id', precioVenta: 890, stock: 5));
+  Future<DetalleProducto> detalle(int id) async => DetalleProducto(
+    producto: Producto(id: id, nombre: 'Detalle $id', precioVenta: 890, stock: 5),
+  );
 }

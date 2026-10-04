@@ -41,16 +41,8 @@ class _ServicioFalso extends CarritoService {
   }
 }
 
-ItemCarrito _pieza(int id, String nombre, double precio, {int cantidad = 1, int stock = 5, String? talla}) => ItemCarrito(
-      id: id,
-      productoId: id + 100,
-      nombre: nombre,
-      cantidad: cantidad,
-      precioVenta: precio,
-      stock: stock,
-      talla: talla,
-      categoriaNombre: 'Aretes',
-    );
+ItemCarrito _pieza(int id, String nombre, double precio, {int cantidad = 1, int stock = 5, String? talla}) =>
+    ItemCarrito(id: id, productoId: id + 100, nombre: nombre, cantidad: cantidad, precioVenta: precio, stock: stock, talla: talla, categoriaNombre: 'Aretes');
 
 final _anillo = _pieza(1, 'Anillo corazón', 1250, talla: 'Talla 7');
 final _aretes = _pieza(2, 'Aretes gota', 540);

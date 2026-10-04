@@ -18,9 +18,13 @@ class _AdaptadorFalso implements HttpClientAdapter {
   @override
   Future<ResponseBody> fetch(RequestOptions options, Stream<Uint8List>? requestStream, Future<void>? cancelFuture) async {
     peticiones.add(options);
-    return ResponseBody.fromString(jsonEncode(respuestas[options.path]), status, headers: {
-      Headers.contentTypeHeader: [Headers.jsonContentType],
-    });
+    return ResponseBody.fromString(
+      jsonEncode(respuestas[options.path]),
+      status,
+      headers: {
+        Headers.contentTypeHeader: [Headers.jsonContentType],
+      },
+    );
   }
 
   @override
@@ -69,7 +73,11 @@ void main() {
 
   test('Pide la primera página del catálogo', () async {
     final service = crear({
-      '/products/filter': {'success': true, 'data': [_anillo], 'total': 1},
+      '/products/filter': {
+        'success': true,
+        'data': [_anillo],
+        'total': 1,
+      },
     });
 
     final productos = await service.productos();
@@ -111,10 +119,7 @@ void main() {
       '/products/filter': {'success': false, 'message': 'error interno'},
     }, status: 500);
 
-    expect(
-      service.productos(),
-      throwsA(isA<ProductoException>().having((e) => e.mensaje, 'mensaje', contains('No se pudo cargar el catálogo'))),
-    );
+    expect(service.productos(), throwsA(isA<ProductoException>().having((e) => e.mensaje, 'mensaje', contains('No se pudo cargar el catálogo'))));
   });
 
   test('Pide el detalle de una pieza con la foto principal y su galería', () async {
@@ -153,7 +158,10 @@ void main() {
 
   test('Una pieza sin fotos ni galería queda con la lista de imágenes vacía', () async {
     final service = crear({
-      '/products/58': {'success': true, 'data': {..._anillo, 'galeria': null}},
+      '/products/58': {
+        'success': true,
+        'data': {..._anillo, 'galeria': null},
+      },
     });
 
     final detalle = await service.detalle(58);
@@ -167,9 +175,6 @@ void main() {
       '/products/999': {'success': false, 'message': 'Producto no encontrado'},
     }, status: 404);
 
-    expect(
-      service.detalle(999),
-      throwsA(isA<ProductoException>().having((e) => e.mensaje, 'mensaje', 'Esta pieza ya no está disponible.')),
-    );
+    expect(service.detalle(999), throwsA(isA<ProductoException>().having((e) => e.mensaje, 'mensaje', 'Esta pieza ya no está disponible.')));
   });
 }

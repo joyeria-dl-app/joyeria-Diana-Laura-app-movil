@@ -71,7 +71,10 @@ void main() {
     await tester.pump();
 
     final iconoMayuscula = tester.widget<Icon>(
-      find.descendant(of: find.ancestor(of: find.text('Mayúscula'), matching: find.byType(Row)).first, matching: find.byType(Icon)),
+      find.descendant(
+        of: find.ancestor(of: find.text('Mayúscula'), matching: find.byType(Row)).first,
+        matching: find.byType(Icon),
+      ),
     );
     expect(iconoMayuscula.icon, Icons.check_rounded);
   });

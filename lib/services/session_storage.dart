@@ -13,8 +13,7 @@ abstract class SessionStorage {
 }
 
 class SecureSessionStorage implements SessionStorage {
-  SecureSessionStorage([FlutterSecureStorage? storage])
-      : _storage = storage ?? const FlutterSecureStorage();
+  SecureSessionStorage([FlutterSecureStorage? storage]) : _storage = storage ?? const FlutterSecureStorage();
 
   final FlutterSecureStorage _storage;
 

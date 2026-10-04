@@ -14,23 +14,17 @@ Future<void> alternarFavorito(BuildContext context, Producto producto, {bool des
   final quedo = await favoritos.alternar(producto);
 
   final (String texto, String? accion, VoidCallback? alTocar) = switch (quedo) {
-    true => (
-        'Guardada en tus favoritos',
-        desdeFavoritos ? null : 'Ver favoritos',
-        () => navegador.pushNamed(AppRoutes.favoritos),
-      ),
+    true => ('Guardada en tus favoritos', desdeFavoritos ? null : 'Ver favoritos', () => navegador.pushNamed(AppRoutes.favoritos)),
     false => ('Quitada de tus favoritos', 'Deshacer', () => favoritos.alternar(producto)),
-    null when favoritos.sinSesion => (
-        'Inicia sesión para guardar tus favoritos',
-        'Iniciar sesión',
-        () => navegador.pushNamed(AppRoutes.login),
-      ),
+    null when favoritos.sinSesion => ('Inicia sesión para guardar tus favoritos', 'Iniciar sesión', () => navegador.pushNamed(AppRoutes.login)),
     null => ('No se pudieron actualizar tus favoritos.', null, null),
   };
   avisos
     ..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(
-      content: Text(texto),
-      action: accion == null ? null : SnackBarAction(label: accion, onPressed: alTocar!),
-    ));
+    ..showSnackBar(
+      SnackBar(
+        content: Text(texto),
+        action: accion == null ? null : SnackBarAction(label: accion, onPressed: alTocar!),
+      ),
+    );
 }

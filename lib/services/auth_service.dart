@@ -20,8 +20,8 @@ class AuthException implements Exception {
 
 class AuthService {
   AuthService({required this._api, required this._storage, Dio? firebaseDio, String? apiKey})
-      : _firebase = firebaseDio ?? Dio(BaseOptions(baseUrl: 'https://identitytoolkit.googleapis.com/v1')),
-        _apiKey = apiKey ?? firebaseApiKey;
+    : _firebase = firebaseDio ?? Dio(BaseOptions(baseUrl: 'https://identitytoolkit.googleapis.com/v1')),
+      _apiKey = apiKey ?? firebaseApiKey;
 
   final ApiClient _api;
   final SessionStorage _storage;
@@ -114,23 +114,18 @@ class AuthService {
     }
 
     try {
-      await _firebase.post('/accounts:update',
-          queryParameters: {'key': _apiKey}, data: {'idToken': idToken, 'displayName': nombre.trim()});
-      await _firebase.post('/accounts:sendOobCode',
-          queryParameters: {'key': _apiKey}, data: {'requestType': 'VERIFY_EMAIL', 'idToken': idToken});
+      await _firebase.post('/accounts:update', queryParameters: {'key': _apiKey}, data: {'idToken': idToken, 'displayName': nombre.trim()});
+      await _firebase.post('/accounts:sendOobCode', queryParameters: {'key': _apiKey}, data: {'requestType': 'VERIFY_EMAIL', 'idToken': idToken});
     } on DioException {
       throw const AuthException('Tu cuenta se creó, pero no pudimos enviar el correo de verificación. Intenta iniciar sesión más tarde.');
     }
 
     try {
       await _api.dio.post('/auth/sync-user/movil', data: {'idToken': idToken, 'nombre': nombre.trim()});
-      await _api.dio.post('/security/set-security-question', data: {
-        'email': correo,
-        'questionType': tipoPregunta,
-        'customQuestion': preguntaPersonalizada ?? '',
-        'answer': respuesta.trim(),
-        'idToken': idToken,
-      });
+      await _api.dio.post(
+        '/security/set-security-question',
+        data: {'email': correo, 'questionType': tipoPregunta, 'customQuestion': preguntaPersonalizada ?? '', 'answer': respuesta.trim(), 'idToken': idToken},
+      );
     } on DioException catch (e) {
       throw AuthException(_mensajeBackend(e));
     }

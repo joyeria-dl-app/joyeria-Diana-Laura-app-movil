@@ -30,7 +30,10 @@ class ResumenCarrito extends StatelessWidget {
           // El envío depende de la dirección y se calcula al pagar (HU-12).
           const _Renglon(
             izquierda: Text('Envío', style: suave),
-            derecha: Text('Se calcula al pagar', style: TextStyle(color: AppColors.textoSuave, fontSize: 13, fontWeight: FontWeight.w500)),
+            derecha: Text(
+              'Se calcula al pagar',
+              style: TextStyle(color: AppColors.textoSuave, fontSize: 13, fontWeight: FontWeight.w500),
+            ),
           ),
           const Padding(padding: EdgeInsets.symmetric(vertical: 12), child: _LineaPunteada()),
           _Renglon(
@@ -73,7 +76,10 @@ class BarraPagar extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('Total', style: TextStyle(color: AppColors.textoSuave, fontSize: 11, fontWeight: FontWeight.w500)),
+                  const Text(
+                    'Total',
+                    style: TextStyle(color: AppColors.textoSuave, fontSize: 11, fontWeight: FontWeight.w500),
+                  ),
                   Text(formatoPrecio(total), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, letterSpacing: -0.5)),
                 ],
               ),
@@ -94,7 +100,10 @@ class BarraPagar extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text('Ir a pagar', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
+                            Text(
+                              'Ir a pagar',
+                              style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
+                            ),
                             SizedBox(width: 6),
                             Icon(Icons.arrow_forward_rounded, size: 18, color: Colors.white),
                           ],

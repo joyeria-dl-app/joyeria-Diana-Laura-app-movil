@@ -17,9 +17,13 @@ class _AdaptadorFalso implements HttpClientAdapter {
   @override
   Future<ResponseBody> fetch(RequestOptions options, Stream<Uint8List>? requestStream, Future<void>? cancelFuture) async {
     peticiones.add(options);
-    return ResponseBody.fromString(jsonEncode(respuesta), status, headers: {
-      Headers.contentTypeHeader: [Headers.jsonContentType],
-    });
+    return ResponseBody.fromString(
+      jsonEncode(respuesta),
+      status,
+      headers: {
+        Headers.contentTypeHeader: [Headers.jsonContentType],
+      },
+    );
   }
 
   @override
@@ -76,7 +80,14 @@ void main() {
     final favorita = await crear({'success': true, 'favorito': true, 'message': 'Agregado a favoritos'}).alternar(58);
 
     final p = backend.peticiones.single;
-    expect([p.method, p.path, p.data], ['POST', '/favoritos/toggle', {'producto_id': 58}]);
+    expect(
+      [p.method, p.path, p.data],
+      [
+        'POST',
+        '/favoritos/toggle',
+        {'producto_id': 58},
+      ],
+    );
     expect(favorita, isTrue);
   });
 
@@ -102,9 +113,7 @@ void main() {
   test('Si el servidor falla muestra un mensaje entendible', () async {
     await expectLater(
       crear({'success': false, 'message': 'relation "favoritos" does not exist'}, status: 500).lista(),
-      throwsA(isA<FavoritoException>()
-          .having((e) => e.mensaje, 'mensaje', contains('Revisa tu conexión'))
-          .having((e) => e.sinSesion, 'sinSesion', isFalse)),
+      throwsA(isA<FavoritoException>().having((e) => e.mensaje, 'mensaje', contains('Revisa tu conexión')).having((e) => e.sinSesion, 'sinSesion', isFalse)),
     );
   });
 }

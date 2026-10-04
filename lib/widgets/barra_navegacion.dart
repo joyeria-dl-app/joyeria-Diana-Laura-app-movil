@@ -64,9 +64,7 @@ class BarraNavegacion extends StatelessWidget {
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                for (final seccion in Seccion.values) _Boton(seccion: seccion, activa: seccion == actual, onTap: () => _ir(context, seccion)),
-              ],
+              children: [for (final seccion in Seccion.values) _Boton(seccion: seccion, activa: seccion == actual, onTap: () => _ir(context, seccion))],
             ),
           ),
         ),
@@ -111,15 +109,14 @@ class _Boton extends StatelessWidget {
                   children: [
                     Icon(relleno, size: 19, color: Colors.white),
                     const SizedBox(width: 8),
-                    Text(nombre, style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w600)),
+                    Text(
+                      nombre,
+                      style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w600),
+                    ),
                   ],
                 ),
               )
-            : SizedBox(
-                width: 46,
-                height: 46,
-                child: Icon(vacio, size: 24, color: AppColors.textoSuave),
-              ),
+            : SizedBox(width: 46, height: 46, child: Icon(vacio, size: 24, color: AppColors.textoSuave)),
       ),
     );
   }

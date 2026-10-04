@@ -24,9 +24,13 @@ class _AdaptadorFalso implements HttpClientAdapter {
   Future<ResponseBody> fetch(RequestOptions options, Stream<Uint8List>? requestStream, Future<void>? cancelFuture) async {
     peticiones.add(options);
     final r = respuestas[options.path]!;
-    return ResponseBody.fromString(jsonEncode(r.body), r.status, headers: {
-      Headers.contentTypeHeader: [Headers.jsonContentType],
-    });
+    return ResponseBody.fromString(
+      jsonEncode(r.body),
+      r.status,
+      headers: {
+        Headers.contentTypeHeader: [Headers.jsonContentType],
+      },
+    );
   }
 
   @override
@@ -55,7 +59,9 @@ void main() {
 
   test('Con contraseña correcta guarda el token y el usuario', () async {
     final service = crear(
-      {'/accounts:signInWithPassword': const _Respuesta(200, {'idToken': 'id-token'})},
+      {
+        '/accounts:signInWithPassword': const _Respuesta(200, {'idToken': 'id-token'}),
+      },
       {
         '/auth/login/movil': const _Respuesta(200, {
           'success': true,
@@ -81,7 +87,9 @@ void main() {
           'error': {'message': 'INVALID_LOGIN_CREDENTIALS'},
         }),
       },
-      {'/auth/login': const _Respuesta(401, {'success': false, 'remainingAttempts': 2})},
+      {
+        '/auth/login': const _Respuesta(401, {'success': false, 'remainingAttempts': 2}),
+      },
     );
 
     await expectLater(
@@ -93,8 +101,12 @@ void main() {
 
   test('Con la cuenta bloqueada muestra el mensaje del backend', () async {
     final service = crear(
-      {'/accounts:signInWithPassword': const _Respuesta(200, {'idToken': 'id-token'})},
-      {'/auth/login/movil': const _Respuesta(423, {'success': false, 'message': 'Cuenta bloqueada. Intenta en 10 min.'})},
+      {
+        '/accounts:signInWithPassword': const _Respuesta(200, {'idToken': 'id-token'}),
+      },
+      {
+        '/auth/login/movil': const _Respuesta(423, {'success': false, 'message': 'Cuenta bloqueada. Intenta en 10 min.'}),
+      },
     );
 
     await expectLater(
@@ -105,11 +117,16 @@ void main() {
 
   test('Cerrar sesión borra el token guardado', () async {
     final service = crear(
-      {'/accounts:signInWithPassword': const _Respuesta(200, {'idToken': 'id-token'})},
+      {
+        '/accounts:signInWithPassword': const _Respuesta(200, {'idToken': 'id-token'}),
+      },
       {
         '/auth/login/movil': const _Respuesta(200, {
           'success': true,
-          'data': {'token': 'jwt-sesion', 'user': {'email': 'a@b.com', 'nombre': 'A', 'rol': 'cliente'}},
+          'data': {
+            'token': 'jwt-sesion',
+            'user': {'email': 'a@b.com', 'nombre': 'A', 'rol': 'cliente'},
+          },
         }),
       },
     );
@@ -122,11 +139,16 @@ void main() {
 
   test('Sin "Recordarme" la sesión no se conserva al volver a abrir la app', () async {
     final service = crear(
-      {'/accounts:signInWithPassword': const _Respuesta(200, {'idToken': 'id-token'})},
+      {
+        '/accounts:signInWithPassword': const _Respuesta(200, {'idToken': 'id-token'}),
+      },
       {
         '/auth/login/movil': const _Respuesta(200, {
           'success': true,
-          'data': {'token': 'jwt-sesion', 'user': {'email': 'a@b.com', 'nombre': 'A', 'rol': 'cliente'}},
+          'data': {
+            'token': 'jwt-sesion',
+            'user': {'email': 'a@b.com', 'nombre': 'A', 'rol': 'cliente'},
+          },
         }),
       },
     );
@@ -148,21 +170,15 @@ void main() {
       '/security/set-security-question': _Respuesta(200, {'success': true}),
     };
 
-    Future<void> registrar(AuthService s) => s.registrarse(
-          nombre: 'Ana Martínez',
-          email: ' ana@correo.com ',
-          password: 'Clave1234',
-          tipoPregunta: '2',
-          respuesta: 'Rosa',
-        );
+    Future<void> registrar(AuthService s) =>
+        s.registrarse(nombre: 'Ana Martínez', email: ' ana@correo.com ', password: 'Clave1234', tipoPregunta: '2', respuesta: 'Rosa');
 
     test('Crea la cuenta, envía la verificación y guarda la pregunta secreta con el token', () async {
       final service = crear(firebaseOk, backendOk);
 
       await registrar(service);
 
-      expect(firebaseFalso.peticiones.map((p) => p.path),
-          ['/accounts:signUp', '/accounts:update', '/accounts:sendOobCode']);
+      expect(firebaseFalso.peticiones.map((p) => p.path), ['/accounts:signUp', '/accounts:update', '/accounts:sendOobCode']);
       expect(firebaseFalso.peticiones[2].data, {'requestType': 'VERIFY_EMAIL', 'idToken': 'token-nuevo'});
       expect(backendFalso.peticiones.map((p) => p.path), ['/auth/sync-user/movil', '/security/set-security-question']);
       expect(backendFalso.peticiones[1].data, {
@@ -182,10 +198,7 @@ void main() {
         }),
       }, backendOk);
 
-      await expectLater(
-        registrar(service),
-        throwsA(isA<AuthException>().having((e) => e.mensaje, 'mensaje', contains('ya tiene una cuenta'))),
-      );
+      await expectLater(registrar(service), throwsA(isA<AuthException>().having((e) => e.mensaje, 'mensaje', contains('ya tiene una cuenta'))));
       expect(backendFalso.peticiones, isEmpty);
     });
   });

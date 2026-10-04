@@ -142,7 +142,12 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
               ),
             ),
           ),
-          const Positioned(left: 16, right: 16, bottom: 16, child: SafeArea(top: false, child: BarraNavegacion(actual: Seccion.catalogo))),
+          const Positioned(
+            left: 16,
+            right: 16,
+            bottom: 16,
+            child: SafeArea(top: false, child: BarraNavegacion(actual: Seccion.catalogo)),
+          ),
         ],
       ),
     );
@@ -158,12 +163,7 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
       return [
         SliverFillRemaining(
           hasScrollBody: false,
-          child: _Aviso(
-            icono: Icons.wifi_off_rounded,
-            titulo: 'Sin conexión',
-            texto: _error!,
-            onReintentar: _reintentar,
-          ),
+          child: _Aviso(icono: Icons.wifi_off_rounded, titulo: 'Sin conexión', texto: _error!, onReintentar: _reintentar),
         ),
       ];
     }
@@ -172,11 +172,7 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
       return const [
         SliverFillRemaining(
           hasScrollBody: false,
-          child: _Aviso(
-            icono: Icons.diamond_outlined,
-            titulo: 'Aún no hay piezas',
-            texto: 'Pronto agregaremos nuevas joyas. Vuelve más tarde.',
-          ),
+          child: _Aviso(icono: Icons.diamond_outlined, titulo: 'Aún no hay piezas', texto: 'Pronto agregaremos nuevas joyas. Vuelve más tarde.'),
         ),
       ];
     }
@@ -187,10 +183,7 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
           producto: _productos[i],
           favorita: context.watch<FavoritosProvider?>()?.esFavorita(_productos[i].id) ?? false,
           onFavorito: () => alternarFavorito(context, _productos[i]),
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute<void>(builder: (_) => DetalleScreen(productoId: _productos[i].id)),
-          ),
+          onTap: () => Navigator.push(context, MaterialPageRoute<void>(builder: (_) => DetalleScreen(productoId: _productos[i].id))),
         ),
       ),
       // Boceto 4d: aviso al pie mientras llega la siguiente página.
@@ -199,7 +192,9 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
           child: Padding(
             padding: const EdgeInsets.only(top: 18),
             child: _error != null
-                ? Center(child: TextButton(onPressed: _cargarMas, child: const Text('No se pudieron cargar más. Reintentar')))
+                ? Center(
+                    child: TextButton(onPressed: _cargarMas, child: const Text('No se pudieron cargar más. Reintentar')),
+                  )
                 : const Column(
                     children: [
                       SizedBox(
@@ -239,13 +234,13 @@ class _TarjetaCargando extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Widget barra(double ancho, double alto) => FractionallySizedBox(
-          widthFactor: ancho,
-          alignment: Alignment.centerLeft,
-          child: Container(
-            height: alto,
-            decoration: BoxDecoration(color: AppColors.superficie2, borderRadius: BorderRadius.circular(alto / 2)),
-          ),
-        );
+      widthFactor: ancho,
+      alignment: Alignment.centerLeft,
+      child: Container(
+        height: alto,
+        decoration: BoxDecoration(color: AppColors.superficie2, borderRadius: BorderRadius.circular(alto / 2)),
+      ),
+    );
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
@@ -294,11 +289,7 @@ class _Encabezado extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Antetitulo('Catálogo'),
-                const SizedBox(height: 2),
-                TituloDegradado(titulo, tamano: 28),
-              ],
+              children: [const Antetitulo('Catálogo'), const SizedBox(height: 2), TituloDegradado(titulo, tamano: 28)],
             ),
           ),
           if (categorias.isNotEmpty) ...[
@@ -310,11 +301,8 @@ class _Encabezado extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 itemCount: categorias.length,
                 separatorBuilder: (_, _) => const SizedBox(width: 10),
-                itemBuilder: (_, i) => _CirculoCategoria(
-                  categoria: categorias[i],
-                  activa: categorias[i].id == activa?.id,
-                  onTap: () => onElegir(categorias[i]),
-                ),
+                itemBuilder: (_, i) =>
+                    _CirculoCategoria(categoria: categorias[i], activa: categorias[i].id == activa?.id, onTap: () => onElegir(categorias[i])),
               ),
             ),
           ],
@@ -322,10 +310,7 @@ class _Encabezado extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
               // Mientras falten páginas por cargar no se conoce el total exacto.
-              child: Text(
-                completo ? '$total piezas' : '$total+ piezas',
-                style: const TextStyle(color: AppColors.textoSuave, fontSize: 12),
-              ),
+              child: Text(completo ? '$total piezas' : '$total+ piezas', style: const TextStyle(color: AppColors.textoSuave, fontSize: 12)),
             ),
         ],
       ),
@@ -369,9 +354,7 @@ class _CirculoCategoria extends StatelessWidget {
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(20),
-                  child: (url == null || url.isEmpty)
-                      ? sinFoto
-                      : Image.network(url, fit: BoxFit.cover, errorBuilder: (_, _, _) => sinFoto),
+                  child: (url == null || url.isEmpty) ? sinFoto : Image.network(url, fit: BoxFit.cover, errorBuilder: (_, _, _) => sinFoto),
                 ),
               ),
               const SizedBox(height: 6),
@@ -379,11 +362,7 @@ class _CirculoCategoria extends StatelessWidget {
                 categoria.nombreVisible,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: activa ? FontWeight.w600 : FontWeight.w400,
-                  color: activa ? AppColors.texto : AppColors.textoSuave,
-                ),
+                style: TextStyle(fontSize: 11, fontWeight: activa ? FontWeight.w600 : FontWeight.w400, color: activa ? AppColors.texto : AppColors.textoSuave),
               ),
             ],
           ),
@@ -415,11 +394,18 @@ class _Aviso extends StatelessWidget {
             child: Icon(icono, size: 40, color: AppColors.primario),
           ),
           const SizedBox(height: 18),
-          Text(titulo, style: const TextStyle(color: AppColors.texto, fontSize: 20, fontWeight: FontWeight.w700)),
+          Text(
+            titulo,
+            style: const TextStyle(color: AppColors.texto, fontSize: 20, fontWeight: FontWeight.w700),
+          ),
           const SizedBox(height: 6),
           ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 250),
-            child: Text(texto, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.textoSuave, fontSize: 13)),
+            child: Text(
+              texto,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: AppColors.textoSuave, fontSize: 13),
+            ),
           ),
           if (onReintentar != null) ...[
             const SizedBox(height: 22),
@@ -442,7 +428,10 @@ class _Aviso extends StatelessWidget {
                       children: [
                         Icon(Icons.refresh_rounded, size: 20, color: Colors.white),
                         SizedBox(width: 8),
-                        Text('Reintentar', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600)),
+                        Text(
+                          'Reintentar',
+                          style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
+                        ),
                       ],
                     ),
                   ),

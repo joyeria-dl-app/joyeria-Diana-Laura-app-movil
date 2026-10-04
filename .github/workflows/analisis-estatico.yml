@@ -30,9 +30,8 @@ jobs:
       - name: Analizar con flutter analyze
         run: flutter analyze --fatal-infos
 
-      # Solo informa: el proyecto usa líneas más largas que el formato por defecto.
+      # Falla si un PR trae código sin formato (líneas de hasta 160 caracteres).
       - name: Revisar formato con dart format
-        continue-on-error: true
         run: dart format --output=none --set-exit-if-changed --line-length 160 lib test integration_test
 
       - name: Revisar dependencias desactualizadas
@@ -43,6 +42,7 @@ jobs:
         run: |
           echo "## Análisis de código estático" >> $GITHUB_STEP_SUMMARY
           echo "- flutter analyze: sin problemas" >> $GITHUB_STEP_SUMMARY
+          echo "- dart format: código con formato" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
           cat dependencias.txt >> $GITHUB_STEP_SUMMARY || true
           echo '```' >> $GITHUB_STEP_SUMMARY
