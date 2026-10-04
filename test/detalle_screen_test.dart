@@ -23,7 +23,14 @@ class _ServicioFalso extends ProductoService {
   }
 }
 
-DetalleProducto _anillo({int stock = 3, bool personalizable = true, String? medidas = 'Talla 7', double? promocion}) => DetalleProducto(
+DetalleProducto _anillo({
+  int stock = 3,
+  bool personalizable = true,
+  String? medidas = 'Talla 7',
+  double? promocion,
+  List<String> imagenes = const [],
+}) =>
+    DetalleProducto(
       producto: Producto(
         id: 58,
         nombre: 'Anillo corazón',
@@ -37,7 +44,10 @@ DetalleProducto _anillo({int stock = 3, bool personalizable = true, String? medi
       descripcion: 'Plata .925 con circonia rosa en corte corazón.',
       pesoGramos: 4.673,
       medidas: medidas,
+      imagenes: imagenes,
     );
+
+const _fotos = ['https://img/1.jpg', 'https://img/2.jpg', 'https://img/3.jpg', 'https://img/4.jpg'];
 
 Future<void> _abrir(WidgetTester tester, ProductoService servicio) async {
   await tester.pumpWidget(
@@ -116,5 +126,50 @@ void main() {
 
     expect(servicio.pedidas, 2);
     expect(find.text('Anillo corazón'), findsOneWidget);
+  });
+
+  // Criterio de aceptación de la HU-08: se pueden deslizar todas las imágenes de la pieza.
+  testWidgets('Con varias fotos se deslizan todas hasta la última', (tester) async {
+    await _abrir(tester, _ServicioFalso(detalleFalso: _anillo(imagenes: _fotos)));
+
+    final galeria = find.byType(PageView);
+    expect(galeria, findsOneWidget);
+    for (var i = 1; i < _fotos.length; i++) {
+      await tester.drag(galeria, const Offset(-500, 0));
+      await tester.pumpAndSettle();
+    }
+    expect(tester.widget<PageView>(galeria).controller!.page, _fotos.length - 1);
+  });
+
+  testWidgets('Con una sola foto no muestra la galería deslizable', (tester) async {
+    await _abrir(tester, _ServicioFalso(detalleFalso: _anillo(imagenes: [_fotos.first])));
+
+    expect(find.byType(PageView), findsNothing);
+    expect(find.bySemanticsLabel(RegExp('Foto 1 de')), findsNothing);
+  });
+
+  testWidgets('El botón Regresar vuelve a la pantalla anterior', (tester) async {
+    await tester.pumpWidget(
+      Provider<ProductoService>.value(
+        value: _ServicioFalso(detalleFalso: _anillo()),
+        child: MaterialApp(
+          theme: AppTheme.oscuro(),
+          home: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => Navigator.push(context, MaterialPageRoute<void>(builder: (_) => const DetalleScreen(productoId: 58))),
+              child: const Text('Catálogo'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Catálogo'));
+    await tester.pumpAndSettle();
+    expect(find.text('Anillo corazón'), findsOneWidget);
+
+    await tester.tap(find.bySemanticsLabel('Regresar'));
+    await tester.pumpAndSettle();
+    expect(find.text('Anillo corazón'), findsNothing);
+    expect(find.text('Catálogo'), findsOneWidget);
   });
 }
