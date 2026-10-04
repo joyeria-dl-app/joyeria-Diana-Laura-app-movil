@@ -55,15 +55,15 @@ class _Backend extends CarritoService {
   Future<void> quitar(int itemId) async => guardado.removeWhere((p) => p.id == itemId);
 
   ItemCarrito _renglon(int id, int cantidad, String? talla) => ItemCarrito(
-        id: id,
-        productoId: _anillo.id,
-        nombre: _anillo.nombre,
-        cantidad: cantidad,
-        precioVenta: _anillo.precioVenta,
-        precioPromocion: _anillo.precioPromocion,
-        stock: _anillo.stock,
-        talla: talla,
-      );
+    id: id,
+    productoId: _anillo.id,
+    nombre: _anillo.nombre,
+    cantidad: cantidad,
+    precioVenta: _anillo.precioVenta,
+    precioPromocion: _anillo.precioPromocion,
+    stock: _anillo.stock,
+    talla: talla,
+  );
 
   // Lo que mostraría el sitio web con la misma cuenta: piezas y total.
   double get totalWeb => guardado.fold(0, (s, p) => s + p.precioFinal * p.cantidad);
@@ -76,11 +76,7 @@ Future<void> _abrir(WidgetTester tester, _Backend backend, Widget inicio) async 
         Provider<ProductoService>.value(value: _Catalogo()),
         ChangeNotifierProvider(create: (_) => CarritoProvider(backend)),
       ],
-      child: MaterialApp(
-        theme: AppTheme.oscuro(),
-        home: inicio,
-        routes: {AppRoutes.carrito: (_) => const CarritoScreen()},
-      ),
+      child: MaterialApp(theme: AppTheme.oscuro(), home: inicio, routes: {AppRoutes.carrito: (_) => const CarritoScreen()}),
     ),
   );
   await tester.pumpAndSettle();
@@ -153,7 +149,12 @@ void main() {
     await _abrir(
       tester,
       backend,
-      const Scaffold(body: Align(alignment: Alignment.bottomCenter, child: BarraNavegacion(actual: Seccion.catalogo))),
+      const Scaffold(
+        body: Align(
+          alignment: Alignment.bottomCenter,
+          child: BarraNavegacion(actual: Seccion.catalogo),
+        ),
+      ),
     );
 
     await tester.tap(find.bySemanticsLabel('Carrito'));

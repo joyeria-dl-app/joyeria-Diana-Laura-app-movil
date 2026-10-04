@@ -50,12 +50,7 @@ class _GaleriaFotosState extends State<GaleriaFotos> {
                 for (var i = 0; i < visibles; i++)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8),
-                    child: _Miniatura(
-                      url: widget.imagenes[i],
-                      activa: i == _actual,
-                      descripcion: 'Foto ${i + 1} de $total',
-                      onTap: () => _ir(i),
-                    ),
+                    child: _Miniatura(url: widget.imagenes[i], activa: i == _actual, descripcion: 'Foto ${i + 1} de $total', onTap: () => _ir(i)),
                   ),
                 if (total > visibles)
                   _Mas(
@@ -100,7 +95,11 @@ class _Miniatura extends StatelessWidget {
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: Image.network(url, fit: BoxFit.cover, errorBuilder: (_, _, _) => const ColoredBox(color: Color(0x73000000))),
+              child: Image.network(
+                url,
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => const ColoredBox(color: Color(0x73000000)),
+              ),
             ),
           ),
         ),
@@ -136,7 +135,10 @@ class _Mas extends StatelessWidget {
                 borderRadius: BorderRadius.circular(14),
                 border: activa ? Border.all(color: Colors.white, width: 2) : null,
               ),
-              child: Text('+$restantes', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
+              child: Text(
+                '+$restantes',
+                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+              ),
             ),
           ),
         ),

@@ -67,14 +67,16 @@ class _DetalleScreenState extends State<DetalleScreen> {
     final (texto, accion, ruta) = ok
         ? ('Agregada a tu carrito', 'Ver carrito', AppRoutes.carrito)
         : carrito.sinSesion
-            ? ('Inicia sesión para agregar piezas a tu carrito', 'Iniciar sesión', AppRoutes.login)
-            : (carrito.aviso ?? 'No se pudo agregar la pieza.', null, null);
+        ? ('Inicia sesión para agregar piezas a tu carrito', 'Iniciar sesión', AppRoutes.login)
+        : (carrito.aviso ?? 'No se pudo agregar la pieza.', null, null);
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(
-        content: Text(texto),
-        action: accion == null ? null : SnackBarAction(label: accion, onPressed: () => Navigator.pushNamed(context, ruta!)),
-      ));
+      ..showSnackBar(
+        SnackBar(
+          content: Text(texto),
+          action: accion == null ? null : SnackBarAction(label: accion, onPressed: () => Navigator.pushNamed(context, ruta!)),
+        ),
+      );
   }
 
   // Compartir y tallas se conectan en HU-13.
@@ -113,21 +115,21 @@ class _DetalleScreenState extends State<DetalleScreen> {
             child: _Hoja(
               child: switch ((detalle, _error)) {
                 (_, final ProductoException error) when error.noEncontrado => _Aviso(
-                    icono: Icons.search_off_rounded,
-                    titulo: 'Pieza no disponible',
-                    texto: 'Esta pieza ya no está disponible. Puede que se haya vendido o retirado del catálogo.',
-                    boton: 'Ver catálogo',
-                    iconoBoton: Icons.diamond_rounded,
-                    onPressed: () => Navigator.pop(context),
-                  ),
+                  icono: Icons.search_off_rounded,
+                  titulo: 'Pieza no disponible',
+                  texto: 'Esta pieza ya no está disponible. Puede que se haya vendido o retirado del catálogo.',
+                  boton: 'Ver catálogo',
+                  iconoBoton: Icons.diamond_rounded,
+                  onPressed: () => Navigator.pop(context),
+                ),
                 (_, ProductoException _) => _Aviso(
-                    icono: Icons.wifi_off_rounded,
-                    titulo: 'Sin conexión',
-                    texto: 'No se pudo cargar la pieza. Revisa tu conexión e intenta de nuevo.',
-                    boton: 'Reintentar',
-                    iconoBoton: Icons.refresh_rounded,
-                    onPressed: _cargar,
-                  ),
+                  icono: Icons.wifi_off_rounded,
+                  titulo: 'Sin conexión',
+                  texto: 'No se pudo cargar la pieza. Revisa tu conexión e intenta de nuevo.',
+                  boton: 'Reintentar',
+                  iconoBoton: Icons.refresh_rounded,
+                  onPressed: _cargar,
+                ),
                 (final DetalleProducto d, _) => _Contenido(detalle: d, resenas: _resenas, onPronto: _pronto, onAgregar: () => _agregar(d)),
                 _ => const _Cargando(),
               },
@@ -148,17 +150,19 @@ class _DetalleScreenState extends State<DetalleScreen> {
                     _BotonFoto(icono: Icons.ios_share_rounded, descripcion: 'Compartir', onTap: _pronto),
                     const SizedBox(width: 8),
                     // Bocetos 7f y 7g: vidrio con contorno, o blanco con corazón rosa si es favorita.
-                    Builder(builder: (context) {
-                      final favorita = context.watch<FavoritosProvider?>()?.esFavorita(widget.productoId) ?? false;
-                      return _BotonFoto(
-                        icono: favorita ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                        descripcion: favorita ? 'Quitar de favoritos' : 'Guardar en favoritos',
-                        blanco: favorita,
-                        onTap: () {
-                          if (detalle != null) alternarFavorito(context, detalle.producto);
-                        },
-                      );
-                    }),
+                    Builder(
+                      builder: (context) {
+                        final favorita = context.watch<FavoritosProvider?>()?.esFavorita(widget.productoId) ?? false;
+                        return _BotonFoto(
+                          icono: favorita ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                          descripcion: favorita ? 'Quitar de favoritos' : 'Guardar en favoritos',
+                          blanco: favorita,
+                          onTap: () {
+                            if (detalle != null) alternarFavorito(context, detalle.producto);
+                          },
+                        );
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -190,9 +194,7 @@ class _Foto extends StatelessWidget {
       color: AppColors.superficie2,
       child: cargando ? null : const Center(child: Icon(Icons.diamond_outlined, size: 64, color: AppColors.primario)),
     );
-    final Widget foto = (url == null)
-        ? sinFoto
-        : Image.network(url!, fit: BoxFit.cover, errorBuilder: (_, _, _) => sinFoto);
+    final Widget foto = (url == null) ? sinFoto : Image.network(url!, fit: BoxFit.cover, errorBuilder: (_, _, _) => sinFoto);
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -200,12 +202,7 @@ class _Foto extends StatelessWidget {
         // Sombra arriba para que se lean la hora y los botones.
         const DecoratedBox(
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Color(0x59000000), Color(0x00000000)],
-              stops: [0, 0.3],
-            ),
+            gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0x59000000), Color(0x00000000)], stops: [0, 0.3]),
           ),
         ),
       ],
@@ -308,12 +305,7 @@ class _Contenido extends StatelessWidget {
                   if (p.personalizable && !p.agotado)
                     const _Etiqueta(texto: 'Personalizable', icono: Icons.brush_rounded, fondo: AppColors.suave, color: AppColors.primario),
                   if (!p.agotado && p.stock <= 5)
-                    _Etiqueta(
-                      texto: 'Quedan ${p.stock}',
-                      icono: Icons.local_fire_department_rounded,
-                      fondo: const Color(0x26F6A723),
-                      color: _aviso,
-                    ),
+                    _Etiqueta(texto: 'Quedan ${p.stock}', icono: Icons.local_fire_department_rounded, fondo: const Color(0x26F6A723), color: _aviso),
                 ],
               ),
               const SizedBox(height: 10),
@@ -327,11 +319,11 @@ class _Contenido extends StatelessWidget {
                 children: [
                   const Icon(Icons.star_rounded, size: 14, color: _aviso),
                   const SizedBox(width: 4),
-                  Text(formatoCalificacion(resenas.promedio), style: const TextStyle(color: AppColors.texto, fontSize: 12, fontWeight: FontWeight.w700)),
                   Text(
-                    ' · ${resenas.total} ${resenas.total == 1 ? 'reseña' : 'reseñas'}',
-                    style: const TextStyle(color: AppColors.textoSuave, fontSize: 12),
+                    formatoCalificacion(resenas.promedio),
+                    style: const TextStyle(color: AppColors.texto, fontSize: 12, fontWeight: FontWeight.w700),
                   ),
+                  Text(' · ${resenas.total} ${resenas.total == 1 ? 'reseña' : 'reseñas'}', style: const TextStyle(color: AppColors.textoSuave, fontSize: 12)),
                 ],
               ),
               if (datos.isNotEmpty) ...[
@@ -351,8 +343,8 @@ class _Contenido extends StatelessWidget {
                 p.agotado
                     ? 'Por ahora no hay piezas disponibles. Vuelve pronto o mira otras joyas del catálogo.'
                     : (detalle.descripcion?.trim().isNotEmpty ?? false)
-                        ? detalle.descripcion!.trim()
-                        : 'Pieza de la colección Diana Laura.',
+                    ? detalle.descripcion!.trim()
+                    : 'Pieza de la colección Diana Laura.',
                 style: const TextStyle(color: AppColors.textoSuave, fontSize: 12.5, height: 1.55),
               ),
               // La talla solo aparece si la pieza la tiene registrada.
@@ -360,11 +352,17 @@ class _Contenido extends StatelessWidget {
                 const SizedBox(height: 14),
                 Row(
                   children: [
-                    const Text('Talla', style: TextStyle(color: AppColors.texto, fontSize: 12, fontWeight: FontWeight.w600)),
+                    const Text(
+                      'Talla',
+                      style: TextStyle(color: AppColors.texto, fontSize: 12, fontWeight: FontWeight.w600),
+                    ),
                     const Spacer(),
                     GestureDetector(
                       onTap: onPronto,
-                      child: const Text('Guía de tallas', style: TextStyle(color: AppColors.primario, fontSize: 11.5, fontWeight: FontWeight.w600)),
+                      child: const Text(
+                        'Guía de tallas',
+                        style: TextStyle(color: AppColors.primario, fontSize: 11.5, fontWeight: FontWeight.w600),
+                      ),
                     ),
                   ],
                 ),
@@ -378,7 +376,10 @@ class _Contenido extends StatelessWidget {
                       borderRadius: BorderRadius.circular(30),
                       boxShadow: const [BoxShadow(color: Color(0x80CF819F), blurRadius: 18, offset: Offset(0, 8), spreadRadius: -8)],
                     ),
-                    child: Text(medida, style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w600)),
+                    child: Text(
+                      medida,
+                      style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w600),
+                    ),
                   ),
                 ),
               ],
@@ -407,7 +408,10 @@ class _Etiqueta extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icono != null) ...[Icon(icono, size: 13, color: color), const SizedBox(width: 4)],
-          Text(texto, style: TextStyle(color: color, fontSize: 10.5, fontWeight: FontWeight.w600)),
+          Text(
+            texto,
+            style: TextStyle(color: color, fontSize: 10.5, fontWeight: FontWeight.w600),
+          ),
         ],
       ),
     );
@@ -448,7 +452,10 @@ class _BarraPrecio extends StatelessWidget {
                           text: formatoPrecio(producto.precioFinal),
                           style: const TextStyle(color: AppColors.texto, fontSize: 22, fontWeight: FontWeight.w700, letterSpacing: -0.5),
                         ),
-                        const TextSpan(text: ' MXN', style: TextStyle(color: AppColors.textoSuave, fontSize: 11, fontWeight: FontWeight.w500)),
+                        const TextSpan(
+                          text: ' MXN',
+                          style: TextStyle(color: AppColors.textoSuave, fontSize: 11, fontWeight: FontWeight.w500),
+                        ),
                       ],
                     ),
                   ),
@@ -469,7 +476,10 @@ class _BarraPrecio extends StatelessWidget {
                       children: [
                         Icon(Icons.block_rounded, size: 18, color: AppColors.textoSuave),
                         SizedBox(width: 8),
-                        Text('Agotado', style: TextStyle(color: AppColors.textoSuave, fontSize: 14, fontWeight: FontWeight.w600)),
+                        Text(
+                          'Agotado',
+                          style: TextStyle(color: AppColors.textoSuave, fontSize: 14, fontWeight: FontWeight.w600),
+                        ),
                       ],
                     ),
                   )
@@ -538,14 +548,14 @@ class _Cargando extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Widget barra(double ancho, double alto) => FractionallySizedBox(
-          widthFactor: ancho,
-          alignment: Alignment.centerLeft,
-          child: Container(
-            height: alto,
-            margin: const EdgeInsets.only(bottom: 10),
-            decoration: BoxDecoration(color: AppColors.superficie2, borderRadius: BorderRadius.circular(alto / 2)),
-          ),
-        );
+      widthFactor: ancho,
+      alignment: Alignment.centerLeft,
+      child: Container(
+        height: alto,
+        margin: const EdgeInsets.only(bottom: 10),
+        decoration: BoxDecoration(color: AppColors.superficie2, borderRadius: BorderRadius.circular(alto / 2)),
+      ),
+    );
     return Semantics(
       label: 'Cargando la pieza',
       child: Padding(
@@ -561,14 +571,7 @@ class _Cargando extends StatelessWidget {
 
 // Bocetos 5d y 5e: el aviso va dentro de la hoja.
 class _Aviso extends StatelessWidget {
-  const _Aviso({
-    required this.icono,
-    required this.titulo,
-    required this.texto,
-    required this.boton,
-    required this.iconoBoton,
-    required this.onPressed,
-  });
+  const _Aviso({required this.icono, required this.titulo, required this.texto, required this.boton, required this.iconoBoton, required this.onPressed});
   final IconData icono;
   final String titulo;
   final String texto;
@@ -589,11 +592,18 @@ class _Aviso extends StatelessWidget {
             child: Icon(icono, size: 40, color: AppColors.primario),
           ),
           const SizedBox(height: 18),
-          Text(titulo, style: const TextStyle(color: AppColors.texto, fontSize: 20, fontWeight: FontWeight.w700)),
+          Text(
+            titulo,
+            style: const TextStyle(color: AppColors.texto, fontSize: 20, fontWeight: FontWeight.w700),
+          ),
           const SizedBox(height: 6),
           ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 250),
-            child: Text(texto, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.textoSuave, fontSize: 13)),
+            child: Text(
+              texto,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: AppColors.textoSuave, fontSize: 13),
+            ),
           ),
           const SizedBox(height: 22),
           _BotonDegradado(texto: boton, icono: iconoBoton, onPressed: onPressed, ancho: 210),

@@ -81,8 +81,8 @@ class _CarritoScreenState extends State<CarritoScreen> {
                   antetitulo: (!_listo || carrito.cargando) && !conPiezas
                       ? null
                       : carrito.sinSesion || (carrito.error != null && !conPiezas)
-                          ? 'Carrito'
-                          : '$piezas ${piezas == 1 ? 'pieza' : 'piezas'}',
+                      ? 'Carrito'
+                      : '$piezas ${piezas == 1 ? 'pieza' : 'piezas'}',
                   onVaciar: conPiezas ? () => _confirmarVaciar(piezas) : null,
                 ),
                 Expanded(child: _contenido(carrito)),
@@ -248,9 +248,7 @@ class _Pieza extends StatelessWidget {
             child: SizedBox(
               width: 90,
               height: 90,
-              child: item.imagen == null
-                  ? const _SinFoto()
-                  : Image.network(item.imagen!, fit: BoxFit.cover, errorBuilder: (_, _, _) => const _SinFoto()),
+              child: item.imagen == null ? const _SinFoto() : Image.network(item.imagen!, fit: BoxFit.cover, errorBuilder: (_, _, _) => const _SinFoto()),
             ),
           ),
           const SizedBox(width: 14),
@@ -258,7 +256,12 @@ class _Pieza extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(item.nombre, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                Text(
+                  item.nombre,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                ),
                 if (etiqueta != null && etiqueta.isNotEmpty) ...[
                   const SizedBox(height: 4),
                   // En el panel algunas categorías se capturaron en minúsculas ("esclavas").
@@ -268,10 +271,7 @@ class _Pieza extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(
-                      child: Text(
-                        formatoPrecio(item.precioFinal),
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, letterSpacing: -0.3),
-                      ),
+                      child: Text(formatoPrecio(item.precioFinal), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, letterSpacing: -0.3)),
                     ),
                     _Cantidad(cantidad: item.cantidad, onMenos: onMenos, onMas: item.puedeAumentar ? onMas : null),
                   ],
@@ -369,8 +369,10 @@ class _SinFoto extends StatelessWidget {
   const _SinFoto();
 
   @override
-  Widget build(BuildContext context) =>
-      const ColoredBox(color: AppColors.superficie2, child: Center(child: Icon(Icons.diamond_outlined, color: AppColors.textoSuave)));
+  Widget build(BuildContext context) => const ColoredBox(
+    color: AppColors.superficie2,
+    child: Center(child: Icon(Icons.diamond_outlined, color: AppColors.textoSuave)),
+  );
 }
 
 class _Barra extends StatelessWidget {
@@ -380,10 +382,10 @@ class _Barra extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        width: ancho,
-        height: alto,
-        decoration: BoxDecoration(color: AppColors.superficie2, borderRadius: BorderRadius.circular(alto / 2)),
-      );
+    width: ancho,
+    height: alto,
+    decoration: BoxDecoration(color: AppColors.superficie2, borderRadius: BorderRadius.circular(alto / 2)),
+  );
 }
 
 // Boceto 6b: tarjetas vacías mientras llega el carrito.
@@ -393,46 +395,35 @@ class _Cargando extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Widget tarjeta() => Container(
-          margin: const EdgeInsets.only(bottom: 14),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: AppColors.superficie,
-            borderRadius: BorderRadius.circular(28),
-            border: Border.all(color: AppColors.borde),
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.superficie,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: AppColors.borde),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 90,
+            height: 90,
+            decoration: BoxDecoration(color: AppColors.superficie2, borderRadius: BorderRadius.circular(20)),
           ),
-          child: Row(
-            children: [
-              Container(
-                width: 90,
-                height: 90,
-                decoration: BoxDecoration(color: AppColors.superficie2, borderRadius: BorderRadius.circular(20)),
-              ),
-              const SizedBox(width: 14),
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [_Barra(ancho: 120, alto: 14), SizedBox(height: 8), _Barra(ancho: 70, alto: 12), SizedBox(height: 14), _Barra(ancho: 90, alto: 16)],
-              ),
-            ],
+          const SizedBox(width: 14),
+          const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [_Barra(ancho: 120, alto: 14), SizedBox(height: 8), _Barra(ancho: 70, alto: 12), SizedBox(height: 14), _Barra(ancho: 90, alto: 16)],
           ),
-        );
-    return ListView(
-      physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
-      children: [tarjeta(), tarjeta()],
+        ],
+      ),
     );
+    return ListView(physics: const NeverScrollableScrollPhysics(), padding: const EdgeInsets.fromLTRB(20, 14, 20, 0), children: [tarjeta(), tarjeta()]);
   }
 }
 
 // Estados 6c, 6d y 6e: cuadro rosa suave con ícono, título y botón.
 class _Aviso extends StatelessWidget {
-  const _Aviso({
-    required this.icono,
-    required this.titulo,
-    required this.texto,
-    required this.boton,
-    required this.iconoBoton,
-    required this.onPressed,
-  });
+  const _Aviso({required this.icono, required this.titulo, required this.texto, required this.boton, required this.iconoBoton, required this.onPressed});
   final IconData icono;
   final String titulo;
   final String texto;
@@ -454,11 +445,19 @@ class _Aviso extends StatelessWidget {
             child: Icon(icono, size: 40, color: AppColors.primario),
           ),
           const SizedBox(height: 18),
-          Text(titulo, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.texto, fontSize: 20, fontWeight: FontWeight.w700)),
+          Text(
+            titulo,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: AppColors.texto, fontSize: 20, fontWeight: FontWeight.w700),
+          ),
           const SizedBox(height: 6),
           ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 250),
-            child: Text(texto, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.textoSuave, fontSize: 13)),
+            child: Text(
+              texto,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: AppColors.textoSuave, fontSize: 13),
+            ),
           ),
           const SizedBox(height: 22),
           DecoratedBox(
@@ -482,7 +481,10 @@ class _Aviso extends StatelessWidget {
                     children: [
                       Icon(iconoBoton, size: 20, color: Colors.white),
                       const SizedBox(width: 8),
-                      Text(boton, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600)),
+                      Text(
+                        boton,
+                        style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
+                      ),
                     ],
                   ),
                 ),
@@ -526,7 +528,11 @@ class _ConfirmarVaciar extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 14),
-            const Text('¿Vaciar el carrito?', textAlign: TextAlign.center, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+            const Text(
+              '¿Vaciar el carrito?',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+            ),
             const SizedBox(height: 6),
             Text(
               'Se quitarán ${piezas == 1 ? 'la pieza' : 'las $piezas piezas'}. También se vacía en el sitio web.',

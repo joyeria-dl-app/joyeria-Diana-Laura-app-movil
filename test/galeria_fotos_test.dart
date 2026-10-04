@@ -10,7 +10,10 @@ Future<void> _abrir(WidgetTester tester, List<String> imagenes) async {
       home: Scaffold(
         body: SizedBox(
           height: 420,
-          child: GaleriaFotos(imagenes: imagenes, foto: (url) => Center(child: Text('Foto $url'))),
+          child: GaleriaFotos(
+            imagenes: imagenes,
+            foto: (url) => Center(child: Text('Foto $url')),
+          ),
         ),
       ),
     ),

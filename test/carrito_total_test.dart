@@ -44,15 +44,8 @@ class _ServicioFalso extends CarritoService {
   }
 }
 
-ItemCarrito _pieza(int id, double precio, {int cantidad = 1, double? promocion, int stock = 5}) => ItemCarrito(
-      id: id,
-      productoId: id + 100,
-      nombre: 'Pieza $id',
-      cantidad: cantidad,
-      precioVenta: precio,
-      precioPromocion: promocion,
-      stock: stock,
-    );
+ItemCarrito _pieza(int id, double precio, {int cantidad = 1, double? promocion, int stock = 5}) =>
+    ItemCarrito(id: id, productoId: id + 100, nombre: 'Pieza $id', cantidad: cantidad, precioVenta: precio, precioPromocion: promocion, stock: stock);
 
 void main() {
   group('Total del carrito', () {
@@ -118,9 +111,7 @@ void main() {
     });
 
     test('Sin sesión no muestra error, pide iniciar sesión', () async {
-      final carrito = CarritoProvider(
-        _ServicioFalso([], error: const CarritoException('Inicia sesión para usar tu carrito.', sinSesion: true)),
-      );
+      final carrito = CarritoProvider(_ServicioFalso([], error: const CarritoException('Inicia sesión para usar tu carrito.', sinSesion: true)));
       await carrito.cargar();
 
       expect(carrito.sinSesion, isTrue);
@@ -143,13 +134,15 @@ void main() {
 
   testWidgets('El resumen muestra subtotal, envío y total como en el boceto 6a', (tester) async {
     var pagos = 0;
-    await tester.pumpWidget(MaterialApp(
-      theme: AppTheme.oscuro(),
-      home: Scaffold(
-        body: const Padding(padding: EdgeInsets.all(20), child: ResumenCarrito(subtotal: 1790, total: 1790)),
-        bottomNavigationBar: BarraPagar(total: 1790, onPagar: () => pagos++),
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.oscuro(),
+        home: Scaffold(
+          body: const Padding(padding: EdgeInsets.all(20), child: ResumenCarrito(subtotal: 1790, total: 1790)),
+          bottomNavigationBar: BarraPagar(total: 1790, onPagar: () => pagos++),
+        ),
       ),
-    ));
+    );
 
     expect(find.text('Subtotal'), findsOneWidget);
     expect(find.text('Se calcula al pagar'), findsOneWidget);

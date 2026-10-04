@@ -126,7 +126,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         children: [
                           const Icon(Icons.error_rounded, size: 16, color: AppColors.error),
                           const SizedBox(width: 6),
-                          Expanded(child: Text(auth.error!, style: const TextStyle(color: AppColors.error, fontSize: 12.5))),
+                          Expanded(
+                            child: Text(auth.error!, style: const TextStyle(color: AppColors.error, fontSize: 12.5)),
+                          ),
                         ],
                       ),
                     ],
@@ -142,8 +144,11 @@ class _LoginScreenState extends State<LoginScreen> {
                               padding: const EdgeInsets.symmetric(vertical: 6),
                               child: Row(
                                 children: [
-                                  Icon(_recordar ? Icons.toggle_on_rounded : Icons.toggle_off_rounded,
-                                      size: 26, color: _recordar ? AppColors.primario : AppColors.textoSuave),
+                                  Icon(
+                                    _recordar ? Icons.toggle_on_rounded : Icons.toggle_off_rounded,
+                                    size: 26,
+                                    color: _recordar ? AppColors.primario : AppColors.textoSuave,
+                                  ),
                                   const SizedBox(width: 6),
                                   const Text('Recordarme', style: TextStyle(color: AppColors.textoSuave, fontSize: 12.5)),
                                 ],
@@ -175,8 +180,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: TextButton(
                         onPressed: () => Navigator.pushNamedAndRemoveUntil(context, AppRoutes.home, (_) => false),
                         style: TextButton.styleFrom(foregroundColor: AppColors.textoSuave),
-                        child: const Text('o explora sin cuenta',
-                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, decoration: TextDecoration.underline)),
+                        child: const Text(
+                          'o explora sin cuenta',
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, decoration: TextDecoration.underline),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -190,7 +197,6 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
-
 
 class _FotoSuperior extends StatelessWidget {
   const _FotoSuperior();

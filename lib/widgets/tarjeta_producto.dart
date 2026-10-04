@@ -43,11 +43,14 @@ class TarjetaProducto extends StatelessWidget {
                   fit: StackFit.expand,
                   children: [
                     _Foto(url: producto.imagen, apagada: producto.agotado),
-                    if (producto.personalizable && !producto.agotado)
-                      const Positioned(top: 10, left: 10, child: _EtiquetaPersonalizable()),
+                    if (producto.personalizable && !producto.agotado) const Positioned(top: 10, left: 10, child: _EtiquetaPersonalizable()),
                     if (producto.agotado) const Center(child: _Agotado()),
                     if (onFavorito != null)
-                      Positioned(top: 10, right: 10, child: _Corazon(favorita: favorita, onTap: onFavorito!)),
+                      Positioned(
+                        top: 10,
+                        right: 10,
+                        child: _Corazon(favorita: favorita, onTap: onFavorito!),
+                      ),
                   ],
                 ),
               ),
@@ -172,11 +175,7 @@ class _Corazon extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: const Color(0x2EFFAAD7)),
           ),
-          child: Icon(
-            favorita ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-            size: 17,
-            color: favorita ? const Color(0xFFF4A6C6) : Colors.white,
-          ),
+          child: Icon(favorita ? Icons.favorite_rounded : Icons.favorite_border_rounded, size: 17, color: favorita ? const Color(0xFFF4A6C6) : Colors.white),
         ),
       ),
     );
@@ -196,7 +195,10 @@ class _EtiquetaPersonalizable extends StatelessWidget {
         children: [
           Icon(Icons.brush_rounded, size: 13, color: Color(0xFF9E2F63)),
           SizedBox(width: 4),
-          Text('Personalizable', style: TextStyle(color: Color(0xFF9E2F63), fontSize: 10.5, fontWeight: FontWeight.w600)),
+          Text(
+            'Personalizable',
+            style: TextStyle(color: Color(0xFF9E2F63), fontSize: 10.5, fontWeight: FontWeight.w600),
+          ),
         ],
       ),
     );
@@ -211,7 +213,10 @@ class _Agotado extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(color: const Color(0x99000000), borderRadius: BorderRadius.circular(20)),
-      child: const Text('Agotado', style: TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.w600)),
+      child: const Text(
+        'Agotado',
+        style: TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.w600),
+      ),
     );
   }
 }

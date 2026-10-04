@@ -1,9 +1,9 @@
 // PostgreSQL envía los precios (numeric) como texto, por ejemplo "565.47".
 double? _aNumero(Object? valor) => switch (valor) {
-      num n => n.toDouble(),
-      String s => double.tryParse(s),
-      _ => null,
-    };
+  num n => n.toDouble(),
+  String s => double.tryParse(s),
+  _ => null,
+};
 
 // Una pieza dentro del carrito (GET /carrito).
 class ItemCarrito {
@@ -22,18 +22,18 @@ class ItemCarrito {
   });
 
   factory ItemCarrito.fromJson(Map<String, dynamic> json) => ItemCarrito(
-        id: json['id'] as int,
-        productoId: json['producto_id'] as int,
-        nombre: json['producto_nombre'] as String? ?? '',
-        cantidad: json['cantidad'] as int? ?? 1,
-        precioVenta: _aNumero(json['precio_venta']) ?? 0,
-        precioOferta: _aNumero(json['precio_oferta']),
-        precioPromocion: _aNumero(json['precio_promocion']),
-        imagen: json['producto_imagen'] as String?,
-        talla: json['talla_medida'] as String?,
-        categoriaNombre: json['categoria_nombre'] as String?,
-        stock: json['stock_actual'] as int? ?? 0,
-      );
+    id: json['id'] as int,
+    productoId: json['producto_id'] as int,
+    nombre: json['producto_nombre'] as String? ?? '',
+    cantidad: json['cantidad'] as int? ?? 1,
+    precioVenta: _aNumero(json['precio_venta']) ?? 0,
+    precioOferta: _aNumero(json['precio_oferta']),
+    precioPromocion: _aNumero(json['precio_promocion']),
+    imagen: json['producto_imagen'] as String?,
+    talla: json['talla_medida'] as String?,
+    categoriaNombre: json['categoria_nombre'] as String?,
+    stock: json['stock_actual'] as int? ?? 0,
+  );
 
   // Id del renglón en el carrito; es el que piden cambiar cantidad y quitar.
   final int id;
@@ -57,11 +57,9 @@ class Carrito {
   const Carrito({this.items = const [], this.total = 0});
 
   factory Carrito.fromJson(Map<String, dynamic> json) => Carrito(
-        items: (json['items'] as List<dynamic>? ?? const [])
-            .map((i) => ItemCarrito.fromJson(i as Map<String, dynamic>))
-            .toList(),
-        total: _aNumero(json['total']) ?? 0,
-      );
+    items: (json['items'] as List<dynamic>? ?? const []).map((i) => ItemCarrito.fromJson(i as Map<String, dynamic>)).toList(),
+    total: _aNumero(json['total']) ?? 0,
+  );
 
   final List<ItemCarrito> items;
   // Total calculado por el backend, el mismo que muestra el sitio web.

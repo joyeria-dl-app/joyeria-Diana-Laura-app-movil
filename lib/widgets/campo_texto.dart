@@ -72,7 +72,9 @@ class _CampoTextoState extends State<CampoTexto> {
                 children: [
                   const Icon(Icons.error_rounded, size: 15, color: AppColors.error),
                   const SizedBox(width: 5),
-                  Expanded(child: Text(mensaje, style: const TextStyle(color: AppColors.error, fontSize: 11.5))),
+                  Expanded(
+                    child: Text(mensaje, style: const TextStyle(color: AppColors.error, fontSize: 11.5)),
+                  ),
                 ],
               ),
             ),

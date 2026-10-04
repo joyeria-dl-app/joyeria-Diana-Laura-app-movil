@@ -81,11 +81,7 @@ Future<void> _abrir(WidgetTester tester, _Backend backend, Widget inicio) async 
         ChangeNotifierProvider(create: (_) => FavoritosProvider(backend)),
         ChangeNotifierProvider(create: (_) => CarritoProvider(_SinCarrito())),
       ],
-      child: MaterialApp(
-        theme: AppTheme.oscuro(),
-        home: inicio,
-        routes: {AppRoutes.favoritos: (_) => const FavoritosScreen()},
-      ),
+      child: MaterialApp(theme: AppTheme.oscuro(), home: inicio, routes: {AppRoutes.favoritos: (_) => const FavoritosScreen()}),
     ),
   );
   await tester.pumpAndSettle();
@@ -95,9 +91,9 @@ Finder _tarjeta(String nombre) => find.ancestor(of: find.text(nombre), matching:
 
 // Corazón de la tarjeta: relleno si es favorita, con contorno si no.
 Finder _corazonDe(String nombre) => find.descendant(
-      of: _tarjeta(nombre),
-      matching: find.byWidgetPredicate((w) => w is Icon && (w.icon == Icons.favorite_rounded || w.icon == Icons.favorite_border_rounded)),
-    );
+  of: _tarjeta(nombre),
+  matching: find.byWidgetPredicate((w) => w is Icon && (w.icon == Icons.favorite_rounded || w.icon == Icons.favorite_border_rounded)),
+);
 
 bool _marcada(WidgetTester tester, String nombre) => tester.widget<Icon>(_corazonDe(nombre)).icon == Icons.favorite_rounded;
 
@@ -166,7 +162,12 @@ void main() {
     await _abrir(
       tester,
       _Backend(),
-      const Scaffold(body: Align(alignment: Alignment.bottomCenter, child: BarraNavegacion(actual: Seccion.catalogo))),
+      const Scaffold(
+        body: Align(
+          alignment: Alignment.bottomCenter,
+          child: BarraNavegacion(actual: Seccion.catalogo),
+        ),
+      ),
     );
 
     await tester.tap(find.bySemanticsLabel('Favoritos'));

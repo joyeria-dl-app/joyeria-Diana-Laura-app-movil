@@ -32,14 +32,9 @@ class CarritoService {
 
   // Si la pieza ya estaba, el backend suma la cantidad al mismo renglón.
   Future<void> agregar(int productoId, {int cantidad = 1, String? talla}) =>
-      _pedir(() => _api.dio.post('/carrito', data: {
-            'producto_id': productoId,
-            'cantidad': cantidad,
-            'talla_medida': ?talla,
-          }));
+      _pedir(() => _api.dio.post('/carrito', data: {'producto_id': productoId, 'cantidad': cantidad, 'talla_medida': ?talla}));
 
-  Future<void> cambiarCantidad(int itemId, int cantidad) =>
-      _pedir(() => _api.dio.put('/carrito/$itemId', data: {'cantidad': cantidad}));
+  Future<void> cambiarCantidad(int itemId, int cantidad) => _pedir(() => _api.dio.put('/carrito/$itemId', data: {'cantidad': cantidad}));
 
   Future<void> quitar(int itemId) => _pedir(() => _api.dio.delete('/carrito/$itemId'));
 

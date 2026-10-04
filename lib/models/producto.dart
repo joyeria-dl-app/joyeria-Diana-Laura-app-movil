@@ -1,9 +1,9 @@
 // PostgreSQL envía los precios (numeric) como texto, por ejemplo "565.47".
 double? _aNumero(Object? valor) => switch (valor) {
-      num n => n.toDouble(),
-      String s => double.tryParse(s),
-      _ => null,
-    };
+  num n => n.toDouble(),
+  String s => double.tryParse(s),
+  _ => null,
+};
 
 class Producto {
   const Producto({
@@ -24,21 +24,21 @@ class Producto {
   });
 
   factory Producto.fromJson(Map<String, dynamic> json) => Producto(
-        id: json['id'] as int,
-        nombre: json['nombre'] as String? ?? '',
-        precioVenta: _aNumero(json['precio_venta']) ?? 0,
-        precioOferta: _aNumero(json['precio_oferta']),
-        precioPromocion: _aNumero(json['precio_promocion']),
-        imagen: json['imagen_principal'] as String?,
-        categoriaId: json['categoria_id'] as int?,
-        categoriaNombre: json['categoria_nombre'] as String?,
-        material: json['material_principal'] as String?,
-        stock: json['stock_actual'] as int? ?? 0,
-        esNuevo: json['es_nuevo'] as bool? ?? false,
-        personalizable: json['permite_personalizacion'] as bool? ?? false,
-        promedioResenas: _aNumero(json['promedio_resenas']) ?? 0,
-        totalResenas: json['total_resenas'] as int? ?? 0,
-      );
+    id: json['id'] as int,
+    nombre: json['nombre'] as String? ?? '',
+    precioVenta: _aNumero(json['precio_venta']) ?? 0,
+    precioOferta: _aNumero(json['precio_oferta']),
+    precioPromocion: _aNumero(json['precio_promocion']),
+    imagen: json['imagen_principal'] as String?,
+    categoriaId: json['categoria_id'] as int?,
+    categoriaNombre: json['categoria_nombre'] as String?,
+    material: json['material_principal'] as String?,
+    stock: json['stock_actual'] as int? ?? 0,
+    esNuevo: json['es_nuevo'] as bool? ?? false,
+    personalizable: json['permite_personalizacion'] as bool? ?? false,
+    promedioResenas: _aNumero(json['promedio_resenas']) ?? 0,
+    totalResenas: json['total_resenas'] as int? ?? 0,
+  );
 
   final int id;
   final String nombre;
@@ -65,11 +65,8 @@ class Producto {
 class Categoria {
   const Categoria({required this.id, required this.nombre, this.imagen});
 
-  factory Categoria.fromJson(Map<String, dynamic> json) => Categoria(
-        id: json['id'] as int,
-        nombre: json['nombre'] as String? ?? '',
-        imagen: json['imagen_url'] as String?,
-      );
+  factory Categoria.fromJson(Map<String, dynamic> json) =>
+      Categoria(id: json['id'] as int, nombre: json['nombre'] as String? ?? '', imagen: json['imagen_url'] as String?);
 
   final int id;
   final String nombre;
@@ -94,9 +91,7 @@ class DetalleProducto {
 
   factory DetalleProducto.fromJson(Map<String, dynamic> json) {
     // La foto principal va primero y luego la galería, sin repetir.
-    final imagenes = <String>[
-      if (json['imagen_principal'] case final String url when url.isNotEmpty) url,
-    ];
+    final imagenes = <String>[if (json['imagen_principal'] case final String url when url.isNotEmpty) url];
     for (final foto in (json['galeria'] as List<dynamic>? ?? const []).cast<Map<String, dynamic>>()) {
       final url = foto['url_imagen'] as String?;
       if (url != null && url.isNotEmpty && !imagenes.contains(url)) imagenes.add(url);

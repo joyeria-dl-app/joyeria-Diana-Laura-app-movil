@@ -24,12 +24,12 @@ class Validaciones {
 
   // Reglas de la contraseña en el orden en que se muestran en pantalla.
   static List<ReglaContrasena> reglasContrasena(String valor) => [
-        ReglaContrasena('8 a 16 caracteres', valor.length >= 8 && valor.length <= 16),
-        ReglaContrasena('Mayúscula', RegExp(r'[A-Z]').hasMatch(valor)),
-        ReglaContrasena('Minúscula', RegExp(r'[a-z]').hasMatch(valor)),
-        ReglaContrasena('Número', RegExp(r'\d').hasMatch(valor)),
-        ReglaContrasena('Sin espacios', valor.isNotEmpty && !valor.contains(' ')),
-      ];
+    ReglaContrasena('8 a 16 caracteres', valor.length >= 8 && valor.length <= 16),
+    ReglaContrasena('Mayúscula', RegExp(r'[A-Z]').hasMatch(valor)),
+    ReglaContrasena('Minúscula', RegExp(r'[a-z]').hasMatch(valor)),
+    ReglaContrasena('Número', RegExp(r'\d').hasMatch(valor)),
+    ReglaContrasena('Sin espacios', valor.isNotEmpty && !valor.contains(' ')),
+  ];
 
   static String? contrasena(String? valor) {
     final v = valor ?? '';

@@ -50,7 +50,12 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
               ],
             ),
           ),
-          const Positioned(left: 16, right: 16, bottom: 16, child: SafeArea(top: false, child: BarraNavegacion(actual: Seccion.favoritos))),
+          const Positioned(
+            left: 16,
+            right: 16,
+            bottom: 16,
+            child: SafeArea(top: false, child: BarraNavegacion(actual: Seccion.favoritos)),
+          ),
         ],
       ),
     );
@@ -126,10 +131,7 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
                   producto: pieza,
                   favorita: true,
                   onFavorito: () => alternarFavorito(context, pieza, desdeFavoritos: true),
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute<void>(builder: (_) => DetalleScreen(productoId: pieza.id)),
-                  ),
+                  onTap: () => Navigator.push(context, MaterialPageRoute<void>(builder: (_) => DetalleScreen(productoId: pieza.id))),
                 );
               },
             ),
@@ -147,10 +149,10 @@ class _Barra extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        width: ancho,
-        height: alto,
-        decoration: BoxDecoration(color: AppColors.superficie2, borderRadius: BorderRadius.circular(alto / 2)),
-      );
+    width: ancho,
+    height: alto,
+    decoration: BoxDecoration(color: AppColors.superficie2, borderRadius: BorderRadius.circular(alto / 2)),
+  );
 }
 
 // Boceto 7b: tarjetas vacías mientras llegan los favoritos.
@@ -164,7 +166,9 @@ class _Cargando extends StatelessWidget {
       slivers: [
         const SliverPadding(
           padding: EdgeInsets.fromLTRB(20, 16, 20, 12),
-          sliver: SliverToBoxAdapter(child: Align(alignment: Alignment.centerLeft, child: _Barra(ancho: 110, alto: 12))),
+          sliver: SliverToBoxAdapter(
+            child: Align(alignment: Alignment.centerLeft, child: _Barra(ancho: 110, alto: 12)),
+          ),
         ),
         SliverPadding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -186,7 +190,9 @@ class _Cargando extends StatelessWidget {
               child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(child: ColoredBox(color: Color(0xB3261C22), child: SizedBox.expand())),
+                  Expanded(
+                    child: ColoredBox(color: Color(0xB3261C22), child: SizedBox.expand()),
+                  ),
                   Padding(
                     padding: EdgeInsets.fromLTRB(14, 12, 14, 16),
                     child: Column(
@@ -206,14 +212,7 @@ class _Cargando extends StatelessWidget {
 
 // Estados 7c, 7d y 7e: cuadro rosa suave con ícono, título y botón.
 class _Aviso extends StatelessWidget {
-  const _Aviso({
-    required this.icono,
-    required this.titulo,
-    required this.texto,
-    required this.boton,
-    required this.iconoBoton,
-    required this.onPressed,
-  });
+  const _Aviso({required this.icono, required this.titulo, required this.texto, required this.boton, required this.iconoBoton, required this.onPressed});
   final IconData icono;
   final String titulo;
   final String texto;
@@ -235,11 +234,19 @@ class _Aviso extends StatelessWidget {
             child: Icon(icono, size: 40, color: AppColors.primario),
           ),
           const SizedBox(height: 18),
-          Text(titulo, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.texto, fontSize: 20, fontWeight: FontWeight.w700)),
+          Text(
+            titulo,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: AppColors.texto, fontSize: 20, fontWeight: FontWeight.w700),
+          ),
           const SizedBox(height: 6),
           ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 250),
-            child: Text(texto, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.textoSuave, fontSize: 13)),
+            child: Text(
+              texto,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: AppColors.textoSuave, fontSize: 13),
+            ),
           ),
           const SizedBox(height: 22),
           DecoratedBox(
@@ -263,7 +270,10 @@ class _Aviso extends StatelessWidget {
                     children: [
                       Icon(iconoBoton, size: 20, color: Colors.white),
                       const SizedBox(width: 8),
-                      Text(boton, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600)),
+                      Text(
+                        boton,
+                        style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
+                      ),
                     ],
                   ),
                 ),

@@ -36,11 +36,7 @@ class ProductoService {
   // El backend también devuelve las categorías desactivadas desde el panel.
   Future<List<Categoria>> categorias() async {
     final lista = await _obtener('/products/categorias');
-    return lista
-        .cast<Map<String, dynamic>>()
-        .where((c) => c['activo'] == true && c['categoria_padre_id'] == null)
-        .map(Categoria.fromJson)
-        .toList();
+    return lista.cast<Map<String, dynamic>>().where((c) => c['activo'] == true && c['categoria_padre_id'] == null).map(Categoria.fromJson).toList();
   }
 
   // Detalle de una pieza con su galería de imágenes.
@@ -53,14 +49,10 @@ class ProductoService {
   Future<({double promedio, int total})> resenas(int id) async {
     final data = await _pedir('/products/$id/resenas') as Map<String, dynamic>;
     final promedio = data['promedio'];
-    return (
-      promedio: promedio is num ? promedio.toDouble() : double.tryParse('$promedio') ?? 0,
-      total: data['total'] as int? ?? 0,
-    );
+    return (promedio: promedio is num ? promedio.toDouble() : double.tryParse('$promedio') ?? 0, total: data['total'] as int? ?? 0);
   }
 
-  Future<List<dynamic>> _obtener(String ruta, [Map<String, dynamic>? parametros]) async =>
-      await _pedir(ruta, parametros: parametros) as List<dynamic>;
+  Future<List<dynamic>> _obtener(String ruta, [Map<String, dynamic>? parametros]) async => await _pedir(ruta, parametros: parametros) as List<dynamic>;
 
   Future<Object?> _pedir(String ruta, {Map<String, dynamic>? parametros, String? noEncontrado}) async {
     try {

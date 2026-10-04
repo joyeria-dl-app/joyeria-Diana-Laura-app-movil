@@ -16,11 +16,11 @@ class AppRoutes {
   static const String favoritos = '/favoritos';
 
   static Map<String, WidgetBuilder> get routes => {
-        home: (_) => const HomeScreen(),
-        login: (_) => const LoginScreen(),
-        register: (_) => const RegisterScreen(),
-        catalogo: (_) => const CatalogoScreen(),
-        carrito: (_) => const CarritoScreen(),
-        favoritos: (_) => const FavoritosScreen(),
-      };
+    home: (_) => const HomeScreen(),
+    login: (_) => const LoginScreen(),
+    register: (_) => const RegisterScreen(),
+    catalogo: (_) => const CatalogoScreen(),
+    carrito: (_) => const CarritoScreen(),
+    favoritos: (_) => const FavoritosScreen(),
+  };
 }

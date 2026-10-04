@@ -47,8 +47,7 @@ class CarritoProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> agregar(int productoId, {int cantidad = 1, String? talla}) =>
-      _cambiar(() => _service.agregar(productoId, cantidad: cantidad, talla: talla));
+  Future<bool> agregar(int productoId, {int cantidad = 1, String? talla}) => _cambiar(() => _service.agregar(productoId, cantidad: cantidad, talla: talla));
 
   Future<bool> cambiarCantidad(ItemCarrito item, int cantidad) {
     if (cantidad < 1) return quitar(item);
