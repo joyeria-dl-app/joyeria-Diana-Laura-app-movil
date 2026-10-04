@@ -5,10 +5,12 @@ import 'package:provider/provider.dart';
 
 import '../models/producto.dart';
 import '../providers/carrito_provider.dart';
+import '../providers/favoritos_provider.dart';
 import '../routes/app_routes.dart';
 import '../services/producto_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/formato.dart';
+import '../widgets/accion_favorito.dart';
 import '../widgets/decoracion.dart';
 import '../widgets/galeria_fotos.dart';
 
@@ -28,6 +30,8 @@ class DetalleScreen extends StatefulWidget {
 class _DetalleScreenState extends State<DetalleScreen> {
   DetalleProducto? _detalle;
   ProductoException? _error;
+  // Reseñas del sitio web (★ promedio · total); en 0 mientras no haya.
+  ({double promedio, int total}) _resenas = (promedio: 0, total: 0);
 
   @override
   void initState() {
@@ -37,11 +41,21 @@ class _DetalleScreenState extends State<DetalleScreen> {
 
   Future<void> _cargar() async {
     setState(() => _error = null);
+    final productos = context.read<ProductoService>();
+    // Si hay sesión, el corazón aparece marcado cuando la pieza ya es favorita.
+    context.read<FavoritosProvider?>()?.comprobar(widget.productoId);
     try {
-      final detalle = await context.read<ProductoService>().detalle(widget.productoId);
+      final detalle = await productos.detalle(widget.productoId);
       if (mounted) setState(() => _detalle = detalle);
     } on ProductoException catch (e) {
       if (mounted) setState(() => _error = e);
+      return;
+    }
+    try {
+      final resenas = await productos.resenas(widget.productoId);
+      if (mounted) setState(() => _resenas = resenas);
+    } on ProductoException {
+      return;
     }
   }
 
@@ -63,7 +77,7 @@ class _DetalleScreenState extends State<DetalleScreen> {
       ));
   }
 
-  // Corazón, compartir y tallas se conectan en HU-10 y HU-13.
+  // Compartir y tallas se conectan en HU-13.
   void _pronto() {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
@@ -114,7 +128,7 @@ class _DetalleScreenState extends State<DetalleScreen> {
                     iconoBoton: Icons.refresh_rounded,
                     onPressed: _cargar,
                   ),
-                (final DetalleProducto d, _) => _Contenido(detalle: d, onPronto: _pronto, onAgregar: () => _agregar(d)),
+                (final DetalleProducto d, _) => _Contenido(detalle: d, resenas: _resenas, onPronto: _pronto, onAgregar: () => _agregar(d)),
                 _ => const _Cargando(),
               },
             ),
@@ -133,7 +147,18 @@ class _DetalleScreenState extends State<DetalleScreen> {
                     const Spacer(),
                     _BotonFoto(icono: Icons.ios_share_rounded, descripcion: 'Compartir', onTap: _pronto),
                     const SizedBox(width: 8),
-                    _BotonFoto(icono: Icons.favorite_rounded, descripcion: 'Agregar a favoritos', onTap: _pronto, blanco: true),
+                    // Bocetos 7f y 7g: vidrio con contorno, o blanco con corazón rosa si es favorita.
+                    Builder(builder: (context) {
+                      final favorita = context.watch<FavoritosProvider?>()?.esFavorita(widget.productoId) ?? false;
+                      return _BotonFoto(
+                        icono: favorita ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                        descripcion: favorita ? 'Quitar de favoritos' : 'Guardar en favoritos',
+                        blanco: favorita,
+                        onTap: () {
+                          if (detalle != null) alternarFavorito(context, detalle.producto);
+                        },
+                      );
+                    }),
                   ],
                 ),
               ),
@@ -254,8 +279,9 @@ class _Hoja extends StatelessWidget {
 }
 
 class _Contenido extends StatelessWidget {
-  const _Contenido({required this.detalle, required this.onPronto, required this.onAgregar});
+  const _Contenido({required this.detalle, required this.resenas, required this.onPronto, required this.onAgregar});
   final DetalleProducto detalle;
+  final ({double promedio, int total}) resenas;
   final VoidCallback onPronto;
   final VoidCallback onAgregar;
 
@@ -294,6 +320,19 @@ class _Contenido extends StatelessWidget {
               Text(
                 p.nombre,
                 style: const TextStyle(color: AppColors.texto, fontSize: 24, fontWeight: FontWeight.w700, letterSpacing: -0.8, height: 1.1),
+              ),
+              // Boceto P7: ★ 4.9 · 38 reseñas.
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  const Icon(Icons.star_rounded, size: 14, color: _aviso),
+                  const SizedBox(width: 4),
+                  Text(formatoCalificacion(resenas.promedio), style: const TextStyle(color: AppColors.texto, fontSize: 12, fontWeight: FontWeight.w700)),
+                  Text(
+                    ' · ${resenas.total} ${resenas.total == 1 ? 'reseña' : 'reseñas'}',
+                    style: const TextStyle(color: AppColors.textoSuave, fontSize: 12),
+                  ),
+                ],
               ),
               if (datos.isNotEmpty) ...[
                 const SizedBox(height: 4),

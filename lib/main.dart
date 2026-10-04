@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'providers/auth_provider.dart';
 import 'providers/carrito_provider.dart';
+import 'providers/favoritos_provider.dart';
 import 'routes/app_routes.dart';
 import 'services/api_client.dart';
 import 'services/auth_service.dart';
@@ -29,12 +30,14 @@ class JoyeriaApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final api = ApiClient(storage: storage);
     final carrito = carritoService ?? CarritoService(api: api);
+    final favoritos = favoritoService ?? FavoritoService(api: api);
     return MultiProvider(
       providers: [
         Provider<ApiClient>.value(value: api),
         Provider<ProductoService>.value(value: productoService ?? ProductoService(api: api)),
         Provider<CarritoService>.value(value: carrito),
-        Provider<FavoritoService>.value(value: favoritoService ?? FavoritoService(api: api)),
+        Provider<FavoritoService>.value(value: favoritos),
+        ChangeNotifierProvider<FavoritosProvider>(create: (_) => FavoritosProvider(favoritos)),
         ChangeNotifierProvider<CarritoProvider>(create: (_) => CarritoProvider(carrito)),
         ChangeNotifierProvider<AuthProvider>(
           create: (_) => AuthProvider(authService ?? AuthService(api: api, storage: storage))..restaurarSesion(),

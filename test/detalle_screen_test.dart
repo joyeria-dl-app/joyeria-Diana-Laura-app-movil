@@ -5,9 +5,11 @@ import 'package:provider/provider.dart';
 import 'package:joyeria_diana_laura/models/carrito.dart';
 import 'package:joyeria_diana_laura/models/producto.dart';
 import 'package:joyeria_diana_laura/providers/carrito_provider.dart';
+import 'package:joyeria_diana_laura/providers/favoritos_provider.dart';
 import 'package:joyeria_diana_laura/screens/detalle_screen.dart';
 import 'package:joyeria_diana_laura/services/api_client.dart';
 import 'package:joyeria_diana_laura/services/carrito_service.dart';
+import 'package:joyeria_diana_laura/services/favorito_service.dart';
 import 'package:joyeria_diana_laura/services/producto_service.dart';
 import 'package:joyeria_diana_laura/theme/app_theme.dart';
 
@@ -29,9 +31,10 @@ class _CarritoFalso extends CarritoService {
 
 // Devuelve el detalle de prueba o el error indicado, sin llamar al backend.
 class _ServicioFalso extends ProductoService {
-  _ServicioFalso({this.detalleFalso, this.error}) : super(api: ApiClient());
+  _ServicioFalso({this.detalleFalso, this.error, this.resenasFalsas = (promedio: 0, total: 0)}) : super(api: ApiClient());
   DetalleProducto? detalleFalso;
   ProductoException? error;
+  ({double promedio, int total}) resenasFalsas;
   int pedidas = 0;
 
   @override
@@ -39,6 +42,25 @@ class _ServicioFalso extends ProductoService {
     pedidas++;
     if (error != null) throw error!;
     return detalleFalso!;
+  }
+
+  @override
+  Future<({double promedio, int total})> resenas(int id) async => resenasFalsas;
+}
+
+// Favoritos sin backend: guarda los ids marcados o falla como se le indique.
+class _FavoritosFalso extends FavoritoService {
+  _FavoritosFalso({this.error}) : super(api: ApiClient());
+  FavoritoException? error;
+  final Set<int> ids = {};
+
+  @override
+  Future<bool> esFavorito(int productoId) async => ids.contains(productoId);
+
+  @override
+  Future<bool> alternar(int productoId) async {
+    if (error != null) throw error!;
+    return ids.remove(productoId) ? false : ids.add(productoId);
   }
 }
 
@@ -68,12 +90,13 @@ DetalleProducto _anillo({
 
 const _fotos = ['https://img/1.jpg', 'https://img/2.jpg', 'https://img/3.jpg', 'https://img/4.jpg'];
 
-Future<void> _abrir(WidgetTester tester, ProductoService servicio, {CarritoService? carrito}) async {
+Future<void> _abrir(WidgetTester tester, ProductoService servicio, {CarritoService? carrito, FavoritoService? favoritos}) async {
   await tester.pumpWidget(
     MultiProvider(
       providers: [
         Provider<ProductoService>.value(value: servicio),
         ChangeNotifierProvider(create: (_) => CarritoProvider(carrito ?? _CarritoFalso())),
+        ChangeNotifierProvider(create: (_) => FavoritosProvider(favoritos ?? _FavoritosFalso())),
       ],
       child: MaterialApp(theme: AppTheme.oscuro(), home: const DetalleScreen(productoId: 58)),
     ),
@@ -118,12 +141,57 @@ void main() {
     expect(find.text('Iniciar sesión'), findsOneWidget);
   });
 
-  testWidgets('Favoritos avisa que estará disponible pronto', (tester) async {
+  testWidgets('Muestra las estrellas en 0 mientras la pieza no tenga reseñas', (tester) async {
     await _abrir(tester, _ServicioFalso(detalleFalso: _anillo()));
 
-    await tester.tap(find.bySemanticsLabel('Agregar a favoritos'));
-    await tester.pump();
-    expect(find.text('Disponible muy pronto'), findsOneWidget);
+    expect(find.text('0'), findsOneWidget);
+    expect(find.text(' · 0 reseñas'), findsOneWidget);
+  });
+
+  testWidgets('Con reseñas muestra el promedio y el total del sitio web', (tester) async {
+    await _abrir(tester, _ServicioFalso(detalleFalso: _anillo(), resenasFalsas: (promedio: 4.9, total: 38)));
+
+    expect(find.text('4.9'), findsOneWidget);
+    expect(find.text(' · 38 reseñas'), findsOneWidget);
+  });
+
+  testWidgets('El corazón guarda la pieza en favoritos y se marca (7g)', (tester) async {
+    final favoritos = _FavoritosFalso();
+    await _abrir(tester, _ServicioFalso(detalleFalso: _anillo()), favoritos: favoritos);
+
+    await tester.tap(find.bySemanticsLabel('Guardar en favoritos'));
+    await tester.pumpAndSettle();
+
+    expect(favoritos.ids, {58});
+    expect(find.bySemanticsLabel('Quitar de favoritos'), findsOneWidget);
+    expect(find.text('Guardada en tus favoritos'), findsOneWidget);
+    expect(find.text('Ver favoritos'), findsOneWidget);
+  });
+
+  testWidgets('Si ya era favorita aparece marcada y al tocarla se quita con Deshacer (7f)', (tester) async {
+    final favoritos = _FavoritosFalso()..ids.add(58);
+    await _abrir(tester, _ServicioFalso(detalleFalso: _anillo()), favoritos: favoritos);
+    expect(find.bySemanticsLabel('Quitar de favoritos'), findsOneWidget);
+
+    await tester.tap(find.bySemanticsLabel('Quitar de favoritos'));
+    await tester.pumpAndSettle();
+    expect(favoritos.ids, isEmpty);
+    expect(find.text('Quitada de tus favoritos'), findsOneWidget);
+
+    await tester.tap(find.text('Deshacer'));
+    await tester.pumpAndSettle();
+    expect(favoritos.ids, {58});
+  });
+
+  testWidgets('Sin sesión el corazón invita a iniciar sesión y no se marca', (tester) async {
+    final favoritos = _FavoritosFalso(error: const FavoritoException('Inicia sesión', sinSesion: true));
+    await _abrir(tester, _ServicioFalso(detalleFalso: _anillo()), favoritos: favoritos);
+
+    await tester.tap(find.bySemanticsLabel('Guardar en favoritos'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Inicia sesión para guardar tus favoritos'), findsOneWidget);
+    expect(find.bySemanticsLabel('Guardar en favoritos'), findsOneWidget);
   });
 
   testWidgets('Sin talla registrada no muestra la sección de talla', (tester) async {

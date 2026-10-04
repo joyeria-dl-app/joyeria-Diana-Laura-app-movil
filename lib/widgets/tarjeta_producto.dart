@@ -4,12 +4,16 @@ import '../models/producto.dart';
 import '../theme/app_theme.dart';
 import '../utils/formato.dart';
 
-// Tarjeta del catálogo (boceto P6): foto de 168 px y debajo nombre y precio.
+// Tarjeta del catálogo y de favoritos (bocetos P6 y 4b): foto de 168 px con
+// el corazón arriba a la derecha y debajo nombre, precio y estrellas.
 class TarjetaProducto extends StatelessWidget {
-  const TarjetaProducto({super.key, required this.producto, this.onTap});
+  const TarjetaProducto({super.key, required this.producto, this.onTap, this.favorita = false, this.onFavorito});
 
   final Producto producto;
   final VoidCallback? onTap;
+  final bool favorita;
+  // Sin él no se muestra el corazón.
+  final VoidCallback? onFavorito;
 
   static const altoFoto = 168.0;
   // Foto + nombre + precio; lo usa la cuadrícula para dar el alto de cada tarjeta.
@@ -42,6 +46,8 @@ class TarjetaProducto extends StatelessWidget {
                     if (producto.personalizable && !producto.agotado)
                       const Positioned(top: 10, left: 10, child: _EtiquetaPersonalizable()),
                     if (producto.agotado) const Center(child: _Agotado()),
+                    if (onFavorito != null)
+                      Positioned(top: 10, right: 10, child: _Corazon(favorita: favorita, onTap: onFavorito!)),
                   ],
                 ),
               ),
@@ -74,6 +80,8 @@ class TarjetaProducto extends StatelessWidget {
                             ),
                           ),
                         ],
+                        const Spacer(),
+                        _Estrellas(promedio: producto.promedioResenas),
                       ],
                     ),
                   ],
@@ -116,6 +124,62 @@ class _Foto extends StatelessWidget {
             loadingBuilder: (_, hijo, progreso) => progreso == null ? hijo : const ColoredBox(color: AppColors.superficie2),
           );
     return apagada ? ColorFiltered(colorFilter: _gris, child: foto) : foto;
+  }
+}
+
+// Calificación junto al precio (★ 4.9); en 0 mientras no haya reseñas.
+class _Estrellas extends StatelessWidget {
+  const _Estrellas({required this.promedio});
+  final double promedio;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: 'Calificación ${formatoCalificacion(promedio)}',
+      excludeSemantics: true,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.star_rounded, size: 14, color: Color(0xFFF6A723)),
+          const SizedBox(width: 2),
+          Text(formatoCalificacion(promedio), style: const TextStyle(color: AppColors.textoSuave, fontSize: 11)),
+        ],
+      ),
+    );
+  }
+}
+
+// Botón de vidrio con el corazón (.gbtn.glass de 34 px): rosa relleno si es favorita.
+class _Corazon extends StatelessWidget {
+  const _Corazon({required this.favorita, required this.onTap});
+  final bool favorita;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      selected: favorita,
+      label: favorita ? 'Quitar de favoritos' : 'Guardar en favoritos',
+      excludeSemantics: true,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 34,
+          height: 34,
+          decoration: BoxDecoration(
+            color: const Color(0x8C281224),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0x2EFFAAD7)),
+          ),
+          child: Icon(
+            favorita ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+            size: 17,
+            color: favorita ? const Color(0xFFF4A6C6) : Colors.white,
+          ),
+        ),
+      ),
+    );
   }
 }
 
