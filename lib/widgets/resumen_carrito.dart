@@ -27,7 +27,7 @@ class ResumenCarrito extends StatelessWidget {
             derecha: Text(formatoPrecioCompleto(subtotal), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
           ),
           const SizedBox(height: 8),
-          // El envío depende de la dirección y se calcula al pagar (HU-10).
+          // El envío depende de la dirección y se calcula al pagar (HU-12).
           const _Renglon(
             izquierda: Text('Envío', style: suave),
             derecha: Text('Se calcula al pagar', style: TextStyle(color: AppColors.textoSuave, fontSize: 13, fontWeight: FontWeight.w500)),

@@ -28,7 +28,7 @@ class CarritoProvider extends ChangeNotifier {
   // Mismo cálculo que el backend: precio final (promoción, oferta o venta) por cantidad.
   // Se calcula aquí para que el total cambie en cuanto se toca + o −.
   double get subtotal => items.fold(0, (suma, i) => suma + i.precioFinal * i.cantidad);
-  // El envío se calcula al pagar (HU-10), así que por ahora el total es el subtotal.
+  // El envío se calcula al pagar (HU-12), así que por ahora el total es el subtotal.
   double get total => subtotal;
 
   Future<void> cargar() async {
