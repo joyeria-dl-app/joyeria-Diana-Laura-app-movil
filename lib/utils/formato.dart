@@ -6,3 +6,11 @@ String formatoPrecio(double precio) {
   final resto = centavos % 100;
   return resto == 0 ? '\$$conComas' : '\$$conComas.${resto.toString().padLeft(2, '0')}';
 }
+
+// Precio siempre con centavos, como en el resumen del carrito: "$1,790.00".
+String formatoPrecioCompleto(double precio) {
+  final centavos = (precio * 100).round();
+  final enteros = (centavos ~/ 100).toString();
+  final conComas = enteros.replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => ',');
+  return '\$$conComas.${(centavos % 100).toString().padLeft(2, '0')}';
+}
