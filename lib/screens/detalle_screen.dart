@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/producto.dart';
+import '../providers/carrito_provider.dart';
+import '../routes/app_routes.dart';
 import '../services/producto_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/formato.dart';
@@ -43,7 +45,25 @@ class _DetalleScreenState extends State<DetalleScreen> {
     }
   }
 
-  // Corazón, compartir, tallas y Agregar se conectan en HU-09, HU-10 y HU-13.
+  // Agrega la pieza al carrito del cliente (HU-09); sin sesión invita a iniciarla.
+  Future<void> _agregar(DetalleProducto detalle) async {
+    final carrito = context.read<CarritoProvider>();
+    final ok = await carrito.agregar(detalle.producto.id, talla: detalle.medidas);
+    if (!mounted) return;
+    final (texto, accion, ruta) = ok
+        ? ('Agregada a tu carrito', 'Ver carrito', AppRoutes.carrito)
+        : carrito.sinSesion
+            ? ('Inicia sesión para agregar piezas a tu carrito', 'Iniciar sesión', AppRoutes.login)
+            : (carrito.aviso ?? 'No se pudo agregar la pieza.', null, null);
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(
+        content: Text(texto),
+        action: accion == null ? null : SnackBarAction(label: accion, onPressed: () => Navigator.pushNamed(context, ruta!)),
+      ));
+  }
+
+  // Corazón, compartir y tallas se conectan en HU-10 y HU-13.
   void _pronto() {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
@@ -94,7 +114,7 @@ class _DetalleScreenState extends State<DetalleScreen> {
                     iconoBoton: Icons.refresh_rounded,
                     onPressed: _cargar,
                   ),
-                (final DetalleProducto d, _) => _Contenido(detalle: d, onPronto: _pronto),
+                (final DetalleProducto d, _) => _Contenido(detalle: d, onPronto: _pronto, onAgregar: () => _agregar(d)),
                 _ => const _Cargando(),
               },
             ),
@@ -234,9 +254,10 @@ class _Hoja extends StatelessWidget {
 }
 
 class _Contenido extends StatelessWidget {
-  const _Contenido({required this.detalle, required this.onPronto});
+  const _Contenido({required this.detalle, required this.onPronto, required this.onAgregar});
   final DetalleProducto detalle;
   final VoidCallback onPronto;
+  final VoidCallback onAgregar;
 
   @override
   Widget build(BuildContext context) {
@@ -325,7 +346,7 @@ class _Contenido extends StatelessWidget {
             ],
           ),
         ),
-        _BarraPrecio(producto: p, onAgregar: onPronto),
+        _BarraPrecio(producto: p, onAgregar: onAgregar),
       ],
     );
   }

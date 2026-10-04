@@ -77,7 +77,8 @@ void main() {
     expect(tester.getSemantics(find.bySemanticsLabel('Catálogo')), isSemantics(isSelected: true, isButton: true));
     expect(tester.getSemantics(find.bySemanticsLabel('Carrito')), isSemantics(isSelected: false, isButton: true));
 
-    await tester.tap(find.bySemanticsLabel('Carrito'));
+    // Favoritos se conecta en la HU-10.
+    await tester.tap(find.bySemanticsLabel('Favoritos'));
     await tester.pump();
     expect(find.text('Disponible muy pronto'), findsOneWidget);
     semantica.dispose();
