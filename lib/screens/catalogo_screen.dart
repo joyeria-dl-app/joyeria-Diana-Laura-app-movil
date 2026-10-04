@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/producto.dart';
+import '../providers/favoritos_provider.dart';
 import '../services/producto_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/accion_favorito.dart';
 import '../widgets/barra_navegacion.dart';
 import '../widgets/decoracion.dart';
 import '../widgets/tarjeta_producto.dart';
@@ -37,6 +39,11 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
     });
     _cargarCategorias();
     _cargarMas();
+    // Para pintar los corazones; sin sesión se quedan sin marcar.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final favoritos = context.read<FavoritosProvider?>();
+      if (favoritos != null && !favoritos.cargada) favoritos.cargar();
+    });
   }
 
   // Si fallan, el catálogo se sigue viendo sin la fila de categorías.
@@ -178,6 +185,8 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
         _productos.length,
         (i) => TarjetaProducto(
           producto: _productos[i],
+          favorita: context.watch<FavoritosProvider?>()?.esFavorita(_productos[i].id) ?? false,
+          onFavorito: () => alternarFavorito(context, _productos[i]),
           onTap: () => Navigator.push(
             context,
             MaterialPageRoute<void>(builder: (_) => DetalleScreen(productoId: _productos[i].id)),

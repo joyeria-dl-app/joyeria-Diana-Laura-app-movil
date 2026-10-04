@@ -49,6 +49,16 @@ class ProductoService {
     return DetalleProducto.fromJson(data as Map<String, dynamic>);
   }
 
+  // Promedio y total de reseñas de una pieza (las mismas del sitio web).
+  Future<({double promedio, int total})> resenas(int id) async {
+    final data = await _pedir('/products/$id/resenas') as Map<String, dynamic>;
+    final promedio = data['promedio'];
+    return (
+      promedio: promedio is num ? promedio.toDouble() : double.tryParse('$promedio') ?? 0,
+      total: data['total'] as int? ?? 0,
+    );
+  }
+
   Future<List<dynamic>> _obtener(String ruta, [Map<String, dynamic>? parametros]) async =>
       await _pedir(ruta, parametros: parametros) as List<dynamic>;
 

@@ -19,6 +19,8 @@ class Producto {
     this.stock = 0,
     this.esNuevo = false,
     this.personalizable = false,
+    this.promedioResenas = 0,
+    this.totalResenas = 0,
   });
 
   factory Producto.fromJson(Map<String, dynamic> json) => Producto(
@@ -34,6 +36,8 @@ class Producto {
         stock: json['stock_actual'] as int? ?? 0,
         esNuevo: json['es_nuevo'] as bool? ?? false,
         personalizable: json['permite_personalizacion'] as bool? ?? false,
+        promedioResenas: _aNumero(json['promedio_resenas']) ?? 0,
+        totalResenas: json['total_resenas'] as int? ?? 0,
       );
 
   final int id;
@@ -48,6 +52,9 @@ class Producto {
   final int stock;
   final bool esNuevo;
   final bool personalizable;
+  // Calificación de las reseñas del sitio web; 0 mientras la pieza no tenga.
+  final double promedioResenas;
+  final int totalResenas;
 
   // Mismo criterio que el sitio web: la promoción vigente gana a la oferta.
   double get precioFinal => precioPromocion ?? precioOferta ?? precioVenta;

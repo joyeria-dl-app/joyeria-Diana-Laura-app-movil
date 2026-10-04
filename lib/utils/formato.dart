@@ -14,3 +14,6 @@ String formatoPrecioCompleto(double precio) {
   final conComas = enteros.replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => ',');
   return '\$$conComas.${(centavos % 100).toString().padLeft(2, '0')}';
 }
+
+// Calificación de reseñas como en los bocetos: "4.9", o "0" si aún no hay reseñas.
+String formatoCalificacion(double promedio) => promedio == 0 ? '0' : promedio.toStringAsFixed(1);
