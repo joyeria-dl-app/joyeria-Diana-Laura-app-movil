@@ -5,6 +5,7 @@ import 'providers/auth_provider.dart';
 import 'routes/app_routes.dart';
 import 'services/api_client.dart';
 import 'services/auth_service.dart';
+import 'services/carrito_service.dart';
 import 'services/producto_service.dart';
 import 'services/session_storage.dart';
 import 'theme/app_theme.dart';
@@ -14,11 +15,12 @@ void main() {
 }
 
 class JoyeriaApp extends StatelessWidget {
-  const JoyeriaApp({super.key, required this.storage, this.authService, this.productoService});
+  const JoyeriaApp({super.key, required this.storage, this.authService, this.productoService, this.carritoService});
 
   final SessionStorage storage;
   final AuthService? authService;
   final ProductoService? productoService;
+  final CarritoService? carritoService;
 
   @override
   Widget build(BuildContext context) {
@@ -27,6 +29,7 @@ class JoyeriaApp extends StatelessWidget {
       providers: [
         Provider<ApiClient>.value(value: api),
         Provider<ProductoService>.value(value: productoService ?? ProductoService(api: api)),
+        Provider<CarritoService>.value(value: carritoService ?? CarritoService(api: api)),
         ChangeNotifierProvider<AuthProvider>(
           create: (_) => AuthProvider(authService ?? AuthService(api: api, storage: storage))..restaurarSesion(),
         ),
