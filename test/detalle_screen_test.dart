@@ -2,11 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 
+import 'package:joyeria_diana_laura/models/carrito.dart';
 import 'package:joyeria_diana_laura/models/producto.dart';
+import 'package:joyeria_diana_laura/providers/carrito_provider.dart';
 import 'package:joyeria_diana_laura/screens/detalle_screen.dart';
 import 'package:joyeria_diana_laura/services/api_client.dart';
+import 'package:joyeria_diana_laura/services/carrito_service.dart';
 import 'package:joyeria_diana_laura/services/producto_service.dart';
 import 'package:joyeria_diana_laura/theme/app_theme.dart';
+
+// Carrito sin backend: guarda lo agregado o falla como se le indique.
+class _CarritoFalso extends CarritoService {
+  _CarritoFalso({this.error}) : super(api: ApiClient());
+  CarritoException? error;
+  final List<(int, String?)> agregadas = [];
+
+  @override
+  Future<void> agregar(int productoId, {int cantidad = 1, String? talla}) async {
+    if (error != null) throw error!;
+    agregadas.add((productoId, talla));
+  }
+
+  @override
+  Future<Carrito> obtener() async => const Carrito();
+}
 
 // Devuelve el detalle de prueba o el error indicado, sin llamar al backend.
 class _ServicioFalso extends ProductoService {
@@ -49,10 +68,13 @@ DetalleProducto _anillo({
 
 const _fotos = ['https://img/1.jpg', 'https://img/2.jpg', 'https://img/3.jpg', 'https://img/4.jpg'];
 
-Future<void> _abrir(WidgetTester tester, ProductoService servicio) async {
+Future<void> _abrir(WidgetTester tester, ProductoService servicio, {CarritoService? carrito}) async {
   await tester.pumpWidget(
-    Provider<ProductoService>.value(
-      value: servicio,
+    MultiProvider(
+      providers: [
+        Provider<ProductoService>.value(value: servicio),
+        ChangeNotifierProvider(create: (_) => CarritoProvider(carrito ?? _CarritoFalso())),
+      ],
       child: MaterialApp(theme: AppTheme.oscuro(), home: const DetalleScreen(productoId: 58)),
     ),
   );
@@ -73,10 +95,33 @@ void main() {
     expect(find.text('Agregar'), findsOneWidget);
   });
 
-  testWidgets('Agregar y favoritos avisan que estarán disponibles pronto', (tester) async {
-    await _abrir(tester, _ServicioFalso(detalleFalso: _anillo()));
+  testWidgets('Agregar guarda la pieza con su talla en el carrito', (tester) async {
+    final carrito = _CarritoFalso();
+    await _abrir(tester, _ServicioFalso(detalleFalso: _anillo()), carrito: carrito);
 
     await tester.tap(find.text('Agregar'));
+    await tester.pumpAndSettle();
+
+    expect(carrito.agregadas, [(58, 'Talla 7')]);
+    expect(find.text('Agregada a tu carrito'), findsOneWidget);
+    expect(find.text('Ver carrito'), findsOneWidget);
+  });
+
+  testWidgets('Sin sesión Agregar invita a iniciar sesión', (tester) async {
+    final carrito = _CarritoFalso(error: const CarritoException('Inicia sesión para usar tu carrito.', sinSesion: true));
+    await _abrir(tester, _ServicioFalso(detalleFalso: _anillo()), carrito: carrito);
+
+    await tester.tap(find.text('Agregar'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Inicia sesión para agregar piezas a tu carrito'), findsOneWidget);
+    expect(find.text('Iniciar sesión'), findsOneWidget);
+  });
+
+  testWidgets('Favoritos avisa que estará disponible pronto', (tester) async {
+    await _abrir(tester, _ServicioFalso(detalleFalso: _anillo()));
+
+    await tester.tap(find.bySemanticsLabel('Agregar a favoritos'));
     await tester.pump();
     expect(find.text('Disponible muy pronto'), findsOneWidget);
   });

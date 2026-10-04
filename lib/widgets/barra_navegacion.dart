@@ -29,8 +29,10 @@ class BarraNavegacion extends StatelessWidget {
         Navigator.popUntil(context, (ruta) => ruta.isFirst);
       case Seccion.catalogo:
         Navigator.pushNamed(context, AppRoutes.catalogo);
-      case Seccion.carrito || Seccion.favoritos || Seccion.perfil:
-        // Se conectan en sus historias (HU-09, HU-10 y HU-14).
+      case Seccion.carrito:
+        Navigator.pushNamed(context, AppRoutes.carrito);
+      case Seccion.favoritos || Seccion.perfil:
+        // Se conectan en sus historias (HU-10 y HU-14).
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
           ..showSnackBar(const SnackBar(content: Text('Disponible muy pronto')));
