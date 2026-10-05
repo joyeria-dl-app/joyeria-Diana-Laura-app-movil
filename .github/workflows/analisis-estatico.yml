@@ -15,6 +15,13 @@ jobs:
     steps:
       - name: Descargar el código
         uses: actions/checkout@v7
+        with:
+          # Todo el historial, para que gitleaks revise también los commits anteriores.
+          fetch-depth: 0
+
+      # Seguridad (#97): falla si encuentra claves o contraseñas en el código o en el historial de Git.
+      - name: Buscar claves con gitleaks
+        run: docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:latest git /repo --redact --verbose
 
       - name: Instalar Flutter
         uses: subosito/flutter-action@v2
@@ -43,6 +50,7 @@ jobs:
           echo "## Análisis de código estático" >> $GITHUB_STEP_SUMMARY
           echo "- flutter analyze: sin problemas" >> $GITHUB_STEP_SUMMARY
           echo "- dart format: código con formato" >> $GITHUB_STEP_SUMMARY
+          echo "- gitleaks: sin claves en el código ni en el historial" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
           cat dependencias.txt >> $GITHUB_STEP_SUMMARY || true
           echo '```' >> $GITHUB_STEP_SUMMARY
