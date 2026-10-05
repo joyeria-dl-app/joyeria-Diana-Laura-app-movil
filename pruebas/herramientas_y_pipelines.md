@@ -27,20 +27,27 @@ Las demás herramientas se mantienen como se planearon.
 
 ## Pipelines y versionamiento
 
-Usamos Git Flow: cada tarea en una rama `feature/*` (o `test/*`, `fix/*`), que se une a `develop`
+Usamos Git Flow: cada tarea en una rama `feature/*` (o `test/*`, `fix/*`) que se une a `develop`
 por Pull Request; al cerrar el sprint, `develop` se une a `main` y se publica una etiqueta `v*`.
+Las pruebas no se dejan para el final: cada tarea que se une a `develop` pasa ese mismo día por
+integración, aceptación y rendimiento en el emulador.
 
-| Momento del versionamiento | Pipelines que corren |
+| Momento | Pipelines | Orden | Si falla |
+|---|---|---|---|
+| Pull Request de una tarea a `develop` | `flutter-ci.yml`, `analisis-estatico.yml`, `pruebas-unitarias.yml` | En paralelo | No se puede unir el Pull Request |
+| Push a `develop` (tarea ya unida) | Los anteriores + `pruebas-integracion.yml`, `pruebas-aceptacion.yml`, `pruebas-rendimiento.yml` | En paralelo, después de que pasaron los del Pull Request | Se corrige con una tarea `fix/*` antes de seguir |
+| Pull Request de `develop` a `main` | `flutter-ci.yml`, `analisis-estatico.yml`, `pruebas-unitarias.yml`, `pruebas-integracion.yml`, `pruebas-aceptacion.yml` | En paralelo | No se puede pasar a `main` |
+| Push a `main` y etiqueta `v*` | `pruebas-regresion.yml`, `pruebas-rendimiento.yml`, `pruebas-esfuerzo.yml` | En paralelo | La versión no se publica |
+| Versión publicada en Releases | `release-apk.yml` | Pruebas y después el APK | No se genera el APK |
+| Programadas | Regresión cada lunes, esfuerzo cada miércoles | | Se abre una tarea en el tablero |
+
+## Carpetas con los elementos de cada prueba
+
+| Carpeta | Qué contiene |
 |---|---|
-| Pull Request de una rama de tarea a `develop` | `flutter-ci.yml`, `analisis-estatico.yml`, `pruebas-unitarias.yml` |
-| Push a `develop` (al unir el Pull Request) | `flutter-ci.yml`, `analisis-estatico.yml`, `pruebas-unitarias.yml` |
-| Pull Request de `develop` a `main` | Los anteriores + `pruebas-integracion.yml` y `pruebas-aceptacion.yml` |
-| Push a `main` | `flutter-ci.yml`, `pruebas-regresion.yml` |
-| Etiqueta de versión `v*` | `pruebas-regresion.yml`, `pruebas-rendimiento.yml`, `pruebas-esfuerzo.yml` |
-| Versión publicada en Releases | `release-apk.yml` (pruebas + APK) |
-| Cada lunes | `pruebas-regresion.yml` |
-| A mano (Actions → Run workflow) | Todos excepto `flutter-ci.yml` |
-
-Las pruebas rápidas (estático y unitarias) corren en cada cambio. Las que usan el emulador o el
-backend real (integración, aceptación, regresión, rendimiento y esfuerzo) corren antes y después
-de unir a `main`, que es cuando se arma una versión.
+| `analysis_options.yaml` | Reglas del análisis estático (`flutter_lints`) |
+| `test/` | Pruebas unitarias y de widgets, con sus datos simulados |
+| `integration_test/` | Integración, aceptación (`aceptacion_test.dart`) y rendimiento (`rendimiento_test.dart`) en el emulador |
+| `pruebas/esfuerzo/` | Script de k6 con la carga (50 usuarios) y los umbrales (95 % < 2 s, < 1 % de errores) |
+| `pruebas/*.md` | Resultados de aceptación, seguridad y regresión de cada sprint |
+| Secretos del repositorio | Cuenta de cliente de prueba y clave de Firebase que usan los pipelines |

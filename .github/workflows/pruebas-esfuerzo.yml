@@ -1,11 +1,13 @@
 # PRUEBAS DE ESFUERZO: carga creciente sobre el backend que usa la app.
 # Genera tráfico real en el servidor de Render, por eso no corre en cada cambio:
-# se lanza a mano o al publicar una etiqueta de versión (v0.3.0, v1.0.0…).
+# se lanza a mano, una vez por semana y al publicar una etiqueta de versión (v0.3.0, v1.0.0…).
 name: Pruebas de esfuerzo
 
 on:
   push:
     tags: ['v*']
+  schedule:
+    - cron: '0 15 * * 3' # miércoles 9:00 (hora de México)
   workflow_dispatch:
     inputs:
       usuarios:

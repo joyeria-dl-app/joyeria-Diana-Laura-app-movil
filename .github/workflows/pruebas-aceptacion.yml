@@ -1,9 +1,12 @@
 # PRUEBAS DE ACEPTACIÓN: los criterios de aceptación de cada historia de usuario, probados
 # en la app real (emulador Android) contra el backend de Render.
-# Corre al pedir unir develop a main, antes de publicar una versión.
+# Corre cada vez que se une una tarea a develop (para detectar fallas el mismo día) y
+# otra vez al pedir unir develop a main; si falla, no se puede pasar a main.
 name: Pruebas de aceptación
 
 on:
+  push:
+    branches: [develop]
   pull_request:
     branches: [main]
   workflow_dispatch:
