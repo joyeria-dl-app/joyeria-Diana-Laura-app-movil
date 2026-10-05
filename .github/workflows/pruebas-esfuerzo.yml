@@ -1,0 +1,28 @@
+# PRUEBAS DE ESFUERZO: carga creciente sobre el backend que usa la app.
+# Solo se lanza a mano porque genera tráfico real en el servidor de Render.
+name: Pruebas de esfuerzo
+
+on:
+  workflow_dispatch:
+    inputs:
+      usuarios:
+        description: Usuarios simultáneos al punto máximo
+        default: '50'
+
+jobs:
+  esfuerzo:
+    name: Esfuerzo del backend con k6
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v7
+
+      - name: Instalar k6
+        uses: grafana/setup-k6-action@v1
+
+      - name: Ejecutar prueba de esfuerzo
+        uses: grafana/run-k6-action@v1
+        env:
+          USUARIOS: ${{ inputs.usuarios }}
+        with:
+          path: pruebas/esfuerzo/catalogo.js

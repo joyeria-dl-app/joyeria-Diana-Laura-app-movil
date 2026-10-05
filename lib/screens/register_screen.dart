@@ -83,21 +83,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _crearCuenta() async {
     if (!_formPregunta.currentState!.validate()) return;
     final ok = await context.read<AuthProvider>().registrarse(
-          nombre: _nombre.text,
-          email: _email.text,
-          password: _password.text,
-          tipoPregunta: _tipoPregunta,
-          preguntaPersonalizada: _tipoPregunta == 'custom' ? _preguntaPersonalizada.text : null,
-          respuesta: _respuesta.text,
-        );
+      nombre: _nombre.text,
+      email: _email.text,
+      password: _password.text,
+      tipoPregunta: _tipoPregunta,
+      preguntaPersonalizada: _tipoPregunta == 'custom' ? _preguntaPersonalizada.text : null,
+      respuesta: _respuesta.text,
+    );
     if (!ok || !mounted) return;
     await showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.superficie,
         title: const Text('Revisa tu correo'),
-        content: Text('Te enviamos un enlace a ${_email.text.trim()} para verificar tu cuenta. '
-            'Después de confirmarlo ya puedes iniciar sesión en la app o en el sitio web.'),
+        content: Text(
+          'Te enviamos un enlace a ${_email.text.trim()} para verificar tu cuenta. '
+          'Después de confirmarlo ya puedes iniciar sesión en la app o en el sitio web.',
+        ),
         actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Entendido'))],
       ),
     );
@@ -142,19 +144,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           child: hijo,
                         ),
                       ),
-                      layoutBuilder: (actual, anteriores) => Stack(
-                        alignment: Alignment.topCenter,
-                        children: [...anteriores, ?actual],
-                      ),
+                      layoutBuilder: (actual, anteriores) => Stack(alignment: Alignment.topCenter, children: [...anteriores, ?actual]),
                       child: Column(
                         key: ValueKey(_paso),
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          _Titulo(
-                            key: const Key('registro_titulo'),
-                            primeraLinea: _paso == 1 ? 'Crea tu' : 'Protege tu',
-                            segundaLinea: 'cuenta',
-                          ),
+                          _Titulo(key: const Key('registro_titulo'), primeraLinea: _paso == 1 ? 'Crea tu' : 'Protege tu', segundaLinea: 'cuenta'),
                           const SizedBox(height: 8),
                           Text(
                             _paso == 1
@@ -167,10 +162,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ],
                       ),
                     ),
-                    if (auth.error != null) ...[
-                      const SizedBox(height: 12),
-                      _MensajeError(auth.error!),
-                    ],
+                    if (auth.error != null) ...[const SizedBox(height: 12), _MensajeError(auth.error!)],
                     const SizedBox(height: 18),
                     BotonPrimario(
                       key: const Key('registro_continuar'),
@@ -206,11 +198,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final barras = reglas.take(4).toList();
     final cumplidas = _password.text.isEmpty ? 0 : barras.where((r) => r.cumple).length;
     // Como en el boceto, una sola línea con tres reglas; el resto aparece en el error si falta.
-    final visibles = [
-      ('8 caracteres', reglas[0].cumple),
-      ('Mayúscula', reglas[1].cumple),
-      ('Número', reglas[3].cumple),
-    ];
+    final visibles = [('8 caracteres', reglas[0].cumple), ('Mayúscula', reglas[1].cumple), ('Número', reglas[3].cumple)];
 
     return Form(
       key: _formDatos,
@@ -261,10 +249,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
                       height: 6,
-                      decoration: BoxDecoration(
-                        color: i < cumplidas ? AppColors.exito : AppColors.superficie2,
-                        borderRadius: BorderRadius.circular(3),
-                      ),
+                      decoration: BoxDecoration(color: i < cumplidas ? AppColors.exito : AppColors.superficie2, borderRadius: BorderRadius.circular(3)),
                     ),
                   ),
                 ],
@@ -281,8 +266,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(cumple ? Icons.check_rounded : Icons.close_rounded,
-                          size: 15, color: cumple ? AppColors.exito : AppColors.textoSuave),
+                      Icon(cumple ? Icons.check_rounded : Icons.close_rounded, size: 15, color: cumple ? AppColors.exito : AppColors.textoSuave),
                       const SizedBox(width: 3),
                       Text(texto, style: TextStyle(fontSize: 11.5, color: cumple ? AppColors.exito : AppColors.textoSuave)),
                     ],
@@ -312,7 +296,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 text: 'Acepto el ',
                 style: TextStyle(color: AppColors.texto, fontSize: 12.5, fontWeight: FontWeight.w500),
                 children: [
-                  TextSpan(text: 'aviso de privacidad', style: TextStyle(color: AppColors.primario, fontWeight: FontWeight.w600)),
+                  TextSpan(
+                    text: 'aviso de privacidad',
+                    style: TextStyle(color: AppColors.primario, fontWeight: FontWeight.w600),
+                  ),
                 ],
               ),
             ),
@@ -324,10 +311,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Widget _pasoPregunta() {
-    final opciones = [
-      for (var i = 0; i < _preguntas.length; i++) ('$i', _preguntas[i]),
-      ('custom', 'Escribir mi propia pregunta'),
-    ];
+    final opciones = [for (var i = 0; i < _preguntas.length; i++) ('$i', _preguntas[i]), ('custom', 'Escribir mi propia pregunta')];
     return Form(
       key: _formPregunta,
       child: Column(
@@ -391,7 +375,9 @@ class _MensajeError extends StatelessWidget {
         children: [
           const Icon(Icons.error_rounded, size: 15, color: AppColors.error),
           const SizedBox(width: 5),
-          Expanded(child: Text(texto, style: const TextStyle(color: AppColors.error, fontSize: 11.5))),
+          Expanded(
+            child: Text(texto, style: const TextStyle(color: AppColors.error, fontSize: 11.5)),
+          ),
         ],
       ),
     );
@@ -419,14 +405,14 @@ class _OpcionPregunta extends StatelessWidget {
         child: Ink(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
-            gradient: seleccionada
-                ? const LinearGradient(colors: [AppColors.suave, Colors.transparent])
-                : null,
+            gradient: seleccionada ? const LinearGradient(colors: [AppColors.suave, Colors.transparent]) : null,
           ),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
             children: [
-              Expanded(child: Text(texto, style: const TextStyle(color: AppColors.texto, fontSize: 13))),
+              Expanded(
+                child: Text(texto, style: const TextStyle(color: AppColors.texto, fontSize: 13)),
+              ),
               const SizedBox(width: 10),
               Container(
                 width: 22,
@@ -437,7 +423,11 @@ class _OpcionPregunta extends StatelessWidget {
                 ),
                 alignment: Alignment.center,
                 child: seleccionada
-                    ? Container(width: 11, height: 11, decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.primario))
+                    ? Container(
+                        width: 11,
+                        height: 11,
+                        decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.primario),
+                      )
                     : null,
               ),
             ],

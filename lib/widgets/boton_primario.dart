@@ -35,7 +35,10 @@ class BotonPrimario extends StatelessWidget {
                     child: Center(
                       child: cargando
                           ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
-                          : Text(texto, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600)),
+                          : Text(
+                              texto,
+                              style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
+                            ),
                     ),
                   ),
                   Container(

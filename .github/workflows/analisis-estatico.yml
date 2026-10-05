@@ -1,0 +1,56 @@
+# ANÁLISIS DE CÓDIGO ESTÁTICO: revisa el código sin ejecutarlo en cada PR.
+name: Análisis de código estático
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+jobs:
+  analisis:
+    name: Análisis estático
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v7
+        with:
+          # Todo el historial, para que gitleaks revise también los commits anteriores.
+          fetch-depth: 0
+
+      # Seguridad (#97): falla si encuentra claves o contraseñas en el código o en el historial de Git.
+      - name: Buscar claves con gitleaks
+        run: docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:latest git /repo --redact --verbose
+
+      - name: Instalar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.5'
+          channel: stable
+          cache: true
+
+      - name: Instalar dependencias
+        run: flutter pub get
+
+      # Reglas de flutter_lints (analysis_options.yaml); falla si hay avisos.
+      - name: Analizar con flutter analyze
+        run: flutter analyze --fatal-infos
+
+      # Falla si un PR trae código sin formato (líneas de hasta 160 caracteres).
+      - name: Revisar formato con dart format
+        run: dart format --output=none --set-exit-if-changed --line-length 160 lib test integration_test
+
+      - name: Revisar dependencias desactualizadas
+        run: flutter pub outdated --no-dev-dependencies | tee dependencias.txt
+
+      - name: Resumen
+        if: always()
+        run: |
+          echo "## Análisis de código estático" >> $GITHUB_STEP_SUMMARY
+          echo "- flutter analyze: sin problemas" >> $GITHUB_STEP_SUMMARY
+          echo "- dart format: código con formato" >> $GITHUB_STEP_SUMMARY
+          echo "- gitleaks: sin claves en el código ni en el historial" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat dependencias.txt >> $GITHUB_STEP_SUMMARY || true
+          echo '```' >> $GITHUB_STEP_SUMMARY
