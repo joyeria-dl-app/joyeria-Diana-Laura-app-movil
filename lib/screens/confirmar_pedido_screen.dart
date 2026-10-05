@@ -978,6 +978,9 @@ class _HojaDireccionState extends State<HojaDireccion> {
       controller: c,
       validator: validar,
       keyboardType: teclado,
+      // Textos largos como "Huejutla de Reyes" bajan de renglón, como en el boceto 8c.
+      minLines: 1,
+      maxLines: 2,
       textCapitalization: TextCapitalization.words,
       style: const TextStyle(color: AppColors.texto, fontSize: 14, fontWeight: FontWeight.w500),
       decoration: InputDecoration(hintText: hint, prefixIcon: Icon(icono, size: 20)),
