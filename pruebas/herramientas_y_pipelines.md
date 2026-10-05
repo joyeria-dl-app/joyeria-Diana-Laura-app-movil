@@ -21,7 +21,8 @@ cada tipo de prueba tiene su propio pipeline en `.github/workflows`.
 |---|---|---|---|
 | Rendimiento | `watchPerformance` de `integration_test` | `FrameTiming` | `watchPerformance` necesita el servicio de depuración de Flutter, que no está disponible en el emulador de GitHub Actions. `FrameTiming` mide los mismos tiempos de cuadro sin depender de él. |
 | Aceptación | Dentro del pipeline de integración | Pipeline propio (`pruebas-aceptacion.yml`) | Para que cada tipo de prueba tenga su pipeline y su resultado por separado. |
-| Esfuerzo | Solo a mano | A mano y al publicar una etiqueta `v*` | Para que quede ligada al versionamiento: cada versión se prueba bajo carga. |
+| Esfuerzo | Solo a mano | A mano, cada semana y al publicar una etiqueta `v*` | Para que quede ligada al versionamiento: cada versión se prueba bajo carga. |
+| Integración, aceptación y rendimiento | Solo al cerrar el sprint | También en cada unión a `develop` | Para no dejar las pruebas al final del sprint: una falla se detecta el mismo día que se une la tarea. |
 
 Las demás herramientas se mantienen como se planearon.
 
@@ -37,7 +38,7 @@ integración, aceptación y rendimiento en el emulador.
 | Pull Request de una tarea a `develop` | `flutter-ci.yml`, `analisis-estatico.yml`, `pruebas-unitarias.yml` | En paralelo | No se puede unir el Pull Request |
 | Push a `develop` (tarea ya unida) | Los anteriores + `pruebas-integracion.yml`, `pruebas-aceptacion.yml`, `pruebas-rendimiento.yml` | En paralelo, después de que pasaron los del Pull Request | Se corrige con una tarea `fix/*` antes de seguir |
 | Pull Request de `develop` a `main` | `flutter-ci.yml`, `analisis-estatico.yml`, `pruebas-unitarias.yml`, `pruebas-integracion.yml`, `pruebas-aceptacion.yml` | En paralelo | No se puede pasar a `main` |
-| Push a `main` y etiqueta `v*` | `pruebas-regresion.yml`, `pruebas-rendimiento.yml`, `pruebas-esfuerzo.yml` | En paralelo | La versión no se publica |
+| Push a `main` y etiqueta `v*` | `pruebas-regresion.yml`, `pruebas-rendimiento.yml`, `pruebas-esfuerzo.yml` | En paralelo | Se corrige antes de publicar la versión |
 | Versión publicada en Releases | `release-apk.yml` | Pruebas y después el APK | No se genera el APK |
 | Programadas | Regresión cada lunes, esfuerzo cada miércoles | | Se abre una tarea en el tablero |
 
