@@ -65,7 +65,13 @@ class _ConfirmarPedidoScreenState extends State<ConfirmarPedidoScreen> {
     }
   }
 
-  List<MetodoPago> get _metodos => _opciones?.metodosPara(domicilio: !_apartado && _domicilio) ?? const [];
+  // En el orden de los bocetos: efectivo, transferencia, Mercado Pago y PayPal.
+  static const _orden = ['efectivo', 'transferencia', 'mercadopago', 'paypal'];
+  List<MetodoPago> get _metodos {
+    final metodos = List.of(_opciones?.metodosPara(domicilio: !_apartado && _domicilio) ?? const <MetodoPago>[]);
+    int lugar(MetodoPago m) => _orden.contains(m.codigo) ? _orden.indexOf(m.codigo) : _orden.length;
+    return metodos..sort((a, b) => lugar(a).compareTo(lugar(b)));
+  }
 
   // Al cambiar de entrega, el efectivo deja de servir a domicilio.
   void _elegirMetodoValido() {
@@ -231,6 +237,8 @@ class _ConfirmarPedidoScreenState extends State<ConfirmarPedidoScreen> {
           onChanged: (apartado) => setState(() {
             _apartado = apartado;
             _avisoServidor = null;
+            // Al cambiar de pestaña se vuelve a proponer el efectivo, como en 8a y 8d.
+            _metodo = null;
             _elegirMetodoValido();
           }),
         ),
