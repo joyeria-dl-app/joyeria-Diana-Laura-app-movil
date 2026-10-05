@@ -3,7 +3,7 @@
 Aplicación móvil para los clientes de Joyería Diana Laura, hecha con Flutter. Usa el mismo backend que el sitio web del negocio, así que la cuenta, el carrito y los pedidos son los mismos en la app y en la web.
 
 - **Planeación y seguimiento:** [GitHub Projects](https://github.com/orgs/joyeria-dl-app/projects/1)
-- **Versión actual:** [v0.1.0 – Sprint 1](https://github.com/joyeria-dl-app/joyeria-Diana-Laura-app-movil/releases/tag/v0.1.0)
+- **Versión actual:** [v0.2.0 – Sprint 2](https://github.com/joyeria-dl-app/joyeria-Diana-Laura-app-movil/releases/tag/v0.2.0)
 
 ## Equipo
 
