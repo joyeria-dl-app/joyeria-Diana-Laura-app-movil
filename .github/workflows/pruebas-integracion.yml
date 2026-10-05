@@ -38,6 +38,10 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
+      # La clave de Firebase y la cuenta de cliente de prueba vienen de los secretos del repositorio.
+      - name: Preparar la configuración de la app
+        run: echo '{"FIREBASE_API_KEY":"${{ secrets.FIREBASE_API_KEY }}","PRUEBAS_CORREO":"${{ secrets.PRUEBAS_CORREO }}","PRUEBAS_CONTRASENA":"${{ secrets.PRUEBAS_CONTRASENA }}"}' > env.json
+
       - name: Ejecutar pruebas de integración en el emulador
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -46,4 +50,4 @@ jobs:
           target: google_apis
           profile: pixel_6
           disable-animations: true
-          script: flutter test integration_test/catalogo_test.dart --reporter expanded
+          script: flutter test integration_test/catalogo_test.dart integration_test/recorrido_cliente_test.dart --dart-define-from-file=env.json --reporter expanded
