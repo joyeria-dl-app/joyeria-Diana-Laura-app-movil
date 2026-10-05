@@ -89,7 +89,6 @@ Usamos versionamiento semántico (`MAYOR.MENOR.PARCHE`). Al cerrar cada sprint s
 | Versión | Sprint | Contenido |
 |---|---|---|
 | v0.1.0 | Sprint 1 | Base de la app, inicio de sesión, registro y diseño visual |
-| v0.2.0 | Sprint 2 | Catálogo con filtros, detalle con galería, carrito, favoritos y plan de pruebas |
 | v0.2.0 | Sprint 2 | Catálogo, detalle de pieza, carrito y favoritos |
 | v0.3.0 | Sprint 3 | Apartado o compra, pago con Mercado Pago y personalización |
 | v1.0.0 | Sprint 4 | Perfil, notificaciones, zonas de entrega y versión en pruebas internas de Google Play |
