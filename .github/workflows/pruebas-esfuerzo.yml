@@ -1,8 +1,11 @@
 # PRUEBAS DE ESFUERZO: carga creciente sobre el backend que usa la app.
-# Solo se lanza a mano porque genera tráfico real en el servidor de Render.
+# Genera tráfico real en el servidor de Render, por eso no corre en cada cambio:
+# se lanza a mano o al publicar una etiqueta de versión (v0.3.0, v1.0.0…).
 name: Pruebas de esfuerzo
 
 on:
+  push:
+    tags: ['v*']
   workflow_dispatch:
     inputs:
       usuarios:
@@ -23,6 +26,7 @@ jobs:
       - name: Ejecutar prueba de esfuerzo
         uses: grafana/run-k6-action@v1
         env:
+          # Con la etiqueta no hay entrada manual; el script usa 50 usuarios.
           USUARIOS: ${{ inputs.usuarios }}
         with:
           path: pruebas/esfuerzo/catalogo.js

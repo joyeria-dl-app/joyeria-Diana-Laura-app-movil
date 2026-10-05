@@ -74,6 +74,8 @@ Reglas:
 | `flutter-ci.yml` (integración continua) | En cada Pull Request y push a `develop` y `main` | Analiza el código (`flutter analyze`) y corre las pruebas (`flutter test`). Si falla, el Pull Request no se puede integrar. |
 | `release-apk.yml` (entrega continua) | Al publicar una versión | Corre las pruebas, compila el APK y lo adjunta a la versión para descargarlo e instalarlo. |
 
+Cada tipo de prueba (unitarias, análisis estático, aceptación, integración, regresión, rendimiento y esfuerzo) tiene su propio pipeline. Las herramientas, los cambios respecto a lo planeado y en qué momento del versionamiento corre cada uno están en [pruebas/herramientas_y_pipelines.md](pruebas/herramientas_y_pipelines.md).
+
 ## Seguridad
 
 - **Dependabot:** revisa cada semana que las librerías no tengan vulnerabilidades conocidas y abre Pull Requests para actualizarlas.
