@@ -13,6 +13,7 @@ cada tipo de prueba tiene su propio pipeline en `.github/workflows`.
 | Aceptación | `integration_test` en el emulador Android | Sí | Recorre cada criterio de aceptación de las historias de usuario en la app instalada. |
 | Regresión | `flutter_test` + `integration_test` en el emulador | Sí | Vuelve a correr todas las pruebas y las de la versión anterior para ver que nada se rompió. |
 | Rendimiento | `FrameTiming` en el emulador y `flutter build apk --analyze-size` | Sí | Mide tiempos de carga, cuadros lentos y el peso del APK. |
+| Entorno | `integration_test` en el emulador + `adb` (`pruebas/entorno.sh`) | Sí | `adb` cambia la batería, simula una llamada, manda la app a segundo plano y activa el modo avión en el emulador mientras la prueba revisa cómo reacciona la app. |
 | Esfuerzo | k6 (Grafana) | No: prueba el backend | La app no guarda datos propios; lo que debe aguantar muchos usuarios a la vez es el backend que usa. Un teléfono no puede generar esa carga. |
 
 ### Cambios respecto a lo planeado
@@ -36,8 +37,8 @@ integración, aceptación y rendimiento en el emulador.
 | Momento | Pipelines | Orden | Si falla |
 |---|---|---|---|
 | Pull Request de una tarea a `develop` | `flutter-ci.yml`, `analisis-estatico.yml`, `pruebas-unitarias.yml` | En paralelo | No se puede unir el Pull Request |
-| Push a `develop` (tarea ya unida) | Los anteriores + `pruebas-integracion.yml`, `pruebas-aceptacion.yml`, `pruebas-rendimiento.yml` | En paralelo, después de que pasaron los del Pull Request | Se corrige con una tarea `fix/*` antes de seguir |
-| Pull Request de `develop` a `main` | `flutter-ci.yml`, `analisis-estatico.yml`, `pruebas-unitarias.yml`, `pruebas-integracion.yml`, `pruebas-aceptacion.yml` | En paralelo | No se puede pasar a `main` |
+| Push a `develop` (tarea ya unida) | Los anteriores + `pruebas-integracion.yml`, `pruebas-aceptacion.yml`, `pruebas-rendimiento.yml`, `pruebas-entorno.yml` | En paralelo, después de que pasaron los del Pull Request | Se corrige con una tarea `fix/*` antes de seguir |
+| Pull Request de `develop` a `main` | `flutter-ci.yml`, `analisis-estatico.yml`, `pruebas-unitarias.yml`, `pruebas-integracion.yml`, `pruebas-aceptacion.yml`, `pruebas-entorno.yml` | En paralelo | No se puede pasar a `main` |
 | Push a `main` y etiqueta `v*` | `pruebas-regresion.yml`, `pruebas-rendimiento.yml`, `pruebas-esfuerzo.yml` | En paralelo | Se corrige antes de publicar la versión |
 | Versión publicada en Releases | `release-apk.yml` | Pruebas y después el APK | No se genera el APK |
 | Programada | Regresión cada lunes | | Se abre una tarea en el tablero |
@@ -48,7 +49,8 @@ integración, aceptación y rendimiento en el emulador.
 |---|---|
 | `analysis_options.yaml` | Reglas del análisis estático (`flutter_lints`) |
 | `test/` | Pruebas unitarias y de widgets, con sus datos simulados |
-| `integration_test/` | Integración, aceptación (`aceptacion_test.dart` y `aceptacion_pedidos_test.dart`) y rendimiento (`rendimiento_test.dart`) en el emulador |
+| `integration_test/` | Integración, aceptación (`aceptacion_test.dart` y `aceptacion_pedidos_test.dart`) rendimiento (`rendimiento_test.dart`) y entorno (`entorno_test.dart`) en el emulador |
 | `pruebas/esfuerzo/` | Script de k6 con la carga (50 usuarios) y los umbrales (95 % < 2 s, < 1 % de errores) |
-| `pruebas/*.md` | Resultados de aceptación, seguridad y regresión de cada sprint |
+| `pruebas/entorno.sh` | Corre la prueba de entorno y aplica con `adb` la batería baja, la llamada, el segundo plano y el modo avión |
+| `pruebas/*.md` | Resultados de aceptación, seguridad, regresión y entorno de cada sprint |
 | Secretos del repositorio | Cuenta de cliente de prueba y clave de Firebase que usan los pipelines |
