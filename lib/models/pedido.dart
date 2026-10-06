@@ -7,7 +7,13 @@ double? _aNumero(Object? valor) => switch (valor) {
   _ => null,
 };
 
-DateTime? _aFecha(Object? valor) => valor is String ? DateTime.tryParse(valor)?.toLocal() : null;
+// El backend guarda las fechas en UTC y a veces las envía sin zona ("2026-10-05 21:13:57");
+// sin la Z, Dart las tomaría como hora local y saldrían 6 horas adelantadas.
+DateTime? _aFecha(Object? valor) {
+  if (valor is! String) return null;
+  final conZona = RegExp(r'(Z|[+-]\d{2}(:?\d{2})?)$').hasMatch(valor) ? valor : '${valor}Z';
+  return DateTime.tryParse(conZona)?.toLocal();
+}
 
 // Método de pago dado de alta en el sitio (GET /carrito/metodos-pago).
 class MetodoPago {

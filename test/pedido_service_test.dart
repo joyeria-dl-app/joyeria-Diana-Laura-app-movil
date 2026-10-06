@@ -284,4 +284,9 @@ void main() {
     });
     expect(await servicio.whatsappTienda(), '527713321421');
   });
+
+  test('Las fechas sin zona del backend se toman como UTC', () {
+    final p = Pedido.fromJson({'id': 1, 'total': '10', 'fecha_creacion': '2026-10-05 21:13:57.862285'});
+    expect(p.fechaCreacion, DateTime.utc(2026, 10, 5, 21, 13, 57, 862, 285).toLocal());
+  });
 }
