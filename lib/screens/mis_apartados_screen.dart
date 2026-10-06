@@ -56,10 +56,11 @@ class _MisApartadosScreenState extends State<MisApartadosScreen> {
     final abonables = _activos.where((a) => a.puedeAbonar).toList();
     if (abonables.isEmpty) {
       final a = _activos.first;
+      // El pago inicial sin confirmar también cuenta como abono pendiente; se revisa primero.
       _avisar(
-        a.abonoPorConfirmar
-            ? 'Ya enviaste un abono. Podrás hacer otro cuando la tienda lo confirme.'
-            : 'Podrás abonar cuando la tienda confirme tu pago inicial.',
+        a.estado == 'pendiente_pago'
+            ? 'Podrás abonar cuando la tienda confirme tu pago inicial.'
+            : 'Ya enviaste un abono. Podrás hacer otro cuando la tienda lo confirme.',
       );
       return;
     }

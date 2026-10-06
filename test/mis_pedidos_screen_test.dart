@@ -224,7 +224,7 @@ void main() {
 
   testWidgets('Abonar: sin pago inicial confirmado avisa que todavía no se puede', (tester) async {
     final servicio = _PedidosFalso(
-      apartados: [Apartado(id: 9, folio: 'AP-9', estado: 'pendiente_pago', montoTotal: 500, montoPagado: 250, saldo: 250)],
+      apartados: [Apartado(id: 9, folio: 'AP-9', estado: 'pendiente_pago', montoTotal: 500, montoPagado: 250, saldo: 250, abonoPorConfirmar: true)],
     );
     await _abrir(tester, servicio, const MisApartadosScreen());
 
