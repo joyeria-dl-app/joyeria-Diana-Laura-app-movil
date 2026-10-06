@@ -1,0 +1,68 @@
+# PRUEBAS DE ENTORNO: cómo se comporta la app ante lo que pasa en el teléfono
+# (batería baja, llamada entrante, segundo plano y sin señal), simulado con adb en
+# el emulador Android contra el backend de Render.
+# Corre cada vez que se une una tarea a develop y al pedir unir develop a main;
+# si falla, no se puede pasar a main.
+name: Pruebas de entorno
+
+on:
+  push:
+    branches: [develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  entorno:
+    name: Entorno en emulador Android
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v7
+
+      - name: Instalar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.5'
+          channel: stable
+          cache: true
+
+      - name: Instalar dependencias
+        run: flutter pub get
+
+      - name: Instalar Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      # Permite al emulador usar la aceleración por hardware del runner.
+      - name: Habilitar KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      # La clave de Firebase y la cuenta de cliente de prueba vienen de los secretos del repositorio.
+      - name: Preparar la configuración de la app
+        run: echo '{"FIREBASE_API_KEY":"${{ secrets.FIREBASE_API_KEY }}","PRUEBAS_CORREO":"${{ secrets.PRUEBAS_CORREO }}","PRUEBAS_CONTRASENA":"${{ secrets.PRUEBAS_CONTRASENA }}"}' > env.json
+
+      # pruebas/entorno.sh corre la prueba y aplica cada situación con adb cuando la prueba lo pide.
+      - name: Ejecutar pruebas de entorno en el emulador
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          script: CAPTURAS=capturas-entorno bash pruebas/entorno.sh
+
+      - name: Guardar las capturas de cada caso
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: capturas-entorno
+          path: capturas-entorno
+          if-no-files-found: ignore
