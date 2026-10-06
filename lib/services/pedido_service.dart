@@ -92,6 +92,35 @@ class PedidoService {
     return (data as List<dynamic>).cast<Map<String, dynamic>>().map(Pedido.fromJson).toList();
   }
 
+  // Comprobante de transferencia (POST /carrito/pedidos/:id/comprobante, campo "imagen").
+  Future<void> subirComprobante(int pedidoId, List<int> bytes, String nombreArchivo) async {
+    await _pedir(
+      () =>
+          _api.dio.post('/carrito/pedidos/$pedidoId/comprobante', data: FormData.fromMap({'imagen': MultipartFile.fromBytes(bytes, filename: nombreArchivo)})),
+    );
+  }
+
+  // Abono a un apartado, igual que en el sitio web (POST /apartados/:id/solicitar-abono).
+  // Con transferencia se manda la foto del comprobante en el campo "imagen"; el trabajador lo confirma.
+  Future<void> solicitarAbono(int apartadoId, {required double monto, required MetodoPago metodo, List<int>? comprobante, String? nombreArchivo}) async {
+    final datos = {'monto': monto.toStringAsFixed(2), 'metodo_pago_id': metodo.id};
+    await _pedir(
+      () => _api.dio.post(
+        '/apartados/$apartadoId/solicitar-abono',
+        data: comprobante == null
+            ? datos
+            : FormData.fromMap({...datos, 'imagen': MultipartFile.fromBytes(comprobante, filename: nombreArchivo ?? 'comprobante.jpg')}),
+      ),
+    );
+  }
+
+  // WhatsApp de la tienda dado de alta en el panel (por ejemplo "527713321421").
+  Future<String?> whatsappTienda() async {
+    final data = await _pedir(() => _api.dio.get('/content/info-empresa'));
+    final numero = ((data as Map<String, dynamic>)['whatsapp'] as String? ?? '').replaceAll(RegExp(r'\D'), '');
+    return numero.isEmpty ? null : numero;
+  }
+
   Future<List<Apartado>> misApartados() async {
     final data = await _pedir(() => _api.dio.get('/apartados/mis-apartados'));
     return (data as List<dynamic>).cast<Map<String, dynamic>>().map(Apartado.fromJson).toList();

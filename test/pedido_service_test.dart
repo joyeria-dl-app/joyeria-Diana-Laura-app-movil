@@ -263,4 +263,30 @@ void main() {
       throwsA(isA<PedidoException>().having((e) => e.mensaje, 'mensaje', contains('Stock insuficiente'))),
     );
   });
+
+  test('Sube el comprobante de transferencia en el campo "imagen"', () async {
+    final servicio = crear({
+      'POST /carrito/pedidos/43/comprobante': {'success': true, 'data': null},
+    });
+    await servicio.subirComprobante(43, [1, 2, 3], 'comprobante.jpg');
+
+    final datos = backend.peticiones.single.data as FormData;
+    expect(datos.files.single.key, 'imagen');
+    expect(datos.files.single.value.filename, 'comprobante.jpg');
+  });
+
+  test('Lee el WhatsApp de la tienda solo con dígitos', () async {
+    final servicio = crear({
+      'GET /content/info-empresa': {
+        'success': true,
+        'data': {'whatsapp': '+52 771 332 1421'},
+      },
+    });
+    expect(await servicio.whatsappTienda(), '527713321421');
+  });
+
+  test('Las fechas sin zona del backend se toman como UTC', () {
+    final p = Pedido.fromJson({'id': 1, 'total': '10', 'fecha_creacion': '2026-10-05 21:13:57.862285'});
+    expect(p.fechaCreacion, DateTime.utc(2026, 10, 5, 21, 13, 57, 862, 285).toLocal());
+  });
 }

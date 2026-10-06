@@ -7,7 +7,13 @@ double? _aNumero(Object? valor) => switch (valor) {
   _ => null,
 };
 
-DateTime? _aFecha(Object? valor) => valor is String ? DateTime.tryParse(valor)?.toLocal() : null;
+// El backend guarda las fechas en UTC y a veces las envía sin zona ("2026-10-05 21:13:57");
+// sin la Z, Dart las tomaría como hora local y saldrían 6 horas adelantadas.
+DateTime? _aFecha(Object? valor) {
+  if (valor is! String) return null;
+  final conZona = RegExp(r'(Z|[+-]\d{2}(:?\d{2})?)$').hasMatch(valor) ? valor : '${valor}Z';
+  return DateTime.tryParse(conZona)?.toLocal();
+}
 
 // Método de pago dado de alta en el sitio (GET /carrito/metodos-pago).
 class MetodoPago {
@@ -177,6 +183,7 @@ class Pedido {
     this.numeroGuia,
     this.paqueteria,
     this.codigoEntrega,
+    this.comprobanteUrl,
     this.piezas = const [],
     this.historial = const [],
   });
@@ -197,6 +204,7 @@ class Pedido {
     numeroGuia: json['numero_guia'] as String?,
     paqueteria: json['paqueteria'] as String?,
     codigoEntrega: json['codigo_entrega'] as String?,
+    comprobanteUrl: json['comprobante_transferencia_url'] as String?,
     piezas: (json['items'] as List<dynamic>? ?? const []).cast<Map<String, dynamic>>().map(PiezaPedido.fromJson).toList(),
     historial: (json['historial'] as List<dynamic>? ?? const []).cast<Map<String, dynamic>>().map(CambioEstado.fromJson).toList(),
   );
@@ -217,6 +225,8 @@ class Pedido {
   final String? numeroGuia;
   final String? paqueteria;
   final String? codigoEntrega;
+  // Comprobante que subió el cliente cuando paga por transferencia.
+  final String? comprobanteUrl;
   final List<PiezaPedido> piezas;
   final List<CambioEstado> historial;
 
@@ -224,6 +234,9 @@ class Pedido {
   bool get enCurso => !terminado;
   bool get entregado => estado == 'entregado';
   bool get terminado => const {'entregado', 'cancelado', 'expirado'}.contains(estado);
+  bool get cancelado => estado == 'cancelado' || estado == 'expirado';
+  // Transferencia sin comprobante todavía: el cliente debe subirlo (9e).
+  bool get esperaComprobante => estado == 'pendiente' && metodoPagoCodigo == 'transferencia' && comprobanteUrl == null;
 
   // Fecha en que el pedido llegó a un estado: "pendiente" es la creación; los demás salen del historial.
   DateTime? fechaDe(String estadoBuscado) {
@@ -246,6 +259,8 @@ class Apartado {
     required this.saldo,
     this.fechaLimite,
     this.plan,
+    this.planPorcentaje,
+    this.abonoPorConfirmar = false,
     this.piezas = const [],
   });
 
@@ -258,6 +273,8 @@ class Apartado {
     saldo: _aNumero(json['saldo_pendiente']) ?? 0,
     fechaLimite: _aFecha(json['fecha_limite_liquidacion']),
     plan: json['plan_nombre'] as String?,
+    planPorcentaje: _aNumero(json['plan_porcentaje']),
+    abonoPorConfirmar: json['abono_pendiente'] != null,
     piezas: (json['productos'] as List<dynamic>? ?? const []).cast<Map<String, dynamic>>().map(PiezaPedido.fromJson).toList(),
   );
 
@@ -270,7 +287,20 @@ class Apartado {
   final double saldo;
   final DateTime? fechaLimite;
   final String? plan;
+  // Porcentaje del total que se paga en cada abono según el plan.
+  final double? planPorcentaje;
+  // Ya mandó un abono que el trabajador todavía no confirma.
+  final bool abonoPorConfirmar;
   final List<PiezaPedido> piezas;
+
+  // Abono sugerido: la cuota del plan, sin pasar del saldo.
+  double get abonoSugerido {
+    final cuota = planPorcentaje == null ? saldo : double.parse((montoTotal * planPorcentaje! / 100).toStringAsFixed(2));
+    return cuota <= 0 || cuota > saldo ? saldo : cuota;
+  }
+
+  // Solo se abona a un apartado activo (con el pago inicial confirmado) y sin otro abono por confirmar.
+  bool get puedeAbonar => estado == 'activo' && !abonoPorConfirmar && saldo > 0.009;
 
   double get avance => montoTotal <= 0 ? 0 : (montoPagado / montoTotal).clamp(0, 1).toDouble();
   bool get activo => estado == 'activo' || estado == 'pendiente_pago';
