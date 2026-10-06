@@ -6,6 +6,8 @@ import '../screens/confirmar_pedido_screen.dart';
 import '../screens/favoritos_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/login_screen.dart';
+import '../screens/mis_apartados_screen.dart';
+import '../screens/mis_pedidos_screen.dart';
 import '../screens/register_screen.dart';
 
 class AppRoutes {
@@ -16,6 +18,8 @@ class AppRoutes {
   static const String carrito = '/carrito';
   static const String favoritos = '/favoritos';
   static const String confirmarPedido = '/confirmar-pedido';
+  static const String misPedidos = '/mis-pedidos';
+  static const String misApartados = '/mis-apartados';
 
   static Map<String, WidgetBuilder> get routes => {
     home: (_) => const HomeScreen(),
@@ -25,5 +29,7 @@ class AppRoutes {
     carrito: (_) => const CarritoScreen(),
     favoritos: (_) => const FavoritosScreen(),
     confirmarPedido: (_) => const ConfirmarPedidoScreen(),
+    misPedidos: (_) => const MisPedidosScreen(),
+    misApartados: (_) => const MisApartadosScreen(),
   };
 }

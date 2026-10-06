@@ -94,10 +94,7 @@ class PedidoListoScreen extends StatelessWidget {
                     type: MaterialType.transparency,
                     child: InkWell(
                       borderRadius: BorderRadius.circular(18),
-                      // Mis pedidos y Mis apartados llegan con la tarea #38.
-                      onTap: () => ScaffoldMessenger.of(context)
-                        ..hideCurrentSnackBar()
-                        ..showSnackBar(const SnackBar(content: Text('Disponible muy pronto'))),
+                      onTap: () => Navigator.pushNamedAndRemoveUntil(context, apartado ? AppRoutes.misApartados : AppRoutes.misPedidos, (r) => r.isFirst),
                       child: SizedBox(
                         height: 52,
                         child: Row(

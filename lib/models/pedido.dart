@@ -177,6 +177,7 @@ class Pedido {
     this.numeroGuia,
     this.paqueteria,
     this.codigoEntrega,
+    this.comprobanteUrl,
     this.piezas = const [],
     this.historial = const [],
   });
@@ -197,6 +198,7 @@ class Pedido {
     numeroGuia: json['numero_guia'] as String?,
     paqueteria: json['paqueteria'] as String?,
     codigoEntrega: json['codigo_entrega'] as String?,
+    comprobanteUrl: json['comprobante_transferencia_url'] as String?,
     piezas: (json['items'] as List<dynamic>? ?? const []).cast<Map<String, dynamic>>().map(PiezaPedido.fromJson).toList(),
     historial: (json['historial'] as List<dynamic>? ?? const []).cast<Map<String, dynamic>>().map(CambioEstado.fromJson).toList(),
   );
@@ -217,6 +219,8 @@ class Pedido {
   final String? numeroGuia;
   final String? paqueteria;
   final String? codigoEntrega;
+  // Comprobante que subió el cliente cuando paga por transferencia.
+  final String? comprobanteUrl;
   final List<PiezaPedido> piezas;
   final List<CambioEstado> historial;
 
@@ -224,6 +228,9 @@ class Pedido {
   bool get enCurso => !terminado;
   bool get entregado => estado == 'entregado';
   bool get terminado => const {'entregado', 'cancelado', 'expirado'}.contains(estado);
+  bool get cancelado => estado == 'cancelado' || estado == 'expirado';
+  // Transferencia sin comprobante todavía: el cliente debe subirlo (9e).
+  bool get esperaComprobante => estado == 'pendiente' && metodoPagoCodigo == 'transferencia' && comprobanteUrl == null;
 
   // Fecha en que el pedido llegó a un estado: "pendiente" es la creación; los demás salen del historial.
   DateTime? fechaDe(String estadoBuscado) {
