@@ -285,6 +285,57 @@ void main() {
     expect(await servicio.whatsappTienda(), '527713321421');
   });
 
+  test('Solicita el abono en tienda con el monto y el método', () async {
+    final servicio = crear({
+      'POST /apartados/7/solicitar-abono': {'success': true, 'data': null},
+    });
+    await servicio.solicitarAbono(
+      7,
+      monto: 290.16,
+      metodo: const MetodoPago(id: 2, nombre: 'Efectivo en Tienda', codigo: 'efectivo'),
+    );
+
+    expect(backend.peticiones.single.path, '/apartados/7/solicitar-abono');
+    expect(cuerpo(0), {'monto': '290.16', 'metodo_pago_id': 2});
+  });
+
+  test('El abono por transferencia manda el comprobante en el campo "imagen"', () async {
+    final servicio = crear({
+      'POST /apartados/7/solicitar-abono': {'success': true, 'data': null},
+    });
+    await servicio.solicitarAbono(
+      7,
+      monto: 290.16,
+      metodo: const MetodoPago(id: 1, nombre: 'Transferencia Bancaria', codigo: 'transferencia'),
+      comprobante: [1, 2, 3],
+      nombreArchivo: 'abono.jpg',
+    );
+
+    final datos = backend.peticiones.single.data as FormData;
+    expect(datos.fields.map((c) => '${c.key}=${c.value}'), ['monto=290.16', 'metodo_pago_id=1']);
+    expect(datos.files.single.key, 'imagen');
+    expect(datos.files.single.value.filename, 'abono.jpg');
+  });
+
+  test('Muestra el mensaje del backend si el abono no procede', () async {
+    final servicio = crear({
+      'POST /apartados/7/solicitar-abono': {'success': false, 'message': 'Ya tienes un abono pendiente de confirmar.'},
+    }, status: 400);
+    expect(
+      servicio.solicitarAbono(
+        7,
+        monto: 100,
+        metodo: const MetodoPago(id: 2, nombre: 'Efectivo', codigo: 'efectivo'),
+      ),
+      throwsA(isA<PedidoException>().having((e) => e.mensaje, 'mensaje', 'Ya tienes un abono pendiente de confirmar.')),
+    );
+  });
+
+  test('Sin conexión avisa que revise su conexión', () async {
+    final servicio = crear({}, status: 500);
+    expect(servicio.misApartados(), throwsA(isA<PedidoException>().having((e) => e.mensaje, 'mensaje', contains('Revisa tu conexión'))));
+  });
+
   test('Las fechas sin zona del backend se toman como UTC', () {
     final p = Pedido.fromJson({'id': 1, 'total': '10', 'fecha_creacion': '2026-10-05 21:13:57.862285'});
     expect(p.fechaCreacion, DateTime.utc(2026, 10, 5, 21, 13, 57, 862, 285).toLocal());
