@@ -100,6 +100,20 @@ class PedidoService {
     );
   }
 
+  // Abono a un apartado, igual que en el sitio web (POST /apartados/:id/solicitar-abono).
+  // Con transferencia se manda la foto del comprobante en el campo "imagen"; el trabajador lo confirma.
+  Future<void> solicitarAbono(int apartadoId, {required double monto, required MetodoPago metodo, List<int>? comprobante, String? nombreArchivo}) async {
+    final datos = {'monto': monto.toStringAsFixed(2), 'metodo_pago_id': metodo.id};
+    await _pedir(
+      () => _api.dio.post(
+        '/apartados/$apartadoId/solicitar-abono',
+        data: comprobante == null
+            ? datos
+            : FormData.fromMap({...datos, 'imagen': MultipartFile.fromBytes(comprobante, filename: nombreArchivo ?? 'comprobante.jpg')}),
+      ),
+    );
+  }
+
   // WhatsApp de la tienda dado de alta en el panel (por ejemplo "527713321421").
   Future<String?> whatsappTienda() async {
     final data = await _pedir(() => _api.dio.get('/content/info-empresa'));

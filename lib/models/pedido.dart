@@ -259,6 +259,8 @@ class Apartado {
     required this.saldo,
     this.fechaLimite,
     this.plan,
+    this.planPorcentaje,
+    this.abonoPorConfirmar = false,
     this.piezas = const [],
   });
 
@@ -271,6 +273,8 @@ class Apartado {
     saldo: _aNumero(json['saldo_pendiente']) ?? 0,
     fechaLimite: _aFecha(json['fecha_limite_liquidacion']),
     plan: json['plan_nombre'] as String?,
+    planPorcentaje: _aNumero(json['plan_porcentaje']),
+    abonoPorConfirmar: json['abono_pendiente'] != null,
     piezas: (json['productos'] as List<dynamic>? ?? const []).cast<Map<String, dynamic>>().map(PiezaPedido.fromJson).toList(),
   );
 
@@ -283,7 +287,20 @@ class Apartado {
   final double saldo;
   final DateTime? fechaLimite;
   final String? plan;
+  // Porcentaje del total que se paga en cada abono según el plan.
+  final double? planPorcentaje;
+  // Ya mandó un abono que el trabajador todavía no confirma.
+  final bool abonoPorConfirmar;
   final List<PiezaPedido> piezas;
+
+  // Abono sugerido: la cuota del plan, sin pasar del saldo.
+  double get abonoSugerido {
+    final cuota = planPorcentaje == null ? saldo : double.parse((montoTotal * planPorcentaje! / 100).toStringAsFixed(2));
+    return cuota <= 0 || cuota > saldo ? saldo : cuota;
+  }
+
+  // Solo se abona a un apartado activo (con el pago inicial confirmado) y sin otro abono por confirmar.
+  bool get puedeAbonar => estado == 'activo' && !abonoPorConfirmar && saldo > 0.009;
 
   double get avance => montoTotal <= 0 ? 0 : (montoPagado / montoTotal).clamp(0, 1).toDouble();
   bool get activo => estado == 'activo' || estado == 'pendiente_pago';

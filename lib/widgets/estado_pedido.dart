@@ -306,9 +306,13 @@ class BotonDegradado extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 if (icono != null) ...[Icon(icono, size: 20, color: Colors.white), const SizedBox(width: 8)],
-                Text(
-                  texto,
-                  style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
+                Flexible(
+                  child: Text(
+                    texto,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
+                  ),
                 ),
               ],
             ),

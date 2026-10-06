@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../models/pedido.dart';
@@ -11,7 +12,6 @@ import '../utils/fechas.dart';
 import '../utils/formato.dart';
 import '../widgets/decoracion.dart';
 import '../widgets/estado_pedido.dart';
-import 'seguimiento_screen.dart';
 
 // Mis apartados (boceto P12, estados 10a y 10b de Bocetos_Sprint3).
 class MisApartadosScreen extends StatefulWidget {
@@ -47,6 +47,45 @@ class _MisApartadosScreenState extends State<MisApartadosScreen> {
 
   List<Apartado> get _activos => (_apartados ?? const <Apartado>[]).where((a) => a.activo).toList();
 
+  void _avisar(String texto) => ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(SnackBar(content: Text(texto)));
+
+  // Registrar un abono como en el sitio web: se elige el apartado, el monto y cómo se paga.
+  Future<void> _abonar() async {
+    final abonables = _activos.where((a) => a.puedeAbonar).toList();
+    if (abonables.isEmpty) {
+      final a = _activos.first;
+      _avisar(
+        a.abonoPorConfirmar
+            ? 'Ya enviaste un abono. Podrás hacer otro cuando la tienda lo confirme.'
+            : 'Podrás abonar cuando la tienda confirme tu pago inicial.',
+      );
+      return;
+    }
+    final servicio = context.read<PedidoService>();
+    try {
+      final opciones = await servicio.opciones();
+      if (!mounted) return;
+      final enviado = await showModalBottomSheet<bool>(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: AppColors.fondo,
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
+        builder: (_) => Provider<PedidoService>.value(
+          value: servicio,
+          child: HojaAbono(apartados: abonables, metodos: opciones.metodos),
+        ),
+      );
+      if (enviado == true) {
+        _avisar('Recibimos tu abono. La tienda lo confirmará en breve.');
+        _cargar();
+      }
+    } on PedidoException catch (e) {
+      _avisar(e.mensaje);
+    }
+  }
+
   void _ayuda() {
     showModalBottomSheet<void>(
       context: context,
@@ -63,7 +102,7 @@ class _MisApartadosScreenState extends State<MisApartadosScreen> {
               SizedBox(height: 10),
               Text(
                 'Pagas al menos el 50% para reservar tus piezas y el resto en abonos antes de la fecha límite. '
-                'Cuando liquidas, las recoges en la tienda. Los abonos se registran en tienda o por WhatsApp.',
+                'Cuando liquidas, las recoges en la tienda. Tus abonos los registras aquí con transferencia o en la tienda, y la tienda los confirma.',
                 style: TextStyle(color: AppColors.textoSuave, fontSize: 13, height: 1.5),
               ),
             ],
@@ -100,12 +139,7 @@ class _MisApartadosScreenState extends State<MisApartadosScreen> {
                 if (hayActivos)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-                    child: BotonDegradado(
-                      texto: 'Abonar por WhatsApp',
-                      icono: Icons.chat_outlined,
-                      ancho: true,
-                      onPressed: () => abrirWhatsApp(context, 'Hola, quiero abonar a mi apartado ${_activos.map((a) => a.folio).join(', ')}.'),
-                    ),
+                    child: BotonDegradado(texto: 'Abonar', icono: Icons.payments_outlined, ancho: true, onPressed: _abonar),
                   ),
               ],
             ),
@@ -270,6 +304,7 @@ class _TarjetaApartado extends StatelessWidget {
     if (a.estado == 'liquidado') return ('Liquidado', TonoEstado.exito, null);
     if (a.estado == 'cancelado') return ('Cancelado', TonoEstado.error, null);
     if (a.estado == 'pendiente_pago') return ('Pago inicial pendiente', TonoEstado.aviso, null);
+    if (a.abonoPorConfirmar) return ('Abono por confirmar', TonoEstado.aviso, Icons.hourglass_top_rounded);
     final dias = a.fechaLimite == null ? null : diasHasta(a.fechaLimite!);
     if (dias != null && dias <= 3) return (dias == 0 ? 'Vence hoy' : '$dias ${dias == 1 ? 'día' : 'días'}', TonoEstado.aviso, Icons.schedule_rounded);
     return ('Al corriente', TonoEstado.exito, null);
@@ -350,6 +385,180 @@ class _TarjetaApartado extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// Hoja para registrar un abono: apartado, monto y forma de pago, como en el sitio web.
+class HojaAbono extends StatefulWidget {
+  const HojaAbono({super.key, required this.apartados, required this.metodos});
+  final List<Apartado> apartados;
+  final List<MetodoPago> metodos;
+
+  @override
+  State<HojaAbono> createState() => _HojaAbonoState();
+}
+
+class _HojaAbonoState extends State<HojaAbono> {
+  late Apartado _apartado = widget.apartados.first;
+  bool _todo = false;
+  late MetodoPago? _metodo = widget.metodos.where((m) => m.codigo == 'transferencia').firstOrNull;
+  bool _enviando = false;
+  String? _error;
+
+  double get _monto => _todo ? _apartado.saldo : _apartado.abonoSugerido;
+
+  Future<void> _enviar() async {
+    final metodo = _metodo!;
+    final servicio = context.read<PedidoService>();
+    List<int>? bytes;
+    String? nombre;
+    if (metodo.codigo == 'transferencia') {
+      final foto = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 85, maxWidth: 1800);
+      if (foto == null) return;
+      bytes = await foto.readAsBytes();
+      nombre = foto.name;
+    }
+    setState(() {
+      _enviando = true;
+      _error = null;
+    });
+    try {
+      await servicio.solicitarAbono(_apartado.id, monto: _monto, metodo: metodo, comprobante: bytes, nombreArchivo: nombre);
+      if (mounted) Navigator.pop(context, true);
+    } on PedidoException catch (e) {
+      if (mounted) {
+        setState(() {
+          _enviando = false;
+          _error = e.mensaje;
+        });
+      }
+    }
+  }
+
+  String _nombre(MetodoPago m) => switch (m.codigo) {
+    'efectivo' => 'Efectivo en tienda',
+    'transferencia' => 'Transferencia',
+    'mercadopago' => 'Mercado Pago',
+    _ => m.nombre,
+  };
+
+  String _detalle(MetodoPago m) => switch (m.codigo) {
+    'efectivo' => 'Pagas en la tienda y ahí lo registran',
+    'transferencia' => 'Subes la foto de tu comprobante',
+    _ => 'Pago en línea muy pronto en la app',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final metodo = _metodo;
+    final enLinea = metodo?.enLinea ?? false;
+    final transferencia = metodo?.codigo == 'transferencia';
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(22, 14, 22, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 44,
+                height: 5,
+                decoration: BoxDecoration(color: AppColors.superficie2, borderRadius: BorderRadius.circular(3)),
+              ),
+            ),
+            const SizedBox(height: 18),
+            const Text('Abonar a tu apartado', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 14),
+            if (widget.apartados.length > 1) ...[
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final a in widget.apartados) _Opcion(texto: a.folio, elegida: a.id == _apartado.id, onTap: () => setState(() => _apartado = a)),
+                ],
+              ),
+              const SizedBox(height: 14),
+            ],
+            const Text('¿Cuánto abonas?', style: TextStyle(color: AppColors.textoSuave, fontSize: 12.5)),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: _Opcion(
+                    texto: _apartado.planPorcentaje == null ? 'Saldo' : 'Abono del plan',
+                    detalle: formatoPrecioCompleto(_apartado.abonoSugerido),
+                    elegida: !_todo,
+                    onTap: () => setState(() => _todo = false),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _Opcion(texto: 'Liquidar', detalle: formatoPrecioCompleto(_apartado.saldo), elegida: _todo, onTap: () => setState(() => _todo = true)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            const Text('¿Cómo pagas?', style: TextStyle(color: AppColors.textoSuave, fontSize: 12.5)),
+            const SizedBox(height: 8),
+            for (final m in widget.metodos) ...[
+              _Opcion(texto: _nombre(m), detalle: _detalle(m), elegida: m.id == metodo?.id, onTap: () => setState(() => _metodo = m)),
+              const SizedBox(height: 8),
+            ],
+            if (_error != null) ...[const SizedBox(height: 4), Text(_error!, style: const TextStyle(color: colorAviso, fontSize: 12))],
+            const SizedBox(height: 12),
+            if (_enviando)
+              const Center(child: CircularProgressIndicator(color: AppColors.primario))
+            else
+              Opacity(
+                opacity: metodo == null || enLinea ? 0.5 : 1,
+                child: BotonDegradado(
+                  texto: transferencia ? 'Subir comprobante y enviar' : 'Avisar que pagaré en tienda',
+                  icono: transferencia ? Icons.upload_file_outlined : Icons.storefront_outlined,
+                  ancho: true,
+                  onPressed: metodo == null || enLinea ? null : _enviar,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Opcion extends StatelessWidget {
+  const _Opcion({required this.texto, this.detalle, required this.elegida, required this.onTap});
+  final String texto;
+  final String? detalle;
+  final bool elegida;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      selected: elegida,
+      button: true,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+          decoration: BoxDecoration(
+            color: elegida ? const Color(0x14FF8CC6) : AppColors.superficie,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: elegida ? AppColors.primario : AppColors.borde, width: elegida ? 1.5 : 1),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(texto, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+              if (detalle != null) Text(detalle!, style: const TextStyle(color: AppColors.textoSuave, fontSize: 11)),
+            ],
+          ),
+        ),
       ),
     );
   }

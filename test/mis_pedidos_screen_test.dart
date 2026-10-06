@@ -20,6 +20,23 @@ class _PedidosFalso extends PedidoService {
 
   @override
   Future<List<Apartado>> misApartados() async => apartados;
+
+  final List<String> abonos = [];
+
+  @override
+  Future<OpcionesCompra> opciones() async => const OpcionesCompra(
+    metodos: [
+      MetodoPago(id: 1, nombre: 'Transferencia Bancaria', codigo: 'transferencia'),
+      MetodoPago(id: 2, nombre: 'Efectivo en Tienda', codigo: 'efectivo'),
+      MetodoPago(id: 7, nombre: 'MercadoPago', codigo: 'mercadopago', enLinea: true),
+    ],
+    costoEnvio: 200,
+  );
+
+  @override
+  Future<void> solicitarAbono(int apartadoId, {required double monto, required MetodoPago metodo, List<int>? comprobante, String? nombreArchivo}) async {
+    abonos.add('$apartadoId $monto ${metodo.codigo}');
+  }
 }
 
 const _pieza = PiezaPedido(nombre: 'Anillos de plata ley .925', cantidad: 2, precioUnitario: 580.32);
@@ -165,7 +182,7 @@ void main() {
     expect(find.text('Al corriente'), findsOneWidget);
     expect(find.text('2 días'), findsOneWidget);
     expect(find.text('Faltan \$580.32'), findsOneWidget);
-    expect(find.text('Abonar por WhatsApp'), findsOneWidget);
+    expect(find.text('Abonar'), findsOneWidget);
   });
 
   testWidgets('10b: sin apartados invita a ir al carrito', (tester) async {
@@ -173,6 +190,47 @@ void main() {
 
     expect(find.text('No tienes apartados'), findsOneWidget);
     expect(find.text('Ir al carrito'), findsOneWidget);
-    expect(find.text('Abonar por WhatsApp'), findsNothing);
+    expect(find.text('Abonar'), findsNothing);
+  });
+
+  testWidgets('Abonar: con el plan semanal sugiere su cuota y registra el abono en tienda', (tester) async {
+    final servicio = _PedidosFalso(
+      apartados: [
+        Apartado(
+          id: 7,
+          folio: 'AP-1',
+          estado: 'activo',
+          montoTotal: 1000,
+          montoPagado: 500,
+          saldo: 500,
+          planPorcentaje: 25,
+          fechaLimite: DateTime.now().add(const Duration(days: 20)),
+        ),
+      ],
+    );
+    await _abrir(tester, servicio, const MisApartadosScreen());
+
+    await tester.tap(find.text('Abonar'));
+    await tester.pumpAndSettle();
+    expect(find.text('Abonar a tu apartado'), findsOneWidget);
+    expect(find.text('\$250.00'), findsOneWidget);
+
+    await tester.tap(find.text('Efectivo en tienda'));
+    await tester.pump();
+    await tester.tap(find.text('Avisar que pagaré en tienda'));
+    await tester.pumpAndSettle();
+    expect(servicio.abonos, ['7 250.0 efectivo']);
+  });
+
+  testWidgets('Abonar: sin pago inicial confirmado avisa que todavía no se puede', (tester) async {
+    final servicio = _PedidosFalso(
+      apartados: [Apartado(id: 9, folio: 'AP-9', estado: 'pendiente_pago', montoTotal: 500, montoPagado: 250, saldo: 250)],
+    );
+    await _abrir(tester, servicio, const MisApartadosScreen());
+
+    await tester.tap(find.text('Abonar'));
+    await tester.pump();
+    expect(find.text('Podrás abonar cuando la tienda confirme tu pago inicial.'), findsOneWidget);
+    expect(servicio.abonos, isEmpty);
   });
 }
