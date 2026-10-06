@@ -48,7 +48,7 @@ integración, aceptación y rendimiento en el emulador.
 |---|---|
 | `analysis_options.yaml` | Reglas del análisis estático (`flutter_lints`) |
 | `test/` | Pruebas unitarias y de widgets, con sus datos simulados |
-| `integration_test/` | Integración, aceptación (`aceptacion_test.dart`) y rendimiento (`rendimiento_test.dart`) en el emulador |
+| `integration_test/` | Integración, aceptación (`aceptacion_test.dart` y `aceptacion_pedidos_test.dart`) y rendimiento (`rendimiento_test.dart`) en el emulador |
 | `pruebas/esfuerzo/` | Script de k6 con la carga (50 usuarios) y los umbrales (95 % < 2 s, < 1 % de errores) |
 | `pruebas/*.md` | Resultados de aceptación, seguridad y regresión de cada sprint |
 | Secretos del repositorio | Cuenta de cliente de prueba y clave de Firebase que usan los pipelines |
