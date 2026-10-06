@@ -1,7 +1,8 @@
-# PRUEBAS DE INTEGRACIÓN: la app real en un emulador Android contra el backend de Render.
+# PRUEBAS DE ACEPTACIÓN: los criterios de aceptación de cada historia de usuario, probados
+# en la app real (emulador Android) contra el backend de Render.
 # Corre cada vez que se une una tarea a develop (para detectar fallas el mismo día) y
 # otra vez al pedir unir develop a main; si falla, no se puede pasar a main.
-name: Pruebas de integración
+name: Pruebas de aceptación
 
 on:
   push:
@@ -11,8 +12,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  integracion:
-    name: Integración en emulador Android
+  aceptacion:
+    name: Aceptación en emulador Android
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -46,7 +47,7 @@ jobs:
       - name: Preparar la configuración de la app
         run: echo '{"FIREBASE_API_KEY":"${{ secrets.FIREBASE_API_KEY }}","PRUEBAS_CORREO":"${{ secrets.PRUEBAS_CORREO }}","PRUEBAS_CONTRASENA":"${{ secrets.PRUEBAS_CONTRASENA }}"}' > env.json
 
-      - name: Ejecutar pruebas de integración en el emulador
+      - name: Ejecutar pruebas de aceptación en el emulador
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
@@ -54,4 +55,4 @@ jobs:
           target: google_apis
           profile: pixel_6
           disable-animations: true
-          script: flutter test integration_test/catalogo_test.dart integration_test/recorrido_cliente_test.dart --dart-define-from-file=env.json --reporter expanded
+          script: flutter test integration_test/aceptacion_test.dart --dart-define-from-file=env.json --reporter expanded

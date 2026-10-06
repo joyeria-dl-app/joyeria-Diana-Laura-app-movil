@@ -4,6 +4,7 @@ name: Pruebas de rendimiento
 on:
   workflow_dispatch:
   push:
+    branches: [develop]
     tags: ['v*']
 
 jobs:
