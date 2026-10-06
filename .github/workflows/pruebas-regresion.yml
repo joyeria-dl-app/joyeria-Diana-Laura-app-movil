@@ -87,4 +87,4 @@ jobs:
           target: google_apis
           profile: pixel_6
           disable-animations: true
-          script: flutter test integration_test/catalogo_test.dart integration_test/recorrido_cliente_test.dart integration_test/aceptacion_test.dart --dart-define-from-file=env.json --reporter expanded
+          script: flutter test integration_test/catalogo_test.dart integration_test/recorrido_cliente_test.dart integration_test/aceptacion_test.dart integration_test/aceptacion_pedidos_test.dart --dart-define-from-file=env.json --reporter expanded
