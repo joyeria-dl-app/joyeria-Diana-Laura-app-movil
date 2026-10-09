@@ -43,9 +43,11 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      # La clave de Firebase y la cuenta de cliente de prueba vienen de los secretos del repositorio.
+      # La clave de Firebase viene de los secretos del repositorio. Este pipeline usa su propia
+      # cuenta de cliente de prueba (ACEPTACION_CORREO): integración, aceptación y entorno corren al
+      # mismo tiempo y, con una sola cuenta, se cambiaban el carrito entre ellos (#185).
       - name: Preparar la configuración de la app
-        run: echo '{"FIREBASE_API_KEY":"${{ secrets.FIREBASE_API_KEY }}","PRUEBAS_CORREO":"${{ secrets.PRUEBAS_CORREO }}","PRUEBAS_CONTRASENA":"${{ secrets.PRUEBAS_CONTRASENA }}"}' > env.json
+        run: echo '{"FIREBASE_API_KEY":"${{ secrets.FIREBASE_API_KEY }}","PRUEBAS_CORREO":"${{ secrets.ACEPTACION_CORREO }}","PRUEBAS_CONTRASENA":"${{ secrets.ACEPTACION_CONTRASENA }}"}' > env.json
 
       - name: Ejecutar pruebas de aceptación en el emulador
         uses: reactivecircus/android-emulator-runner@v2
