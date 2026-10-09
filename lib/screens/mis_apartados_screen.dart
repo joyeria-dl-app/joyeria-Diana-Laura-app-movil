@@ -10,6 +10,7 @@ import '../services/pedido_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/fechas.dart';
 import '../utils/formato.dart';
+import '../utils/pago_en_linea.dart';
 import '../widgets/decoracion.dart';
 import '../widgets/estado_pedido.dart';
 
@@ -24,11 +25,33 @@ class MisApartadosScreen extends StatefulWidget {
 class _MisApartadosScreenState extends State<MisApartadosScreen> {
   List<Apartado>? _apartados;
   PedidoException? _error;
+  // Se abrió Mercado Pago: al volver a la app se consultan otra vez los apartados.
+  bool _esperandoPago = false;
+  late final AppLifecycleListener _ciclo = AppLifecycleListener(
+    onResume: () {
+      if (!_esperandoPago) return;
+      _esperandoPago = false;
+      _cargar();
+    },
+  );
 
   @override
   void initState() {
     super.initState();
+    _ciclo;
     _cargar();
+  }
+
+  @override
+  void dispose() {
+    _ciclo.dispose();
+    super.dispose();
+  }
+
+  // HU-12: pago inicial con Mercado Pago de un apartado que todavía lo espera.
+  Future<void> _pagarInicial(Apartado a) async {
+    final servicio = context.read<PedidoService>();
+    _esperandoPago = await abrirPagoMercadoPago(context, () => servicio.preferenciaApartado(a.id));
   }
 
   Future<void> _cargar() async {
@@ -137,6 +160,16 @@ class _MisApartadosScreenState extends State<MisApartadosScreen> {
                 ),
                 const Padding(padding: EdgeInsets.fromLTRB(20, 14, 20, 0), child: TituloDegradado('Mis apartados', tamano: 28)),
                 Expanded(child: _contenido()),
+                for (final a in _activos.where((a) => a.puedePagarEnLinea))
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                    child: BotonDegradado(
+                      texto: 'Pagar ${a.folio} con Mercado Pago',
+                      icono: Icons.credit_card_rounded,
+                      ancho: true,
+                      onPressed: () => _pagarInicial(a),
+                    ),
+                  ),
                 if (hayActivos)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),

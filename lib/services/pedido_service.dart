@@ -127,14 +127,15 @@ class PedidoService {
   }
 
   // HU-12: enlace de Mercado Pago para pagar un pedido que la tienda ya confirmó.
+  // origen 'app' hace que Mercado Pago regrese a la app y no al sitio web.
   Future<PreferenciaPago> preferenciaPedido(int pedidoId) async {
-    final data = await _pedir(() => _api.dio.post('/carrito/pago/mercadopago', data: {'venta_id': pedidoId}));
+    final data = await _pedir(() => _api.dio.post('/carrito/pago/mercadopago', data: {'venta_id': pedidoId, 'origen': 'app'}));
     return PreferenciaPago.fromJson(data as Map<String, dynamic>);
   }
 
   // HU-12: enlace de Mercado Pago para el pago inicial de un apartado.
   Future<PreferenciaPago> preferenciaApartado(int apartadoId) async {
-    final data = await _pedir(() => _api.dio.post('/apartados/pago/mercadopago', data: {'apartado_id': apartadoId}));
+    final data = await _pedir(() => _api.dio.post('/apartados/pago/mercadopago', data: {'apartado_id': apartadoId, 'origen': 'app'}));
     return PreferenciaPago.fromJson(data as Map<String, dynamic>);
   }
 

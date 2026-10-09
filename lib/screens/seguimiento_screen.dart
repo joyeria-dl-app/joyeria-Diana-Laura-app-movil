@@ -7,6 +7,8 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/pedido.dart';
 import '../services/pedido_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/formato.dart';
+import '../utils/pago_en_linea.dart';
 import '../widgets/estado_pedido.dart';
 import 'mis_pedidos_screen.dart';
 
@@ -37,6 +39,43 @@ class SeguimientoScreen extends StatefulWidget {
 class _SeguimientoScreenState extends State<SeguimientoScreen> {
   late Pedido _pedido = widget.pedido;
   bool _subiendo = false;
+  bool _pagando = false;
+  // Se abrió Mercado Pago: al volver a la app se consulta otra vez el pedido.
+  bool _esperandoPago = false;
+  late final AppLifecycleListener _ciclo = AppLifecycleListener(onResume: _alVolver);
+
+  @override
+  void initState() {
+    super.initState();
+    _ciclo;
+  }
+
+  @override
+  void dispose() {
+    _ciclo.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pagar() async {
+    final servicio = context.read<PedidoService>();
+    setState(() => _pagando = true);
+    final abierta = await abrirPagoMercadoPago(context, () => servicio.preferenciaPedido(_pedido.id));
+    if (mounted) setState(() => _pagando = false);
+    _esperandoPago = abierta;
+  }
+
+  Future<void> _alVolver() async {
+    if (!_esperandoPago) return;
+    _esperandoPago = false;
+    try {
+      final nuevo = (await context.read<PedidoService>().misPedidos()).where((p) => p.id == _pedido.id).firstOrNull;
+      if (!mounted || nuevo == null) return;
+      setState(() => _pedido = nuevo);
+      _avisar(nuevo.pagado ? 'Recibimos tu pago.' : 'Si ya pagaste, en unos momentos se verá aquí.');
+    } on PedidoException catch (e) {
+      _avisar(e.mensaje);
+    }
+  }
 
   void _avisar(String texto) => ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
@@ -133,6 +172,19 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
 
   // Lo que guarda el pedido según su momento: guía (9c), código de entrega (9d) o comprobante (9e).
   List<Widget> _tarjeta(Pedido p) {
+    // HU-12: pedido confirmado con Mercado Pago y todavía sin pagar.
+    if (p.puedePagarEnLinea) {
+      return [
+        _Tarjeta(
+          icono: Icons.credit_card_rounded,
+          titulo: 'Paga con Mercado Pago',
+          texto: 'Tu pedido ya está confirmado · ${formatoPrecioCompleto(p.total)}',
+          accion: _pagando
+              ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: AppColors.primario))
+              : _BotonAccion(icono: Icons.open_in_new_rounded, descripcion: 'Pagar con Mercado Pago', onPressed: _pagar),
+        ),
+      ];
+    }
     if (p.esperaComprobante) {
       return [
         _Tarjeta(
