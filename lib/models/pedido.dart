@@ -335,3 +335,33 @@ class Confirmacion {
   final String folio;
   final int pedidoId;
 }
+
+// HU-12: resultado de un pago con Mercado Pago.
+enum ResultadoPago { aprobado, pendiente, rechazado }
+
+// Regreso de Mercado Pago a la app: joyeriadl://pago?tipo=pedido&id=10&pago=exitoso
+class RegresoPago {
+  const RegresoPago({required this.tipo, required this.id, required this.pago});
+
+  static RegresoPago? desde(Uri uri) {
+    final id = int.tryParse(uri.queryParameters['id'] ?? '');
+    final tipo = uri.queryParameters['tipo'];
+    if (uri.scheme != 'joyeriadl' || uri.host != 'pago' || id == null || (tipo != 'pedido' && tipo != 'apartado')) return null;
+    return RegresoPago(tipo: tipo!, id: id, pago: uri.queryParameters['pago'] ?? '');
+  }
+
+  // pedido o apartado.
+  final String tipo;
+  final int id;
+  // exitoso, pendiente o fallido, como lo manda Mercado Pago.
+  final String pago;
+}
+
+// El servidor manda: si ya registró el pago está aprobado. Si no, se usa lo que dijo Mercado Pago
+// al regresar (el aviso al servidor puede tardar unos segundos). Sin regreso ni pago, no hay resultado.
+ResultadoPago? resultadoDelPago({required bool pagadoEnServidor, String? regreso}) {
+  if (pagadoEnServidor || regreso == 'exitoso') return ResultadoPago.aprobado;
+  if (regreso == 'pendiente') return ResultadoPago.pendiente;
+  if (regreso == null) return null;
+  return ResultadoPago.rechazado;
+}
