@@ -145,4 +145,38 @@ void main() {
       expect(diasHasta(DateTime(2026, 10, 1), hoy: hoy), 0);
     });
   });
+  group('Pagar en línea (HU-12)', () {
+    Pedido pedido({String estado = 'confirmado', String? metodo = 'mercadopago', String? pago = 'pendiente'}) =>
+        Pedido(id: 1, folio: 'DL-1', estado: estado, total: 10, metodoPagoCodigo: metodo, estadoPago: pago);
+
+    test('Un pedido con Mercado Pago se paga cuando la tienda lo confirma', () {
+      expect(pedido(estado: 'pendiente').puedePagarEnLinea, isFalse);
+      for (final estado in ['confirmado', 'en_preparacion', 'enviado']) {
+        expect(pedido(estado: estado).puedePagarEnLinea, isTrue, reason: estado);
+      }
+    });
+
+    test('No se paga si ya está pagado, terminado o con otro método', () {
+      expect(pedido(pago: 'aprobado').puedePagarEnLinea, isFalse);
+      expect(pedido(estado: 'entregado').puedePagarEnLinea, isFalse);
+      expect(pedido(estado: 'cancelado').puedePagarEnLinea, isFalse);
+      expect(pedido(metodo: 'efectivo').puedePagarEnLinea, isFalse);
+      expect(pedido(metodo: 'paypal').puedePagarEnLinea, isFalse);
+    });
+
+    test('El pago inicial de un apartado con Mercado Pago se hace mientras espera ese pago', () {
+      final a = Apartado.fromJson({
+        'id': 7,
+        'estado': 'pendiente_pago',
+        'monto_total': '1000',
+        'monto_pagado': '500',
+        'saldo_pendiente': '500',
+        'metodo_pago_inicial': 'mercadopago',
+      });
+      expect(a.metodoInicial, 'mercadopago');
+      expect(a.puedePagarEnLinea, isTrue);
+      expect(Apartado.fromJson({'id': 7, 'estado': 'activo', 'metodo_pago_inicial': 'mercadopago'}).puedePagarEnLinea, isFalse);
+      expect(Apartado.fromJson({'id': 7, 'estado': 'pendiente_pago', 'metodo_pago_inicial': 'efectivo'}).puedePagarEnLinea, isFalse);
+    });
+  });
 }

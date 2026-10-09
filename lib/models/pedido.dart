@@ -237,6 +237,10 @@ class Pedido {
   bool get cancelado => estado == 'cancelado' || estado == 'expirado';
   // Transferencia sin comprobante todavía: el cliente debe subirlo (9e).
   bool get esperaComprobante => estado == 'pendiente' && metodoPagoCodigo == 'transferencia' && comprobanteUrl == null;
+  bool get pagado => estadoPago == 'aprobado';
+  // HU-12: con Mercado Pago se paga en línea cuando la tienda ya confirmó el pedido y mientras no esté pagado.
+  // El plazo para pagar lo revisa el backend al pedir la preferencia.
+  bool get puedePagarEnLinea => metodoPagoCodigo == 'mercadopago' && !pagado && const {'confirmado', 'en_preparacion', 'enviado'}.contains(estado);
 
   // Fecha en que el pedido llegó a un estado: "pendiente" es la creación; los demás salen del historial.
   DateTime? fechaDe(String estadoBuscado) {
@@ -261,6 +265,7 @@ class Apartado {
     this.plan,
     this.planPorcentaje,
     this.abonoPorConfirmar = false,
+    this.metodoInicial,
     this.piezas = const [],
   });
 
@@ -275,6 +280,7 @@ class Apartado {
     plan: json['plan_nombre'] as String?,
     planPorcentaje: _aNumero(json['plan_porcentaje']),
     abonoPorConfirmar: json['abono_pendiente'] != null,
+    metodoInicial: json['metodo_pago_inicial'] as String?,
     piezas: (json['productos'] as List<dynamic>? ?? const []).cast<Map<String, dynamic>>().map(PiezaPedido.fromJson).toList(),
   );
 
@@ -291,6 +297,8 @@ class Apartado {
   final double? planPorcentaje;
   // Ya mandó un abono que el trabajador todavía no confirma.
   final bool abonoPorConfirmar;
+  // Código del método con que se hizo el pago inicial (efectivo, transferencia, mercadopago o paypal).
+  final String? metodoInicial;
   final List<PiezaPedido> piezas;
 
   // Abono sugerido: la cuota del plan, sin pasar del saldo.
@@ -304,6 +312,21 @@ class Apartado {
 
   double get avance => montoTotal <= 0 ? 0 : (montoPagado / montoTotal).clamp(0, 1).toDouble();
   bool get activo => estado == 'activo' || estado == 'pendiente_pago';
+  // HU-12: el pago inicial con Mercado Pago se hace en línea mientras el apartado espera ese pago.
+  bool get puedePagarEnLinea => estado == 'pendiente_pago' && metodoInicial == 'mercadopago';
+}
+
+// Preferencia de pago de Mercado Pago (HU-12): el enlace donde el cliente paga.
+class PreferenciaPago {
+  const PreferenciaPago({required this.id, required this.enlace, this.enlacePruebas});
+
+  factory PreferenciaPago.fromJson(Map<String, dynamic> json) =>
+      PreferenciaPago(id: json['preference_id'] as String, enlace: json['init_point'] as String, enlacePruebas: json['sandbox_init_point'] as String?);
+
+  final String id;
+  final String enlace;
+  // Enlace del modo de pruebas de Mercado Pago, para pagar con cuentas y tarjetas de prueba.
+  final String? enlacePruebas;
 }
 
 // Resultado de confirmar una compra o un apartado.
