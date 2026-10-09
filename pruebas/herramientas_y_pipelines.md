@@ -24,6 +24,7 @@ cada tipo de prueba tiene su propio pipeline en `.github/workflows`.
 | Aceptación | Dentro del pipeline de integración | Pipeline propio (`pruebas-aceptacion.yml`) | Para que cada tipo de prueba tenga su pipeline y su resultado por separado. |
 | Esfuerzo | Solo a mano | A mano y al publicar una etiqueta `v*` | Para que quede ligada al versionamiento: cada versión se prueba bajo carga. |
 | Integración, aceptación y rendimiento | Solo al cerrar el sprint | También en cada unión a `develop` | Para no dejar las pruebas al final del sprint: una falla se detecta el mismo día que se une la tarea. |
+| Cuenta de cliente de prueba | Una sola para todos los pipelines | Una para integración y regresión, otra para aceptación y otra para entorno | Al unir el Pull Request #184 a develop, aceptación e integración fallaron porque corrían al mismo tiempo que entorno con la misma cuenta y se cambiaban el carrito entre ellos; corridos por separado pasaron (#185). |
 
 Las demás herramientas se mantienen como se planearon.
 
