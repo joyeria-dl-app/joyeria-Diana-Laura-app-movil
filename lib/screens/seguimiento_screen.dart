@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -11,6 +13,7 @@ import '../utils/formato.dart';
 import '../utils/pago_en_linea.dart';
 import '../widgets/estado_pedido.dart';
 import 'mis_pedidos_screen.dart';
+import 'resultado_pago_screen.dart';
 
 // Abre WhatsApp con la tienda y un mensaje ya escrito.
 Future<void> abrirWhatsApp(BuildContext context, String mensaje) async {
@@ -42,6 +45,7 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
   bool _pagando = false;
   // Se abrió Mercado Pago: al volver a la app se consulta otra vez el pedido.
   bool _esperandoPago = false;
+  StreamSubscription<Uri>? _enlaces;
   late final AppLifecycleListener _ciclo = AppLifecycleListener(onResume: _alVolver);
 
   @override
@@ -53,25 +57,54 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
   @override
   void dispose() {
     _ciclo.dispose();
+    _enlaces?.cancel();
     super.dispose();
   }
 
   Future<void> _pagar() async {
     final servicio = context.read<PedidoService>();
     setState(() => _pagando = true);
+    // Escucha el enlace de regreso antes de salir de la app para no perderlo.
+    _enlaces?.cancel();
+    _enlaces = enlacesDeRegreso().listen((uri) {
+      final regreso = RegresoPago.desde(uri);
+      if (regreso != null && regreso.tipo == 'pedido' && regreso.id == _pedido.id) _mostrarResultado(regreso.pago);
+    });
     final abierta = await abrirPagoMercadoPago(context, () => servicio.preferenciaPedido(_pedido.id));
     if (mounted) setState(() => _pagando = false);
     _esperandoPago = abierta;
+    if (!abierta) _enlaces?.cancel();
   }
 
+  // Si el cliente vuelve sin pasar por el enlace de Mercado Pago, se revisa solo el servidor.
   Future<void> _alVolver() async {
     if (!_esperandoPago) return;
+    await Future<void>.delayed(const Duration(seconds: 2));
+    if (_esperandoPago) await _mostrarResultado(null);
+  }
+
+  // HU-12 (#43): consulta el pedido y muestra si el pago quedó aprobado, pendiente o rechazado.
+  Future<void> _mostrarResultado(String? regreso) async {
+    if (!_esperandoPago) return;
     _esperandoPago = false;
+    await _enlaces?.cancel();
+    if (!mounted) return;
     try {
       final nuevo = (await context.read<PedidoService>().misPedidos()).where((p) => p.id == _pedido.id).firstOrNull;
       if (!mounted || nuevo == null) return;
       setState(() => _pedido = nuevo);
-      _avisar(nuevo.pagado ? 'Recibimos tu pago.' : 'Si ya pagaste, en unos momentos se verá aquí.');
+      final resultado = resultadoDelPago(pagadoEnServidor: nuevo.pagado, regreso: regreso);
+      if (resultado == null) {
+        _avisar('No vimos tu pago. Si ya pagaste, en unos momentos se verá aquí.');
+        return;
+      }
+      final reintentar = await Navigator.push<bool>(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ResultadoPagoScreen(resultado: resultado, folio: nuevo.folio, monto: nuevo.total),
+        ),
+      );
+      if (reintentar == true && mounted) await _pagar();
     } on PedidoException catch (e) {
       _avisar(e.mensaje);
     }

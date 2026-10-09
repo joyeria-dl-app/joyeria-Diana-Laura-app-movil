@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -13,6 +14,7 @@ import '../utils/formato.dart';
 import '../utils/pago_en_linea.dart';
 import '../widgets/decoracion.dart';
 import '../widgets/estado_pedido.dart';
+import 'resultado_pago_screen.dart';
 
 // Mis apartados (boceto P12, estados 10a y 10b de Bocetos_Sprint3).
 class MisApartadosScreen extends StatefulWidget {
@@ -25,13 +27,15 @@ class MisApartadosScreen extends StatefulWidget {
 class _MisApartadosScreenState extends State<MisApartadosScreen> {
   List<Apartado>? _apartados;
   PedidoException? _error;
-  // Se abrió Mercado Pago: al volver a la app se consultan otra vez los apartados.
-  bool _esperandoPago = false;
+  // Apartado cuyo pago inicial se abrió en Mercado Pago: al volver se muestra el resultado.
+  Apartado? _pagando;
+  StreamSubscription<Uri>? _enlaces;
   late final AppLifecycleListener _ciclo = AppLifecycleListener(
-    onResume: () {
-      if (!_esperandoPago) return;
-      _esperandoPago = false;
-      _cargar();
+    onResume: () async {
+      if (_pagando == null) return;
+      // Si vuelve sin pasar por el enlace de Mercado Pago, se revisa solo el servidor.
+      await Future<void>.delayed(const Duration(seconds: 2));
+      if (_pagando != null) await _mostrarResultado(null);
     },
   );
 
@@ -45,13 +49,44 @@ class _MisApartadosScreenState extends State<MisApartadosScreen> {
   @override
   void dispose() {
     _ciclo.dispose();
+    _enlaces?.cancel();
     super.dispose();
   }
 
   // HU-12: pago inicial con Mercado Pago de un apartado que todavía lo espera.
   Future<void> _pagarInicial(Apartado a) async {
     final servicio = context.read<PedidoService>();
-    _esperandoPago = await abrirPagoMercadoPago(context, () => servicio.preferenciaApartado(a.id));
+    _enlaces?.cancel();
+    _enlaces = enlacesDeRegreso().listen((uri) {
+      final regreso = RegresoPago.desde(uri);
+      if (regreso != null && regreso.tipo == 'apartado' && regreso.id == a.id) _mostrarResultado(regreso.pago);
+    });
+    final abierta = await abrirPagoMercadoPago(context, () => servicio.preferenciaApartado(a.id));
+    _pagando = abierta ? a : null;
+    if (!abierta) _enlaces?.cancel();
+  }
+
+  // HU-12 (#43): el pago inicial quedó aprobado si el apartado ya no lo espera.
+  Future<void> _mostrarResultado(String? regreso) async {
+    final a = _pagando;
+    if (a == null) return;
+    _pagando = null;
+    await _enlaces?.cancel();
+    await _cargar();
+    if (!mounted) return;
+    final nuevo = _apartados?.where((x) => x.id == a.id).firstOrNull ?? a;
+    final resultado = resultadoDelPago(pagadoEnServidor: nuevo.estado != 'pendiente_pago', regreso: regreso);
+    if (resultado == null) {
+      _avisar('No vimos tu pago. Si ya pagaste, en unos momentos se verá aquí.');
+      return;
+    }
+    final reintentar = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ResultadoPagoScreen(resultado: resultado, folio: nuevo.folio, monto: nuevo.montoPagado, apartado: true),
+      ),
+    );
+    if (reintentar == true && mounted) await _pagarInicial(nuevo);
   }
 
   Future<void> _cargar() async {
