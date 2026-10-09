@@ -340,4 +340,60 @@ void main() {
     final p = Pedido.fromJson({'id': 1, 'total': '10', 'fecha_creacion': '2026-10-05 21:13:57.862285'});
     expect(p.fechaCreacion, DateTime.utc(2026, 10, 5, 21, 13, 57, 862, 285).toLocal());
   });
+  group('Pago con Mercado Pago (HU-12)', () {
+    const preferencia = {
+      'success': true,
+      'data': {
+        'preference_id': '2481604929-6d0f1b5e-7a1c-4c4f-9b67-3f1a2c8d9e10',
+        'init_point': 'https://www.mercadopago.com.mx/checkout/v1/redirect?pref_id=2481604929-6d0f1b5e-7a1c-4c4f-9b67-3f1a2c8d9e10',
+        'sandbox_init_point': 'https://sandbox.mercadopago.com.mx/checkout/v1/redirect?pref_id=2481604929-6d0f1b5e-7a1c-4c4f-9b67-3f1a2c8d9e10',
+      },
+    };
+
+    test('Pide la preferencia de un pedido con su venta_id', () async {
+      final servicio = crear({'POST /carrito/pago/mercadopago': preferencia});
+      final p = await servicio.preferenciaPedido(41);
+      expect(backend.peticiones.single.data, {'venta_id': 41});
+      expect(p.id, '2481604929-6d0f1b5e-7a1c-4c4f-9b67-3f1a2c8d9e10');
+      expect(p.enlace, startsWith('https://www.mercadopago.com.mx/checkout/'));
+      expect(p.enlacePruebas, startsWith('https://sandbox.mercadopago.com.mx/'));
+    });
+
+    test('Pide la preferencia del pago inicial de un apartado con su apartado_id', () async {
+      final servicio = crear({'POST /apartados/pago/mercadopago': preferencia});
+      final p = await servicio.preferenciaApartado(7);
+      expect(backend.peticiones.single.data, {'apartado_id': 7});
+      expect(p.enlace, contains('pref_id='));
+    });
+
+    for (final mensaje in [
+      'El pedido aún no está confirmado por el trabajador',
+      'El plazo para pagar este pedido ya venció. Haz un pedido nuevo.',
+      'Este pedido ya está pagado.',
+    ]) {
+      test('Muestra el mensaje del backend: "$mensaje"', () async {
+        final servicio = crear({
+          'POST /carrito/pago/mercadopago': {'success': false, 'message': mensaje},
+        }, status: 400);
+        expect(servicio.preferenciaPedido(41), throwsA(isA<PedidoException>().having((e) => e.mensaje, 'mensaje', mensaje)));
+      });
+    }
+
+    test('Si Mercado Pago no responde avisa que elija otro método', () async {
+      for (final status in [502, 503]) {
+        final servicio = crear({
+          'POST /carrito/pago/mercadopago': {'success': false, 'message': 'Error al crear preferencia de pago'},
+        }, status: status);
+        expect(
+          servicio.preferenciaPedido(41),
+          throwsA(isA<PedidoException>().having((e) => e.mensaje, 'mensaje', contains('Mercado Pago no está disponible'))),
+        );
+      }
+    });
+
+    test('Sin sesión pide iniciar sesión', () async {
+      final servicio = crear({}, status: 401);
+      expect(servicio.preferenciaApartado(7), throwsA(isA<PedidoException>().having((e) => e.sinSesion, 'sinSesion', isTrue)));
+    });
+  });
 }

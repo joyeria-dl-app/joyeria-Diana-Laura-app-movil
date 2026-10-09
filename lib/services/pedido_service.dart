@@ -126,6 +126,18 @@ class PedidoService {
     return (data as List<dynamic>).cast<Map<String, dynamic>>().map(Apartado.fromJson).toList();
   }
 
+  // HU-12: enlace de Mercado Pago para pagar un pedido que la tienda ya confirmó.
+  Future<PreferenciaPago> preferenciaPedido(int pedidoId) async {
+    final data = await _pedir(() => _api.dio.post('/carrito/pago/mercadopago', data: {'venta_id': pedidoId}));
+    return PreferenciaPago.fromJson(data as Map<String, dynamic>);
+  }
+
+  // HU-12: enlace de Mercado Pago para el pago inicial de un apartado.
+  Future<PreferenciaPago> preferenciaApartado(int apartadoId) async {
+    final data = await _pedir(() => _api.dio.post('/apartados/pago/mercadopago', data: {'apartado_id': apartadoId}));
+    return PreferenciaPago.fromJson(data as Map<String, dynamic>);
+  }
+
   Future<Object?> _pedir(Future<Response<dynamic>> Function() peticion) async {
     try {
       final respuesta = await peticion();
@@ -144,6 +156,10 @@ class PedidoService {
         {'message': final String m} when status == 400 || status == 404 => m,
         _ => null,
       };
+      // 502 y 503: Mercado Pago no respondió o no está configurado en el servidor.
+      if (status == 502 || status == 503) {
+        throw const PedidoException('Mercado Pago no está disponible en este momento. Intenta más tarde o elige otro método de pago.');
+      }
       throw PedidoException(mensaje ?? 'No se pudo conectar. Revisa tu conexión e intenta de nuevo.');
     }
   }
