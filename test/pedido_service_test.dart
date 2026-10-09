@@ -353,7 +353,7 @@ void main() {
     test('Pide la preferencia de un pedido con su venta_id', () async {
       final servicio = crear({'POST /carrito/pago/mercadopago': preferencia});
       final p = await servicio.preferenciaPedido(41);
-      expect(backend.peticiones.single.data, {'venta_id': 41});
+      expect(backend.peticiones.single.data, {'venta_id': 41, 'origen': 'app'});
       expect(p.id, '2481604929-6d0f1b5e-7a1c-4c4f-9b67-3f1a2c8d9e10');
       expect(p.enlace, startsWith('https://www.mercadopago.com.mx/checkout/'));
       expect(p.enlacePruebas, startsWith('https://sandbox.mercadopago.com.mx/'));
@@ -362,7 +362,7 @@ void main() {
     test('Pide la preferencia del pago inicial de un apartado con su apartado_id', () async {
       final servicio = crear({'POST /apartados/pago/mercadopago': preferencia});
       final p = await servicio.preferenciaApartado(7);
-      expect(backend.peticiones.single.data, {'apartado_id': 7});
+      expect(backend.peticiones.single.data, {'apartado_id': 7, 'origen': 'app'});
       expect(p.enlace, contains('pref_id='));
     });
 
