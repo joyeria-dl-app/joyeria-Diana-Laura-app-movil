@@ -23,10 +23,7 @@ import 'package:joyeria_diana_laura/utils/pago_en_linea.dart';
 const _enlace = 'https://www.mercadopago.com.mx/checkout/v1/redirect?pref_id=2481604929-6d0f1b5e';
 
 class _Backend extends PedidoService {
-  _Backend({List<Pedido>? pedidos, List<Apartado>? apartados})
-    : pedidos = pedidos ?? [],
-      apartados = apartados ?? [],
-      super(api: ApiClient());
+  _Backend({List<Pedido>? pedidos, List<Apartado>? apartados}) : pedidos = pedidos ?? [], apartados = apartados ?? [], super(api: ApiClient());
   final List<Pedido> pedidos;
   final List<Apartado> apartados;
   final List<String> preferencias = [];
