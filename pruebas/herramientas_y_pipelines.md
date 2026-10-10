@@ -26,6 +26,7 @@ cada tipo de prueba tiene su propio pipeline en `.github/workflows`.
 | Integración, aceptación y rendimiento | Solo al cerrar el sprint | También en cada unión a `develop` | Para no dejar las pruebas al final del sprint: una falla se detecta el mismo día que se une la tarea. |
 | Cuenta de cliente de prueba | Una sola para todos los pipelines | Una para integración y regresión, otra para aceptación y otra para entorno | Al unir el Pull Request #184 a develop, aceptación e integración fallaron porque corrían al mismo tiempo que entorno con la misma cuenta y se cambiaban el carrito entre ellos; corridos por separado pasaron (#185). |
 | Inicio de sesión en las pruebas del emulador | Cada prueba con su propio bloque | Función compartida `iniciarSesion()` (`integration_test/sesion.dart`) | Al unir el Pull Request #188, aceptación falló porque el toque en "Iniciar sesión" no le atinó al botón mientras la pantalla seguía en animación o el teclado lo tapaba. La función espera la animación, cierra el teclado, hace visible el botón y reintenta hasta 3 veces (#189). |
+| Aceptación del pago con Mercado Pago (HU-12) | Automática en el pipeline | En el emulador, con un paso a mano: la persona que prueba paga en la página de Mercado Pago con el comprador de prueba (`integration_test/aceptacion_pago_test.dart`) | Mercado Pago no permite automatizar su página de pago, y solo procesa pagos cuando vendedor y comprador son cuentas de prueba. La prueba avisa con "ACEPTACION PASO" qué hacer y revisa en la app y en el servidor el resultado (#44). |
 
 Las demás herramientas se mantienen como se planearon.
 
@@ -51,7 +52,7 @@ integración, aceptación y rendimiento en el emulador.
 |---|---|
 | `analysis_options.yaml` | Reglas del análisis estático (`flutter_lints`) |
 | `test/` | Pruebas unitarias y de widgets, con sus datos simulados |
-| `integration_test/` | Integración, aceptación (`aceptacion_test.dart` y `aceptacion_pedidos_test.dart`) rendimiento (`rendimiento_test.dart`) y entorno (`entorno_test.dart`) en el emulador; `sesion.dart` tiene el inicio de sesión que comparten |
+| `integration_test/` | Integración, aceptación (`aceptacion_test.dart` y `aceptacion_pedidos_test.dart`) rendimiento (`rendimiento_test.dart`) y entorno (`entorno_test.dart`) en el emulador; `aceptacion_pago_test.dart` es la aceptación del pago con Mercado Pago; `sesion.dart` tiene el inicio de sesión que comparten |
 | `pruebas/esfuerzo/` | Script de k6 con la carga (50 usuarios) y los umbrales (95 % < 2 s, < 1 % de errores) |
 | `pruebas/entorno.sh` | Corre la prueba de entorno y aplica con `adb` la batería baja, la llamada, el segundo plano y el modo avión |
 | `pruebas/*.md` | Resultados de aceptación, seguridad, regresión y entorno de cada sprint |
