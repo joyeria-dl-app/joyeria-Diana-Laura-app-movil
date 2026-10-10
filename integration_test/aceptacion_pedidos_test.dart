@@ -17,6 +17,7 @@ import 'package:joyeria_diana_laura/services/session_storage.dart';
 import 'package:joyeria_diana_laura/utils/formato.dart';
 
 import 'catalogo_test.dart' show despertarServidor, esperar;
+import 'sesion.dart';
 
 // Pruebas de aceptación de HU-11 en el emulador contra el backend real.
 // Cada caso (CA-10 a CA-15) sale del criterio de aceptación; la tabla con los
@@ -53,17 +54,7 @@ void main() {
     expect(_contrasena, isNotEmpty, reason: 'Falta PRUEBAS_CONTRASENA');
 
     await tester.pumpWidget(JoyeriaApp(storage: SecureSessionStorage()));
-    await esperar(tester, find.byType(FilledButton));
-
-    // Inicio de sesión con la cuenta de prueba.
-    if (find.text('Ver catálogo').evaluate().isEmpty) {
-      await tester.tap(find.text('Iniciar sesión'));
-      await esperar(tester, find.byKey(const Key('login_email')));
-      await tester.enterText(find.descendant(of: find.byKey(const Key('login_email')), matching: find.byType(EditableText)), _correo);
-      await tester.enterText(find.descendant(of: find.byKey(const Key('login_password')), matching: find.byType(EditableText)), _contrasena);
-      await tester.tap(find.text('Iniciar sesión').last);
-    }
-    await esperar(tester, find.text('Ver catálogo'));
+    await iniciarSesion(tester, _correo, _contrasena);
 
     // Servicios con la misma sesión de la app: devuelven lo que guarda el servidor para la cuenta.
     final contexto = tester.element(find.byType(Scaffold).first);
