@@ -164,8 +164,12 @@ void main() {
     final activos = apartados.where((a) => a.activo).toList();
     await tester.tap(find.text('Mis apartados'));
     await esperar(tester, find.byType(MisApartadosScreen));
-    if (activos.isEmpty) {
+    if (apartados.isEmpty) {
       await esperar(tester, find.text('No tienes apartados'));
+    } else if (activos.isEmpty) {
+      // Solo tiene apartados cancelados o liquidados: la lista los muestra, sin el resumen de lo que falta (#193).
+      await esperar(tester, find.textContaining(apartados.first.folio));
+      expect(find.textContaining(RegExp(r'^en \d+ apartados? activos?$')), findsNothing);
     } else {
       final falta = activos.fold<double>(0, (s, Apartado a) => s + a.saldo);
       await esperar(tester, find.text(formatoPrecioCompleto(falta)));
