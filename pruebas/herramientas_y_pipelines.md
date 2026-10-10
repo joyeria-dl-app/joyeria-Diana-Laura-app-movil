@@ -25,6 +25,7 @@ cada tipo de prueba tiene su propio pipeline en `.github/workflows`.
 | Esfuerzo | Solo a mano | A mano y al publicar una etiqueta `v*` | Para que quede ligada al versionamiento: cada versión se prueba bajo carga. |
 | Integración, aceptación y rendimiento | Solo al cerrar el sprint | También en cada unión a `develop` | Para no dejar las pruebas al final del sprint: una falla se detecta el mismo día que se une la tarea. |
 | Cuenta de cliente de prueba | Una sola para todos los pipelines | Una para integración y regresión, otra para aceptación y otra para entorno | Al unir el Pull Request #184 a develop, aceptación e integración fallaron porque corrían al mismo tiempo que entorno con la misma cuenta y se cambiaban el carrito entre ellos; corridos por separado pasaron (#185). |
+| Inicio de sesión en las pruebas del emulador | Cada prueba con su propio bloque | Función compartida `iniciarSesion()` (`integration_test/sesion.dart`) | Al unir el Pull Request #188, aceptación falló porque el toque en "Iniciar sesión" no le atinó al botón mientras la pantalla seguía en animación o el teclado lo tapaba. La función espera la animación, cierra el teclado, hace visible el botón y reintenta hasta 3 veces (#189). |
 
 Las demás herramientas se mantienen como se planearon.
 
@@ -50,7 +51,7 @@ integración, aceptación y rendimiento en el emulador.
 |---|---|
 | `analysis_options.yaml` | Reglas del análisis estático (`flutter_lints`) |
 | `test/` | Pruebas unitarias y de widgets, con sus datos simulados |
-| `integration_test/` | Integración, aceptación (`aceptacion_test.dart` y `aceptacion_pedidos_test.dart`) rendimiento (`rendimiento_test.dart`) y entorno (`entorno_test.dart`) en el emulador |
+| `integration_test/` | Integración, aceptación (`aceptacion_test.dart` y `aceptacion_pedidos_test.dart`) rendimiento (`rendimiento_test.dart`) y entorno (`entorno_test.dart`) en el emulador; `sesion.dart` tiene el inicio de sesión que comparten |
 | `pruebas/esfuerzo/` | Script de k6 con la carga (50 usuarios) y los umbrales (95 % < 2 s, < 1 % de errores) |
 | `pruebas/entorno.sh` | Corre la prueba de entorno y aplica con `adb` la batería baja, la llamada, el segundo plano y el modo avión |
 | `pruebas/*.md` | Resultados de aceptación, seguridad, regresión y entorno de cada sprint |
