@@ -1,6 +1,8 @@
 # PRUEBAS DE ESFUERZO: carga creciente sobre el backend que usa la app.
 # Genera tráfico real en el servidor de Render, por eso no corre en cada cambio:
 # se lanza a mano o al publicar una etiqueta de versión (v0.3.0, v1.0.0…).
+# Antes de correrla hay que subir el límite por IP del backend en Render
+# (RASP_RATE_LIMIT_MAX); ver pruebas/esfuerzo_sprint3.md.
 name: Pruebas de esfuerzo
 
 on:
@@ -8,9 +10,17 @@ on:
     tags: ['v*']
   workflow_dispatch:
     inputs:
+      escenario:
+        description: criterio (50 usuarios con umbrales) o quiebre (subida por escalones)
+        type: choice
+        options: [criterio, quiebre]
+        default: criterio
       usuarios:
-        description: Usuarios simultáneos al punto máximo
+        description: Usuarios simultáneos del escenario criterio
         default: '50'
+      maximo:
+        description: Usuarios al último escalón del escenario quiebre
+        default: '150'
 
 jobs:
   esfuerzo:
@@ -26,7 +36,13 @@ jobs:
       - name: Ejecutar prueba de esfuerzo
         uses: grafana/run-k6-action@v1
         env:
-          # Con la etiqueta no hay entrada manual; el script usa 50 usuarios.
+          # Con la etiqueta no hay entrada manual; el script usa el escenario criterio con 50 usuarios.
+          ESCENARIO: ${{ inputs.escenario }}
           USUARIOS: ${{ inputs.usuarios }}
+          MAXIMO: ${{ inputs.maximo }}
+          # Cuenta de prueba para el carrito y los pedidos con sesión.
+          PRUEBAS_CORREO: ${{ secrets.PRUEBAS_CORREO }}
+          PRUEBAS_CONTRASENA: ${{ secrets.PRUEBAS_CONTRASENA }}
+          FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
         with:
           path: pruebas/esfuerzo/catalogo.js
