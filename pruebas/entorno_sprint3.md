@@ -34,3 +34,20 @@ bash pruebas/entorno.sh
 ```
 
 Se necesita el emulador abierto (`DISPOSITIVO`, por defecto `emulator-5554`) y `env.json`. Con `CAPTURAS=carpeta` guarda una captura de pantalla de cada caso.
+
+## Corrección #202: prueba estable al volver del segundo plano (11 de octubre de 2026)
+
+En `develop`, tras el PR #201, la corrida 38172994278 falló en CE-04 en su primer intento y pasó al reintentarla. Al volver a abrir la app desde segundo plano, la salida de `flutter test` dejó de traer los avisos `ENTORNO` de la app; `entorno.sh` nunca vio "PASO sin_senal", no activó el modo avión y la prueba no encontró "Sin conexión".
+
+Cambios:
+- La prueba escribe cada aviso también en `entorno_pasos.txt`, dentro de la carpeta temporal de la app, y `entorno.sh` lo lee cada segundo con `adb shell run-as`. Cada paso se aplica una sola vez aunque llegue por los dos caminos. Se intentó primero con `adb logcat`, pero dentro de `flutter test` los mensajes de la app no llegan a logcat.
+- Antes de CE-04 la prueba espera a que el teléfono se quede sin red (abre una conexión real). Si el modo avión no se activa en 60 s, falla con esa causa.
+- Los workflows usan `ubuntu-24.04` en lugar de `ubuntu-latest`, que cambia a Ubuntu 26 el 19 de octubre.
+
+| Comprobación | Resultado |
+|---|---|
+| Local, script normal, 2 corridas seguidas | 5/5 cada una, 7 acciones de adb, ningún paso repetido |
+| Local, solo con el archivo (sin la salida de flutter test) | 5/5 |
+| Pipeline, 3 corridas seguidas (#20, #21, #22), primer intento | 5/5 cada una |
+
+Las corridas #18 y #19 del pipeline fallaron antes de CE-01 porque se lanzaron al mismo tiempo que la #17 con la misma cuenta y compartían el carrito del servidor; no tienen relación con el cambio.
