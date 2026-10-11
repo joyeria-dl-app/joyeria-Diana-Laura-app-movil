@@ -12,7 +12,7 @@ on:
 jobs:
   unitarias:
     name: Regresión - pruebas unitarias
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Descargar el código
         uses: actions/checkout@v7
@@ -46,7 +46,7 @@ jobs:
   integracion:
     name: Regresión - pruebas de integración
     needs: unitarias
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
       - name: Descargar el código
