@@ -4,10 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../models/producto.dart';
+import '../providers/auth_provider.dart';
 import '../providers/carrito_provider.dart';
 import '../providers/favoritos_provider.dart';
 import '../routes/app_routes.dart';
 import '../services/producto_service.dart';
+import 'solicitar_personalizacion_screen.dart';
 import '../theme/app_theme.dart';
 import '../utils/formato.dart';
 import '../widgets/accion_favorito.dart';
@@ -79,6 +81,31 @@ class _DetalleScreenState extends State<DetalleScreen> {
       );
   }
 
+  // HU-13 (#46): formulario para pedir la personalización; sin sesión invita a iniciarla.
+  void _personalizar(DetalleProducto detalle) {
+    if (context.read<AuthProvider?>()?.autenticado == false) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: const Text('Inicia sesión para personalizar una pieza'),
+            action: SnackBarAction(label: 'Iniciar sesión', onPressed: () => Navigator.pushNamed(context, AppRoutes.login)),
+          ),
+        );
+      return;
+    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SolicitarPersonalizacionScreen(
+          producto: detalle.producto,
+          foto: detalle.imagenes.firstOrNull,
+          precioPersonalizacion: detalle.precioPersonalizacion,
+        ),
+      ),
+    );
+  }
+
   // Compartir y tallas se conectan en HU-13.
   void _pronto() {
     ScaffoldMessenger.of(context)
@@ -130,7 +157,13 @@ class _DetalleScreenState extends State<DetalleScreen> {
                   iconoBoton: Icons.refresh_rounded,
                   onPressed: _cargar,
                 ),
-                (final DetalleProducto d, _) => _Contenido(detalle: d, resenas: _resenas, onPronto: _pronto, onAgregar: () => _agregar(d)),
+                (final DetalleProducto d, _) => _Contenido(
+                  detalle: d,
+                  resenas: _resenas,
+                  onPronto: _pronto,
+                  onAgregar: () => _agregar(d),
+                  onPersonalizar: () => _personalizar(d),
+                ),
                 _ => const _Cargando(),
               },
             ),
@@ -276,11 +309,12 @@ class _Hoja extends StatelessWidget {
 }
 
 class _Contenido extends StatelessWidget {
-  const _Contenido({required this.detalle, required this.resenas, required this.onPronto, required this.onAgregar});
+  const _Contenido({required this.detalle, required this.resenas, required this.onPronto, required this.onAgregar, required this.onPersonalizar});
   final DetalleProducto detalle;
   final ({double promedio, int total}) resenas;
   final VoidCallback onPronto;
   final VoidCallback onAgregar;
+  final VoidCallback onPersonalizar;
 
   @override
   Widget build(BuildContext context) {
@@ -383,11 +417,74 @@ class _Contenido extends StatelessWidget {
                   ),
                 ),
               ],
+              if (p.personalizable && !p.agotado) ...[
+                const SizedBox(height: 16),
+                _Personalizar(precio: detalle.precioPersonalizacion, onPressed: onPersonalizar),
+              ],
             ],
           ),
         ),
         _BarraPrecio(producto: p, onAgregar: onAgregar),
       ],
+    );
+  }
+}
+
+// HU-13: invitación a personalizar la pieza, con el costo extra si lo tiene.
+class _Personalizar extends StatelessWidget {
+  const _Personalizar({required this.precio, required this.onPressed});
+  final double precio;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: 'Personalizar esta pieza',
+      excludeSemantics: true,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onPressed,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
+          decoration: BoxDecoration(
+            color: AppColors.suave,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0x33E0679A)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(gradient: AppColors.degradado, borderRadius: BorderRadius.circular(14)),
+                child: const Icon(Icons.brush_rounded, size: 19, color: Colors.white),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '¿La quieres a tu gusto?',
+                      style: TextStyle(color: AppColors.texto, fontSize: 13, fontWeight: FontWeight.w600),
+                    ),
+                    Text(
+                      precio > 0 ? 'Pide un grabado o un cambio · +${formatoPrecio(precio)}' : 'Pide un grabado o un cambio de diseño',
+                      style: const TextStyle(color: AppColors.textoSuave, fontSize: 11.5),
+                    ),
+                  ],
+                ),
+              ),
+              const Text(
+                'Personalizar',
+                style: TextStyle(color: AppColors.primario, fontSize: 12.5, fontWeight: FontWeight.w600),
+              ),
+              const Icon(Icons.chevron_right_rounded, color: AppColors.primario, size: 20),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
