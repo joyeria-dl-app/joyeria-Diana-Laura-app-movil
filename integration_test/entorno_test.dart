@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -23,8 +25,18 @@ import 'sesion.dart';
 const _correo = String.fromEnvironment('PRUEBAS_CORREO');
 const _contrasena = String.fromEnvironment('PRUEBAS_CONTRASENA');
 
-void _paso(String caso) => debugPrint('ENTORNO PASO $caso');
-void _caso(String id, String descripcion) => debugPrint('ENTORNO $id Pasa: $descripcion');
+// Cada aviso va por dos caminos: debugPrint llega a la salida de flutter test y el archivo
+// entorno_pasos.txt (en la carpeta temporal de la app) lo lee entorno.sh con adb run-as, por si
+// la salida de flutter test se corta al volver a abrir la app (#202).
+final _pasos = File('${Directory.systemTemp.path}/entorno_pasos.txt');
+
+void _avisar(String mensaje) {
+  debugPrint(mensaje);
+  _pasos.writeAsStringSync('$mensaje\n', mode: FileMode.append, flush: true);
+}
+
+void _paso(String caso) => _avisar('ENTORNO PASO $caso');
+void _caso(String id, String descripcion) => _avisar('ENTORNO $id Pasa: $descripcion');
 
 Future<void> _espera(WidgetTester tester, Duration duracion) async {
   await tester.runAsync(() => Future<void>.delayed(duracion));
@@ -41,6 +53,25 @@ Future<void> _esperarEstado(WidgetTester tester, bool Function(AppLifecycleState
   fail('La app no $que en 60 s (estado: ${WidgetsBinding.instance.lifecycleState})');
 }
 
+// Espera a que el teléfono se quede sin red (modo avión de entorno.sh). Si no pasa, la prueba
+// falla aquí con la causa en lugar de seguir con red y no encontrar "Sin conexión" (#202).
+Future<void> _esperarSinRed(WidgetTester tester) async {
+  final fin = DateTime.now().add(const Duration(seconds: 60));
+  while (DateTime.now().isBefore(fin)) {
+    final conRed = await tester.runAsync(() async {
+      try {
+        (await Socket.connect('1.1.1.1', 443, timeout: const Duration(seconds: 3))).destroy();
+        return true;
+      } on Object {
+        return false;
+      }
+    });
+    if (conRed == false) return;
+    await _espera(tester, const Duration(seconds: 1));
+  }
+  fail('El modo avión no se activó en 60 s: entorno.sh no aplicó el paso sin_senal');
+}
+
 NavigatorState _navegador(WidgetTester tester) => tester.state<NavigatorState>(find.byType(Navigator).first);
 
 void main() {
@@ -51,6 +82,7 @@ void main() {
   testWidgets('Entorno: batería baja, llamada entrante y sin señal', (tester) async {
     expect(_correo, isNotEmpty, reason: 'Falta PRUEBAS_CORREO');
     expect(_contrasena, isNotEmpty, reason: 'Falta PRUEBAS_CONTRASENA');
+    if (_pasos.existsSync()) _pasos.deleteSync();
 
     await tester.pumpWidget(JoyeriaApp(storage: SecureSessionStorage()));
     await iniciarSesion(tester, _correo, _contrasena);
@@ -113,7 +145,7 @@ void main() {
     _navegador(tester).popUntil((ruta) => ruta.isFirst);
     await tester.pumpAndSettle();
     _paso('sin_senal');
-    await _espera(tester, const Duration(seconds: 8));
+    await _esperarSinRed(tester);
     await tester.tap(find.text('Mis pedidos'));
     await tester.pump();
     final fin = DateTime.now().add(const Duration(seconds: 60));

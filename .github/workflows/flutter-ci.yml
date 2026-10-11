@@ -9,7 +9,7 @@ on:
 jobs:
   analizar-y-probar:
     name: Analizar y probar
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Descargar el código
         uses: actions/checkout@v7
