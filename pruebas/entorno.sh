@@ -109,7 +109,7 @@ aplicar() {
 (
   while sleep 1; do
     adb_ shell "run-as $PAQUETE sh -c 'cat \$(find . -name entorno_pasos.txt 2> /dev/null) 2> /dev/null'" 2> /dev/null |
-      tr -d '' | while IFS= read -r linea; do aplicar "$linea"; done
+      tr -d '\r' | while IFS= read -r linea; do aplicar "$linea"; done
   done
 ) &
 LECTOR=$!
