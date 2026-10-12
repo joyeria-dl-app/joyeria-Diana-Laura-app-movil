@@ -56,3 +56,7 @@ k6 run -e ESCENARIO=quiebre -e MAXIMO=150 pruebas/esfuerzo/catalogo.js
 ```
 
 Antes de correrla hay que subir el límite por IP en Render y regresarlo a 500 al terminar.
+
+## Nota: rendimiento después de reiniciar Render
+
+Al terminar la prueba de esfuerzo se regresó `RASP_RATE_LIMIT_MAX` a 500 en Render, lo que reinicia el servicio. La corrida de **Pruebas de rendimiento** de `develop` tras el PR #195 (run 38119896214) falló en su primer intento: la carga del catálogo tardó 7.5 s porque fue la primera petición al servidor recién reiniciado (arranque en frío). Al reintentar el job, el catálogo cargó en 1.4 s y pasó. No es un problema de la app: después de cambiar variables en Render conviene esperar a que el servidor despierte antes de lanzar las pruebas de rendimiento.
