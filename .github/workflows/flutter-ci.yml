@@ -1,8 +1,19 @@
+# FLUTTER CI
+# Tipo: integración continua (revisión básica) · Alcance: todo el código de la app.
+# Comprobación rápida de que el código compila, no tiene errores de análisis y las pruebas
+# pasan. Es el primer filtro de cada PR.
+#
+# Ejecución: los pasos van EN SECUENCIA (si el análisis falla, no se corren las pruebas). Este
+# workflow corre EN PARALELO con Análisis de código estático y Pruebas unitarias en cada PR.
+#
+# Acción según el resultado: es un check obligatorio; si falla, GitHub no deja unir el PR.
 name: Flutter CI
 
 on:
+  # En cada PR hacia develop o main.
   pull_request:
     branches: [develop, main]
+  # Al unir a develop o main, para confirmar que la rama sigue en verde.
   push:
     branches: [develop, main]
 
@@ -14,6 +25,7 @@ jobs:
       - name: Descargar el código
         uses: actions/checkout@v7
 
+      # Misma versión de Flutter en todos los workflows para que los resultados sean comparables.
       - name: Instalar Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -24,8 +36,10 @@ jobs:
       - name: Instalar dependencias
         run: flutter pub get
 
+      # Errores de compilación y avisos del analizador de Dart.
       - name: Analizar el código
         run: flutter analyze
 
+      # Todas las pruebas unitarias y de widgets (sin emulador, con el backend simulado).
       - name: Ejecutar pruebas
         run: flutter test

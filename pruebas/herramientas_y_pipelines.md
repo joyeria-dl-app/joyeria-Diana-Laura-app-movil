@@ -45,8 +45,27 @@ integración, aceptación y rendimiento en el emulador.
 | Push a `develop` (tarea ya unida) | Los anteriores + `pruebas-integracion.yml`, `pruebas-aceptacion.yml`, `pruebas-rendimiento.yml`, `pruebas-entorno.yml` | En paralelo, después de que pasaron los del Pull Request | Se corrige con una tarea `fix/*` antes de seguir |
 | Pull Request de `develop` a `main` | `flutter-ci.yml`, `analisis-estatico.yml`, `pruebas-unitarias.yml`, `pruebas-integracion.yml`, `pruebas-aceptacion.yml`, `pruebas-entorno.yml` | En paralelo | No se puede pasar a `main` |
 | Push a `main` y etiqueta `v*` | `pruebas-regresion.yml`, `pruebas-rendimiento.yml`, `pruebas-esfuerzo.yml` | En paralelo | Se corrige antes de publicar la versión |
-| Versión publicada en Releases | `release-apk.yml` | Pruebas y después el APK | No se genera el APK |
-| Programada | Regresión cada lunes | | Se abre una tarea en el tablero |
+| Versión publicada en Releases | `release-apk.yml`, que primero llama a `pruebas-regresion.yml` | En secuencia: regresión completa y, solo si pasa, el APK | No se genera el APK y se abre una issue |
+| Programada | Regresión cada lunes sobre `develop` | Unitarias y, si pasan, integración (en secuencia) | `avisar-fallas.yml` abre una issue con el enlace a la corrida |
+| Cualquier workflow termina en rojo en `develop`, `main` o una etiqueta | `avisar-fallas.yml` | Se dispara al terminar el workflow | Abre una issue o comenta la que ya está abierta para ese workflow |
+
+## Paralelo o secuencia
+
+- **Entre workflows: en paralelo.** Cada workflow corre en su propio runner (máquina virtual de GitHub con `ubuntu-24.04`). Los del emulador usan una cuenta de prueba distinta cada uno para no cambiarse el carrito (#185).
+- **Dentro de un workflow: en secuencia.** Cada paso espera al anterior; si uno falla, los siguientes no corren. Excepción: Pruebas de rendimiento tiene dos trabajos independientes (tamaño del APK y tiempos) que corren en paralelo.
+- **Trabajos encadenados:** Regresión corre integración solo si pasaron las unitarias (`needs: unitarias`) y Publicar APK compila solo si pasó la regresión (`needs: regresion`).
+- **Dentro de las pruebas:** `flutter test` reparte los archivos de pruebas unitarias en paralelo entre los núcleos del runner; las pruebas del emulador corren una tras otra en el mismo emulador.
+
+Cada archivo `.yml` explica al inicio su tipo de prueba, su alcance, cómo se ejecuta y qué hace según el resultado, y cada paso tiene un comentario.
+
+## Revisión del Sprint 3 (observaciones, #206)
+
+| Observación | Cambio |
+|---|---|
+| Comentar los yml | Los 11 workflows tienen un encabezado (tipo, alcance, ejecución y acción según el resultado) y un comentario en cada paso. |
+| ¿Las pruebas se ejecutan en paralelo o en secuencia? | Se indica en cada workflow y se resume en la sección anterior. |
+| Atender los comentarios de los resultados de las pruebas automatizadas | La regresión programada del 12 de octubre (run 38314303514) falló porque `git describe` no encontraba la etiqueta de la versión anterior en `develop`; las 255 pruebas unitarias sí pasaron. Ahora se toma la etiqueta `v*` más alta del repositorio; las 134 pruebas de v0.2.0 pasan contra el código actual. El resumen del análisis estático decía "sin problemas" aunque fallara; ahora muestra el resultado real de cada revisión. |
+| Que los pipelines actúen según el resultado | Publicar APK corre la regresión completa y solo compila si pasa. `avisar-fallas.yml` abre una issue cuando un workflow falla en `develop`, `main` o una etiqueta (GitHub lo activa cuando el archivo llega a `main`, con la v0.3.0). En los PR, los checks obligatorios bloquean el merge. |
 
 ## Carpetas con los elementos de cada prueba
 

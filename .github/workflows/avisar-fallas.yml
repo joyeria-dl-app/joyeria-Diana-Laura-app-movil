@@ -1,0 +1,68 @@
+# AVISAR FALLAS
+# Tipo: monitoreo del pipeline · Alcance: todos los workflows de pruebas en develop y main.
+# Atiende los resultados de las pruebas automatizadas: cuando un workflow termina en rojo en
+# develop o main, abre una issue con el enlace a la corrida para que el equipo la revise y la
+# corrija. Si ya hay una issue abierta para ese mismo workflow, agrega un comentario en lugar
+# de repetirla. Las fallas en los PR no abren issue: ahí el merge ya queda bloqueado.
+#
+# Ejecución: se dispara al terminar cada workflow listado (evento workflow_run); corre de forma
+# independiente, una vez por cada workflow que termina.
+name: Avisar fallas
+
+on:
+  workflow_run:
+    workflows:
+      - Flutter CI
+      - Análisis de código estático
+      - Pruebas unitarias
+      - Pruebas de integración
+      - Pruebas de aceptación
+      - Pruebas de entorno
+      - Pruebas de rendimiento
+      - Pruebas de regresión
+      - Pruebas de esfuerzo
+      - Publicar APK
+    types: [completed]
+
+# Necesario para abrir issues y comentar.
+permissions:
+  issues: write
+
+jobs:
+  abrir-issue:
+    name: Abrir issue por la falla
+    # Solo cuando el workflow falló y corrió sobre develop o main (o una etiqueta de versión).
+    if: >-
+      github.event.workflow_run.conclusion == 'failure' &&
+      (github.event.workflow_run.head_branch == 'develop' ||
+       github.event.workflow_run.head_branch == 'main' ||
+       startsWith(github.event.workflow_run.head_branch, 'v'))
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Abrir o actualizar la issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          WORKFLOW: ${{ github.event.workflow_run.name }}
+          RAMA: ${{ github.event.workflow_run.head_branch }}
+          COMMIT: ${{ github.event.workflow_run.head_sha }}
+          ENLACE: ${{ github.event.workflow_run.html_url }}
+          EVENTO: ${{ github.event.workflow_run.event }}
+        run: |
+          titulo="FALLA DE PIPELINE - $WORKFLOW en $RAMA"
+          cuerpo="El workflow **$WORKFLOW** terminó con error.
+
+          - Rama: \`$RAMA\`
+          - Commit: \`${COMMIT:0:7}\`
+          - Disparado por: \`$EVENTO\`
+          - Corrida: $ENLACE
+
+          Revisar el registro de la corrida, corregir la causa y cerrar esta issue con el PR de la corrección."
+          existente=$(gh issue list --state open --search "\"$titulo\" in:title" --json number,title --jq ".[] | select(.title == \"$titulo\") | .number" | head -1)
+          if [ -n "$existente" ]; then
+            gh issue comment "$existente" --body "Volvió a fallar: $ENLACE (commit \`${COMMIT:0:7}\`)."
+            echo "Comentario agregado a la issue #$existente"
+          else
+            gh issue create --title "$titulo" --body "$cuerpo"
+            echo "Issue creada: $titulo"
+          fi

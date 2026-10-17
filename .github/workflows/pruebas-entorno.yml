@@ -1,8 +1,15 @@
-# PRUEBAS DE ENTORNO: cómo se comporta la app ante lo que pasa en el teléfono
-# (batería baja, llamada entrante, segundo plano y sin señal), simulado con adb en
-# el emulador Android contra el backend de Render.
-# Corre cada vez que se une una tarea a develop y al pedir unir develop a main;
-# si falla, no se puede pasar a main.
+# PRUEBAS DE ENTORNO
+# Tipo: entorno · Alcance: comportamiento de la app ante lo que pasa en el teléfono (batería
+# baja, llamada entrante, segundo plano y sin señal), simulado con adb en el emulador Android
+# contra el backend de Render.
+#
+# Ejecución: los pasos van EN SECUENCIA; los cinco casos (CE-01 a CE-05) corren EN SECUENCIA
+# porque cada uno parte del estado que deja el anterior. Este workflow corre EN PARALELO con
+# Integración, Aceptación y Rendimiento.
+#
+# Acción según el resultado: en develop, si falla, "Avisar fallas" abre una issue; en el PR de
+# develop a main es un check obligatorio y bloquea el paso a main. Las capturas de cada caso
+# se guardan aunque la prueba falle.
 name: Pruebas de entorno
 
 on:
@@ -18,9 +25,11 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
+      # Descarga el código del commit que disparó el workflow.
       - name: Descargar el código
         uses: actions/checkout@v7
 
+      # Misma versión de Flutter en todos los workflows para que los resultados sean comparables.
       - name: Instalar Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -28,9 +37,11 @@ jobs:
           channel: stable
           cache: true
 
+      # Librerías de pubspec.yaml.
       - name: Instalar dependencias
         run: flutter pub get
 
+      # El emulador y la compilación de Android necesitan Java 17.
       - name: Instalar Java
         uses: actions/setup-java@v6
         with:
@@ -61,6 +72,7 @@ jobs:
           disable-animations: true
           script: CAPTURAS=capturas-entorno bash pruebas/entorno.sh
 
+      # Capturas descargables desde la página de la corrida (Artifacts), aunque la prueba falle.
       - name: Guardar las capturas de cada caso
         if: always()
         uses: actions/upload-artifact@v7

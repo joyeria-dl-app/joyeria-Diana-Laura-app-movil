@@ -1,24 +1,49 @@
-# PRUEBAS DE REGRESIÓN: toda la suite antes de publicar una versión y cada semana.
+# PRUEBAS DE REGRESIÓN
+# Tipo: regresión · Alcance: toda la app (HU-01 a la última HU integrada).
+# Comprueba que lo que ya funcionaba sigue funcionando: corre todas las pruebas unitarias
+# actuales, las pruebas de la versión anterior contra el código nuevo y las pruebas en el
+# emulador de integración y aceptación.
+#
+# Ejecución: los dos trabajos van EN SECUENCIA (integración espera a que pasen las unitarias,
+# `needs: unitarias`); si las unitarias fallan, no se gasta tiempo en el emulador. Este
+# workflow corre EN PARALELO con los demás workflows del repositorio.
+#
+# Acción según el resultado: Publicar APK llama a este workflow y solo compila la versión si
+# pasa. Si falla una corrida programada o en main, "Avisar fallas" abre una issue.
 name: Pruebas de regresión
 
 on:
+  # Al unir a main (antes de publicar) y al crear una etiqueta de versión.
   push:
     branches: [main]
     tags: ['v*']
+  # Cada lunes a las 8:00 (hora de México) sobre develop, para detectar fallas a tiempo.
   schedule:
-    - cron: '0 14 * * 1' # lunes 8:00 (hora de México)
+    - cron: '0 14 * * 1'
+  # Desde Actions → Run workflow.
   workflow_dispatch:
+  # Lo llama Publicar APK antes de compilar una versión.
+  workflow_call:
+    secrets:
+      FIREBASE_API_KEY:
+        required: true
+      PRUEBAS_CORREO:
+        required: true
+      PRUEBAS_CONTRASENA:
+        required: true
 
 jobs:
   unitarias:
     name: Regresión - pruebas unitarias
     runs-on: ubuntu-24.04
     steps:
+      # fetch-depth: 0 descarga todo el historial y las etiquetas para encontrar la versión anterior.
       - name: Descargar el código
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
+      # Misma versión de Flutter en todos los workflows para que los resultados sean comparables.
       - name: Instalar Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -29,15 +54,22 @@ jobs:
       - name: Instalar dependencias
         run: flutter pub get
 
+      # Todas las pruebas unitarias y de widgets del código actual.
       - name: Ejecutar todas las pruebas unitarias
         run: flutter test --reporter expanded
 
-      # Las pruebas de la versión anterior (último tag) se corren contra el código actual:
-      # ninguna prueba que pasaba antes debe fallar.
+      # Las pruebas de la versión anterior se corren contra el código actual: ninguna prueba que
+      # pasaba antes debe fallar. La versión anterior es la etiqueta v* más alta del repositorio,
+      # sin contar la que se está publicando. Antes se usaba `git describe`, que solo ve las
+      # etiquetas de la rama actual y fallaba en develop porque las versiones se etiquetan en main
+      # (run 38314303514, #206).
       - name: Ejecutar las pruebas de la versión anterior
         run: |
-          git fetch --tags --quiet
-          anterior=$(git describe --tags --abbrev=0)
+          anterior=$(git tag --list 'v*' --sort=-v:refname | grep -vx "${GITHUB_REF_NAME}" | head -1)
+          if [ -z "$anterior" ]; then
+            echo "No hay una versión anterior publicada; se omite este paso."
+            exit 0
+          fi
           echo "Versión anterior: $anterior"
           mkdir -p .regresion_anterior
           for f in $(git ls-tree --name-only -r "$anterior" -- test); do git show "$anterior:$f" > ".regresion_anterior/$(basename "$f")"; done
@@ -45,6 +77,7 @@ jobs:
 
   integracion:
     name: Regresión - pruebas de integración
+    # Solo corre si las unitarias pasaron.
     needs: unitarias
     runs-on: ubuntu-24.04
     timeout-minutes: 45
@@ -62,13 +95,15 @@ jobs:
       - name: Instalar dependencias
         run: flutter pub get
 
+      # El emulador de Android necesita Java 17 para compilar la app.
       - name: Instalar Java
         uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '17'
 
-      # La clave de Firebase y la cuenta de prueba vienen de los secretos del repositorio.
+      # La clave de Firebase y la cuenta de prueba vienen de los secretos del repositorio; el
+      # archivo env.json solo existe durante la corrida y nunca se sube al repositorio.
       - name: Preparar la configuración de la app
         run: echo '{"FIREBASE_API_KEY":"${{ secrets.FIREBASE_API_KEY }}","PRUEBAS_CORREO":"${{ secrets.PRUEBAS_CORREO }}","PRUEBAS_CONTRASENA":"${{ secrets.PRUEBAS_CONTRASENA }}"}' > env.json
 
@@ -79,6 +114,8 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
+      # Las pruebas del emulador corren EN SECUENCIA dentro del mismo emulador, una después de
+      # otra, con la cuenta de prueba de integración.
       - name: Ejecutar pruebas de integración en el emulador
         uses: reactivecircus/android-emulator-runner@v2
         with:

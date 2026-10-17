@@ -1,7 +1,14 @@
-# PRUEBAS DE ACEPTACIÓN: los criterios de aceptación de cada historia de usuario, probados
-# en la app real (emulador Android) contra el backend de Render.
-# Corre cada vez que se une una tarea a develop (para detectar fallas el mismo día) y
-# otra vez al pedir unir develop a main; si falla, no se puede pasar a main.
+# PRUEBAS DE ACEPTACIÓN
+# Tipo: aceptación · Alcance: criterios de aceptación de las HU probados en la app real contra
+# el backend de Render (HU-11: comprar, apartar y ver el estado del pedido).
+# Las aceptaciones que necesitan a una persona (pago en Mercado Pago de HU-12, respuesta de la
+# tienda en HU-13) se corren a mano; ver pruebas/aceptacion_hu12.md y aceptacion_hu13.md.
+#
+# Ejecución: los pasos van EN SECUENCIA y las pruebas corren EN SECUENCIA dentro del mismo
+# emulador. Este workflow corre EN PARALELO con Integración, Entorno y Rendimiento.
+#
+# Acción según el resultado: en develop, si falla, "Avisar fallas" abre una issue; en el PR de
+# develop a main es un check obligatorio y bloquea el paso a main.
 name: Pruebas de aceptación
 
 on:
@@ -17,9 +24,11 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
+      # Descarga el código del commit que disparó el workflow.
       - name: Descargar el código
         uses: actions/checkout@v7
 
+      # Misma versión de Flutter en todos los workflows para que los resultados sean comparables.
       - name: Instalar Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -27,9 +36,11 @@ jobs:
           channel: stable
           cache: true
 
+      # Librerías de pubspec.yaml.
       - name: Instalar dependencias
         run: flutter pub get
 
+      # El emulador y la compilación de Android necesitan Java 17.
       - name: Instalar Java
         uses: actions/setup-java@v6
         with:
@@ -49,6 +60,7 @@ jobs:
       - name: Preparar la configuración de la app
         run: echo '{"FIREBASE_API_KEY":"${{ secrets.FIREBASE_API_KEY }}","PRUEBAS_CORREO":"${{ secrets.ACEPTACION_CORREO }}","PRUEBAS_CONTRASENA":"${{ secrets.ACEPTACION_CONTRASENA }}"}' > env.json
 
+      # Levanta un Pixel 6 con Android 14 (API 34) sin animaciones y corre las pruebas en él.
       - name: Ejecutar pruebas de aceptación en el emulador
         uses: reactivecircus/android-emulator-runner@v2
         with:

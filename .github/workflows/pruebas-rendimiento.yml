@@ -1,4 +1,13 @@
-# PRUEBAS DE RENDIMIENTO: tamaño del APK y tiempos de carga y scroll en el emulador.
+# PRUEBAS DE RENDIMIENTO
+# Tipo: rendimiento · Alcance: tamaño del APK de producción (límite 30 MB) y tiempos de carga
+# y scroll del catálogo en el emulador contra el backend de Render.
+#
+# Ejecución: los dos trabajos (tamaño y tiempos) corren EN PARALELO porque no dependen uno del
+# otro; los pasos de cada trabajo van EN SECUENCIA. Este workflow corre EN PARALELO con
+# Integración, Aceptación y Entorno.
+#
+# Acción según el resultado: si el APK pasa de 30 MB o los tiempos superan su límite, el
+# workflow falla y "Avisar fallas" abre una issue.
 name: Pruebas de rendimiento
 
 on:
@@ -8,13 +17,16 @@ on:
     tags: ['v*']
 
 jobs:
+  # Trabajo 1: tamaño del APK (no necesita emulador).
   tamano:
     name: Tamaño del APK de producción
     runs-on: ubuntu-24.04
     steps:
+      # Descarga el código del commit que disparó el workflow.
       - name: Descargar el código
         uses: actions/checkout@v7
 
+      # Misma versión de Flutter en todos los workflows para que los resultados sean comparables.
       - name: Instalar Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -22,18 +34,22 @@ jobs:
           channel: stable
           cache: true
 
+      # Librerías de pubspec.yaml.
       - name: Instalar dependencias
         run: flutter pub get
 
+      # El emulador y la compilación de Android necesitan Java 17.
       - name: Instalar Java
         uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '17'
 
+      # APK de producción para arm64 (la arquitectura de los teléfonos reales).
       - name: Compilar y analizar tamaño
         run: flutter build apk --release --target-platform android-arm64 --analyze-size
 
+      # Falla si el APK pesa 30 MB o más; el tamaño queda en el resumen de la corrida.
       - name: Revisar límite de 30 MB
         run: |
           tamano=$(stat -c%s build/app/outputs/flutter-apk/app-release.apk)
@@ -42,14 +58,17 @@ jobs:
           echo "Tamaño del APK (arm64): $mb MB" >> $GITHUB_STEP_SUMMARY
           test $mb -lt 30
 
+  # Trabajo 2: tiempos en el emulador; corre al mismo tiempo que el trabajo 1.
   tiempos:
     name: Tiempos de carga y scroll
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
+      # Descarga el código del commit que disparó el workflow.
       - name: Descargar el código
         uses: actions/checkout@v7
 
+      # Misma versión de Flutter en todos los workflows para que los resultados sean comparables.
       - name: Instalar Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -57,9 +76,11 @@ jobs:
           channel: stable
           cache: true
 
+      # Librerías de pubspec.yaml.
       - name: Instalar dependencias
         run: flutter pub get
 
+      # El emulador y la compilación de Android necesitan Java 17.
       - name: Instalar Java
         uses: actions/setup-java@v6
         with:
@@ -73,6 +94,7 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
+      # rendimiento_test.dart mide la carga del catálogo y el scroll; falla si pasan su límite.
       - name: Medir tiempos en el emulador
         uses: reactivecircus/android-emulator-runner@v2
         with:
