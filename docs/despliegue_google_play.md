@@ -10,7 +10,7 @@ Al cerrar cada sprint, `develop` se une a `main`, se crea la etiqueta de versió
 |---|---|---|---|---|
 | v0.1.0 | Sprint 1 | 27 sep 2026 | GitHub Releases | APK |
 | v0.2.0 | Sprint 2 | 5 oct 2026 | GitHub Releases | `joyeria-diana-laura-v0.2.0.apk` |
-| v0.3.0 | Sprint 3 | 26 oct 2026 (#92) | GitHub Releases | `joyeria-diana-laura-v0.3.0.apk` |
+| v0.3.0 | Sprint 3 | 26 oct 2026 (#92) | GitHub Releases | `joyeria-diana-laura-v0.3.0+3.apk` |
 
 ## Cómo se desplegará con Google Play (Sprint 4, HU-17)
 
@@ -57,6 +57,10 @@ Cuándo sube cada parte:
 | v0.3.0 | `0.3.0+3` | GitHub Releases |
 | v1.0.0 | `1.0.0+4` | GitHub Releases y Pruebas internas de Google Play |
 
+### Dónde se valida la versión en el pipeline
+
+El workflow `.github/workflows/release-apk.yml` (Publicar APK) tiene el paso **Revisar la versión**: lee `version:` de `pubspec.yaml`, la compara con la etiqueta del release y, si no coinciden (por ejemplo, etiqueta `v0.3.0` con `pubspec.yaml` en `0.2.0+2`), detiene la publicación con un error. Si coinciden, compila con `--build-name` y `--build-number` y escribe la versión en el resumen de la corrida.
+
 ## Flujo de una versión
 
 ```
@@ -70,5 +74,5 @@ develop  ──PR (checks + aprobación)──▶  main  ──etiqueta vX.Y.Z�
 1. Se sube `version:` en `pubspec.yaml` (versionName y versionCode) en el PR de cierre del sprint.
 2. PR de `develop` a `main`: corren todos los pipelines y lo aprueba el otro integrante.
 3. Se crea la etiqueta `vX.Y.Z` y el release en GitHub: corren regresión, rendimiento y esfuerzo.
-4. Publicar APK compila solo si la regresión pasó; si falla, no hay APK y se abre una issue.
+4. Publicar APK revisa que la etiqueta coincida con `version:` de `pubspec.yaml` (si no, se detiene), compila con ese versionName y versionCode solo si la regresión pasó, y nombra el archivo con la versión completa (`joyeria-diana-laura-v0.3.0+3.apk`). Si algo falla, no hay APK y se abre una issue.
 5. Desde el Sprint 4, el mismo código se compila como AAB firmado y se sube a Pruebas internas.

@@ -7,6 +7,11 @@
 #
 # Acción según el resultado: si la regresión falla, este workflow se detiene, la versión queda
 # sin APK y "Avisar fallas" abre una issue. Una versión con pruebas en rojo no se publica.
+#
+# Versión: la etiqueta (por ejemplo v0.3.0) debe coincidir con `version:` de pubspec.yaml
+# (0.3.0+3: versionName 0.3.0 y versionCode 3). Si no coinciden, no se compila. El APK se
+# compila con esa versión y se nombra joyeria-diana-laura-v0.3.0+3.apk. Esquema completo en
+# docs/despliegue_google_play.md.
 name: Publicar APK
 
 on:
@@ -48,6 +53,24 @@ jobs:
         with:
           ref: ${{ env.TAG }}
 
+      # Lee la versión de pubspec.yaml y detiene la publicación si no coincide con la etiqueta.
+      - name: Revisar la versión
+        id: version
+        run: |
+          linea=$(grep -E '^version:' pubspec.yaml | sed 's/version: *//')
+          nombre=${linea%%+*}
+          codigo=${linea##*+}
+          echo "Etiqueta: $TAG · pubspec.yaml: $linea (versionName $nombre, versionCode $codigo)"
+          if [ "v$nombre" != "$TAG" ]; then
+            echo "::error::La etiqueta $TAG no coincide con la versión $nombre de pubspec.yaml"
+            exit 1
+          fi
+          echo "nombre=$nombre" >> "$GITHUB_OUTPUT"
+          echo "codigo=$codigo" >> "$GITHUB_OUTPUT"
+          echo "## Versión publicada" >> $GITHUB_STEP_SUMMARY
+          echo "- versionName: $nombre (etiqueta $TAG)" >> $GITHUB_STEP_SUMMARY
+          echo "- versionCode: $codigo" >> $GITHUB_STEP_SUMMARY
+
       - name: Instalar Java
         uses: actions/setup-java@v6
         with:
@@ -68,13 +91,15 @@ jobs:
       - name: Crear env.json
         run: echo '{"FIREBASE_API_KEY":"${{ secrets.FIREBASE_API_KEY }}"}' > env.json
 
+      # Compila con el versionName y versionCode de pubspec.yaml ya revisados.
       - name: Compilar APK
-        run: flutter build apk --release --dart-define-from-file=env.json
+        run: flutter build apk --release --dart-define-from-file=env.json --build-name=${{ steps.version.outputs.nombre }} --build-number=${{ steps.version.outputs.codigo }}
 
-      # El APK se sube a la página de la versión con el nombre joyeria-diana-laura-vX.Y.Z.apk.
+      # El APK se sube a la página de la versión con el nombre joyeria-diana-laura-vX.Y.Z+N.apk.
       - name: Adjuntar el APK a la versión
         env:
           GH_TOKEN: ${{ github.token }}
+          ARCHIVO: joyeria-diana-laura-${{ env.TAG }}+${{ steps.version.outputs.codigo }}.apk
         run: |
-          cp build/app/outputs/flutter-apk/app-release.apk "joyeria-diana-laura-${TAG}.apk"
-          gh release upload "$TAG" "joyeria-diana-laura-${TAG}.apk" --clobber
+          cp build/app/outputs/flutter-apk/app-release.apk "$ARCHIVO"
+          gh release upload "$TAG" "$ARCHIVO" --clobber
