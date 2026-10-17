@@ -26,8 +26,9 @@ No corre en los pipelines: crea un pedido real de la cuenta de prueba, que se ca
 | SP-10 | Sin sesión: enlace de pago, crear pedido y recibo | 401 | Pasa |
 | SP-11 | Token inventado | 401 / 403 | Pasa |
 | SP-12 | Ver el detalle (`GET /apartados/4`) del apartado de otra cuenta | 404 (antes de la corrección: 200 con piezas, abonos y comprobante) | **Fallaba → corregido** (#216) |
+| SP-13 | Perfil con nombre de 1 letra o con etiquetas, teléfono con letras y foto de otro sitio (`PUT /auth/profile`) | 400 y el perfil no cambia (antes: 200, se guardaban) | **Fallaba → corregido** (#220) |
 
-**12 de 12 casos pasan.** SP-12 se agregó el 17 de octubre de 2026 (ver abajo).
+**13 de 13 casos pasan.** SP-12 y SP-13 se agregaron en octubre de 2026 (ver abajo).
 
 ## Hallazgo corregido: ver el apartado de otra cuenta (#216)
 
@@ -36,6 +37,13 @@ Al preparar el historial de abonos de la HU-14 (#51) se encontró que `GET /apar
 - **Corrección en el backend** (repositorio Joyeria-Diana-Laura, PR #4): el endpoint responde 404 si el apartado no es del cliente; el personal lo sigue viendo. Publicado el 17 de octubre de 2026; desde entonces el apartado 4 responde 404 y los apartados propios siguen respondiendo 200.
 - **Prueba:** nuevo caso SP-12.
 - **Error en la propia prueba, corregido:** al pasar los datos a `datos_prueba.dart` (#208), las direcciones de SP-06 quedaron como `'/carrito/pedidos/$RegistrosAjenos.pedido'`, que Dart convierte en `/carrito/pedidos/RegistrosAjenos.pedido` en lugar de `/carrito/pedidos/16`. La prueba pasaba porque esa dirección también se rechaza, pero no probaba el pedido real. Se cambió a `${RegistrosAjenos.pedido}` en todas las pruebas del emulador. Pedido de prueba de esta corrida: 21, cancelado y sin transacciones.
+
+## Hallazgo corregido: datos de perfil sin validar (#220)
+
+Al preparar los ajustes del perfil de la HU-14 (#213) se encontró que `PUT /auth/profile` guardaba lo que llegara: con la cuenta de prueba se guardaron un nombre de 1 letra, un teléfono con letras y una foto de perfil con la URL de otro sitio (la cuenta se regresó a sus datos). El sitio web solo revisaba que el nombre no estuviera vacío.
+
+- **Corrección en el backend** (repositorio Joyeria-Diana-Laura, PR #5): nombre con las reglas del registro (3 a 30 letras y espacios), teléfono vacío o de 10 dígitos, foto vacía o de la cuenta de Cloudinary de la tienda; si no cumple responde 400. Publicado el 18 de octubre de 2026.
+- **Prueba:** nuevo caso SP-13; comprueba también que el perfil no cambia y que un nombre válido se sigue guardando. Pedido de prueba de esta corrida: 22, cancelado y sin transacciones.
 
 ## Revisado en el código, sin prueba automática
 
