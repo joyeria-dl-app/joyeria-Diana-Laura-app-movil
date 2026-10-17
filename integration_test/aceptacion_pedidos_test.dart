@@ -39,7 +39,7 @@ void _caso(String id, String descripcion) => debugPrint('ACEPTACION $id Pasa: $d
 
 Future<void> _pausaParaCaptura(WidgetTester tester, String caso) async {
   if (OpcionesPrueba.pausaWeb <= 0) return;
-  debugPrint('ACEPTACION $caso: toma ahora la captura del sitio web ($OpcionesPrueba.pausaWeb s)');
+  debugPrint('ACEPTACION $caso: toma ahora la captura del sitio web (${OpcionesPrueba.pausaWeb} s)');
   await tester.runAsync(() => Future<void>.delayed(const Duration(seconds: OpcionesPrueba.pausaWeb)));
 }
 
