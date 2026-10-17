@@ -1,6 +1,16 @@
+# PUBLICAR APK
+# Tipo: entrega continua (CD) · Alcance: la versión que se publica en GitHub Releases.
+# Compila el APK de producción y lo adjunta a la versión.
+#
+# Ejecución: EN SECUENCIA. Primero corren las pruebas de regresión completas (reutiliza el
+# workflow pruebas-regresion.yml); el APK solo se compila si todas pasan (`needs: regresion`).
+#
+# Acción según el resultado: si la regresión falla, este workflow se detiene, la versión queda
+# sin APK y "Avisar fallas" abre una issue. Una versión con pruebas en rojo no se publica.
 name: Publicar APK
 
 on:
+  # Al publicar una versión en GitHub (Releases → Publish release).
   release:
     types: [published]
   # Permite compilar el APK de una versión ya publicada.
@@ -10,16 +20,29 @@ on:
         description: Etiqueta de la versión (por ejemplo v0.1.0)
         required: true
 
+# Necesario para adjuntar el APK a la versión.
 permissions:
   contents: write
 
 jobs:
+  # 1. Regresión completa: unitarias, pruebas de la versión anterior e integración en emulador.
+  regresion:
+    name: Regresión antes de publicar
+    uses: ./.github/workflows/pruebas-regresion.yml
+    secrets:
+      FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+      PRUEBAS_CORREO: ${{ secrets.PRUEBAS_CORREO }}
+      PRUEBAS_CONTRASENA: ${{ secrets.PRUEBAS_CONTRASENA }}
+
+  # 2. Solo si la regresión pasó.
   compilar-apk:
     name: Compilar y adjuntar APK
+    needs: regresion
     runs-on: ubuntu-24.04
     env:
       TAG: ${{ github.event.release.tag_name || inputs.tag }}
     steps:
+      # Se compila exactamente el código de la etiqueta de la versión.
       - name: Descargar el código de la versión
         uses: actions/checkout@v7
         with:
@@ -41,9 +64,6 @@ jobs:
       - name: Instalar dependencias
         run: flutter pub get
 
-      - name: Ejecutar pruebas
-        run: flutter test
-
       # La clave pública de Firebase se guarda como secreto del repositorio, no en el código.
       - name: Crear env.json
         run: echo '{"FIREBASE_API_KEY":"${{ secrets.FIREBASE_API_KEY }}"}' > env.json
@@ -51,6 +71,7 @@ jobs:
       - name: Compilar APK
         run: flutter build apk --release --dart-define-from-file=env.json
 
+      # El APK se sube a la página de la versión con el nombre joyeria-diana-laura-vX.Y.Z.apk.
       - name: Adjuntar el APK a la versión
         env:
           GH_TOKEN: ${{ github.token }}

@@ -1,8 +1,16 @@
-# PRUEBAS DE ESFUERZO: carga creciente sobre el backend que usa la app.
-# Genera tráfico real en el servidor de Render, por eso no corre en cada cambio:
-# se lanza a mano o al publicar una etiqueta de versión (v0.3.0, v1.0.0…).
-# Antes de correrla hay que subir el límite por IP del backend en Render
-# (RASP_RATE_LIMIT_MAX); ver pruebas/esfuerzo_sprint3.md.
+# PRUEBAS DE ESFUERZO
+# Tipo: esfuerzo · Alcance: el backend que usa la app (catálogo, carrito y pedidos con sesión)
+# bajo carga creciente, con k6.
+# Genera tráfico real en el servidor de Render, por eso no corre en cada cambio: se lanza a mano
+# o al publicar una etiqueta de versión (v0.3.0, v1.0.0…). Antes de correrla hay que subir el
+# límite por IP del backend en Render (RASP_RATE_LIMIT_MAX); ver pruebas/esfuerzo_sprint3.md.
+#
+# Ejecución: los usuarios virtuales de k6 hacen sus peticiones EN PARALELO (ese es el esfuerzo);
+# los pasos del workflow van EN SECUENCIA.
+#
+# Acción según el resultado: en el escenario criterio (el que corre con cada versión), k6 falla
+# si el 95 % de las respuestas pasa de 2 s o hay más de 1 % de errores; entonces "Avisar fallas"
+# abre una issue. El escenario quiebre no tiene umbrales: busca hasta dónde llega el servidor.
 name: Pruebas de esfuerzo
 
 on:
@@ -27,12 +35,15 @@ jobs:
     name: Esfuerzo del backend con k6
     runs-on: ubuntu-24.04
     steps:
+      # Descarga el código del commit que disparó el workflow.
       - name: Descargar el código
         uses: actions/checkout@v7
 
+      # k6 es la herramienta de pruebas de carga de Grafana.
       - name: Instalar k6
         uses: grafana/setup-k6-action@v1
 
+      # pruebas/esfuerzo/catalogo.js define los escenarios y los umbrales.
       - name: Ejecutar prueba de esfuerzo
         uses: grafana/run-k6-action@v1
         env:
