@@ -9,6 +9,7 @@ import '../screens/login_screen.dart';
 import '../screens/mis_apartados_screen.dart';
 import '../screens/mis_pedidos_screen.dart';
 import '../screens/mis_personalizaciones_screen.dart';
+import '../screens/perfil_screen.dart';
 import '../screens/register_screen.dart';
 
 class AppRoutes {
@@ -22,6 +23,7 @@ class AppRoutes {
   static const String misPedidos = '/mis-pedidos';
   static const String misApartados = '/mis-apartados';
   static const String misPersonalizaciones = '/mis-personalizaciones';
+  static const String perfil = '/perfil';
 
   static Map<String, WidgetBuilder> get routes => {
     home: (_) => const HomeScreen(),
@@ -34,5 +36,6 @@ class AppRoutes {
     misPedidos: (_) => const MisPedidosScreen(),
     misApartados: (_) => const MisApartadosScreen(),
     misPersonalizaciones: (_) => const MisPersonalizacionesScreen(),
+    perfil: (_) => const PerfilScreen(),
   };
 }
