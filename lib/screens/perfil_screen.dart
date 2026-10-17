@@ -5,6 +5,7 @@ import '../models/perfil.dart';
 import '../routes/app_routes.dart';
 import '../services/perfil_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/cerrar_sesion.dart';
 import '../utils/fechas.dart';
 import '../widgets/barra_navegacion.dart';
 import '../widgets/estado_pedido.dart';
@@ -12,7 +13,7 @@ import '../widgets/estado_pedido.dart';
 // Mi perfil (HU-14, #50): boceto 10 "Perfil (P15)" de A3 Interfaces con los datos reales
 // de la cuenta. Del boceto, "Clienta frecuente" se muestra como "Clienta desde" (el segmento
 // no se guarda por cliente) y se agrega Mis personalizaciones (HU-13). El tema (#212), los
-// ajustes y el cambio de foto (#213) y cerrar sesión (#52) se conectan en sus tareas.
+// ajustes y el cambio de foto (#213) se conectan en sus tareas; cerrar sesión ya funciona (#52).
 class PerfilScreen extends StatefulWidget {
   const PerfilScreen({super.key});
 
@@ -403,7 +404,7 @@ class _Opciones extends StatelessWidget {
             final_: Switch(value: true, onChanged: (_) => onPronto(), activeThumbColor: Colors.white, activeTrackColor: AppColors.primario2),
             onTap: onPronto,
           ),
-          _Renglon(icono: Icons.logout_rounded, texto: 'Cerrar sesión', peligro: true, onTap: onPronto),
+          _Renglon(icono: Icons.logout_rounded, texto: 'Cerrar sesión', peligro: true, onTap: () => cerrarSesionConConfirmacion(context)),
         ],
       ),
     );

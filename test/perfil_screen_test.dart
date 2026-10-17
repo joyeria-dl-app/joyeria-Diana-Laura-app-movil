@@ -113,13 +113,14 @@ void main() {
     }
   });
 
-  testWidgets('El tema, los ajustes, la foto y cerrar sesión están visibles y avisan que llegan pronto', (tester) async {
+  testWidgets('El tema, los ajustes y la foto están visibles y avisan que llegan pronto', (tester) async {
     await _abrir(tester, _PerfilFalso(cuenta: _ana));
     expect(find.text('Tema oscuro'), findsOneWidget);
     expect(find.byType(Switch), findsOneWidget);
     expect(find.text('Cerrar sesión'), findsOneWidget);
 
-    for (final toque in [find.byTooltip('Ajustes'), find.byKey(const Key('perfil_foto')), find.text('Cerrar sesión')]) {
+    // Cerrar sesión ya funciona (#52); se prueba en test/cerrar_sesion_test.dart.
+    for (final toque in [find.byTooltip('Ajustes'), find.byKey(const Key('perfil_foto'))]) {
       await tester.ensureVisible(toque);
       await tester.tap(toque);
       await tester.pump();
