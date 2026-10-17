@@ -1,3 +1,8 @@
+// TIPO: widget
+// ALCANCE: HU-08 · galería de fotos del detalle
+// EJECUCIÓN: pipelines Pruebas unitarias y Flutter CI en cada PR; los archivos de test/ corren EN PARALELO entre sí y los casos de este archivo EN SECUENCIA. flutter test test/galeria_fotos_test.dart
+// DATOS: fotos sustituidas por texto, sin red
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

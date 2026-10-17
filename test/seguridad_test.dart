@@ -1,3 +1,8 @@
+// TIPO: seguridad (unitaria)
+// ALCANCE: HU-19 · sesión cifrada, sin claves en el código, env.json ignorado y solo HTTPS (#97)
+// EJECUCIÓN: pipelines Pruebas unitarias y Flutter CI en cada PR; los archivos de test/ corren EN PARALELO entre sí y los casos de este archivo EN SECUENCIA. flutter test test/seguridad_test.dart
+// DATOS: los archivos del propio repositorio
+
 import 'dart:io';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -61,12 +66,15 @@ void main() {
     test('La clave y la cuenta de prueba se leen al compilar, no están escritas', () {
       final auth = File('lib/services/auth_service.dart').readAsStringSync();
       expect(auth, contains("String.fromEnvironment('FIREBASE_API_KEY')"));
+      // Los datos de prueba están en un solo archivo (#208): la cuenta se lee al compilar.
+      final datos = File('integration_test/datos_prueba.dart').readAsStringSync();
+      expect(datos, contains("String.fromEnvironment('PRUEBAS_CORREO')"));
+      expect(datos, contains("String.fromEnvironment('PRUEBAS_CONTRASENA')"));
+      // Las demás pruebas del emulador toman la cuenta de ese archivo; ninguna la escribe.
       for (final prueba in _archivos('integration_test', {'.dart'})) {
         final codigo = prueba.readAsStringSync();
-        if (codigo.contains('PRUEBAS_CORREO')) {
-          expect(codigo, contains("String.fromEnvironment('PRUEBAS_CORREO')"), reason: prueba.path);
-          expect(codigo, contains("String.fromEnvironment('PRUEBAS_CONTRASENA')"), reason: prueba.path);
-        }
+        if (codigo.contains('CuentaPrueba.')) expect(codigo, contains("import 'datos_prueba.dart';"), reason: prueba.path);
+        expect(RegExp(r"'[\w.+-]+@[\w-]+\.[\w.]+'").hasMatch(codigo), isFalse, reason: '${prueba.path} tiene un correo escrito');
       }
     });
 

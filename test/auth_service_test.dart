@@ -1,3 +1,8 @@
+// TIPO: unitaria
+// ALCANCE: HU-01 y HU-02 · servicio de sesión: inicio, intentos fallidos, bloqueo y cierre de sesión
+// EJECUCIÓN: pipelines Pruebas unitarias y Flutter CI en cada PR; los archivos de test/ corren EN PARALELO entre sí y los casos de este archivo EN SECUENCIA. flutter test test/auth_service_test.dart
+// DATOS: backend simulado en memoria (sin red); respuestas simuladas del backend de autenticación
+
 import 'dart:convert';
 import 'dart:typed_data';
 

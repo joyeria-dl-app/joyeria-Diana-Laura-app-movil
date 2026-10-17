@@ -1,3 +1,8 @@
+// TIPO: integración
+// ALCANCE: HU-07 a HU-10 · recorrido con sesión: filtro, detalle, carrito y favoritos contra el backend real
+// EJECUCIÓN: pipeline Pruebas de integración y Regresión; EN SECUENCIA en el emulador. flutter test integration_test/recorrido_cliente_test.dart --dart-define-from-file=env.json
+// DATOS: integration_test/datos_prueba.dart (cuenta de env.json o de los secretos PRUEBAS_*)
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -13,13 +18,11 @@ import 'package:joyeria_diana_laura/widgets/tarjeta_producto.dart';
 
 import 'catalogo_test.dart' show despertarServidor, esperar;
 import 'sesion.dart';
+import 'datos_prueba.dart';
 
 // Prueba de integración del recorrido del cliente con sesión (HU-07 a HU-10):
 // catálogo → filtro → detalle → agregar al carrito → favoritos, contra el backend real.
 // La cuenta de prueba va en env.json (PRUEBAS_CORREO y PRUEBAS_CONTRASENA); en GitHub viene de los secretos:
-// flutter test integration_test/recorrido_cliente_test.dart --dart-define-from-file=env.json
-const _correo = String.fromEnvironment('PRUEBAS_CORREO');
-const _contrasena = String.fromEnvironment('PRUEBAS_CONTRASENA');
 
 // Abre la primera pieza del filtro con existencias (las agotadas no se pueden agregar).
 Future<void> _abrirPiezaDisponible(WidgetTester tester) async {
@@ -44,18 +47,18 @@ void main() {
   setUpAll(despertarServidor);
 
   testWidgets('HU-07 a HU-10: el cliente filtra, abre una pieza, la agrega al carrito y la guarda en favoritos', (tester) async {
-    expect(_correo, isNotEmpty, reason: 'Falta PRUEBAS_CORREO');
-    expect(_contrasena, isNotEmpty, reason: 'Falta PRUEBAS_CONTRASENA');
+    expect(CuentaPrueba.correo, isNotEmpty, reason: 'Falta PRUEBAS_CORREO');
+    expect(CuentaPrueba.contrasena, isNotEmpty, reason: 'Falta PRUEBAS_CONTRASENA');
 
     await tester.pumpWidget(JoyeriaApp(storage: SecureSessionStorage()));
-    await iniciarSesion(tester, _correo, _contrasena);
+    await iniciarSesion(tester, CuentaPrueba.correo, CuentaPrueba.contrasena);
 
     // Catálogo y filtro por categoría.
     await tester.tap(find.text('Ver catálogo'));
     await esperar(tester, find.textContaining('piezas'));
-    await esperar(tester, find.text('Anillos'));
-    await tester.tap(find.text('Anillos').first);
-    await esperar(tester, find.text('Anillos').at(1));
+    await esperar(tester, find.text(PiezasPrueba.categoriaCompra));
+    await tester.tap(find.text(PiezasPrueba.categoriaCompra).first);
+    await esperar(tester, find.text(PiezasPrueba.categoriaCompra).at(1));
 
     // Detalle de una pieza con existencias.
     await _abrirPiezaDisponible(tester);

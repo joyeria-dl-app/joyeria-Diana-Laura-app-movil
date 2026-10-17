@@ -1,3 +1,8 @@
+// TIPO: widget
+// ALCANCE: HU-13 · Mis personalizaciones: en revisión, aprobada, no aprobada y comprada
+// EJECUCIÓN: pipelines Pruebas unitarias y Flutter CI en cada PR; los archivos de test/ corren EN PARALELO entre sí y los casos de este archivo EN SECUENCIA. flutter test test/mis_personalizaciones_test.dart
+// DATOS: backend simulado en memoria (sin red); solicitudes de ejemplo
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';

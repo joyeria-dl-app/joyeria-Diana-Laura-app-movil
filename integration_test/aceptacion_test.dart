@@ -1,3 +1,8 @@
+// TIPO: aceptación
+// ALCANCE: HU-08, HU-09 y HU-10 · casos CA-01 a CA-09 contra el backend real
+// EJECUCIÓN: pipeline Pruebas de aceptación (develop y PR a main) y Regresión; EN SECUENCIA en el emulador. flutter test integration_test/aceptacion_test.dart --dart-define-from-file=env.json (opcional --dart-define=PAUSA_WEB=40 para capturar el sitio web)
+// DATOS: integration_test/datos_prueba.dart (cuenta de env.json o de los secretos ACEPTACION_*)
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -19,6 +24,7 @@ import 'package:joyeria_diana_laura/widgets/tarjeta_producto.dart';
 
 import 'catalogo_test.dart' show despertarServidor, esperar;
 import 'sesion.dart';
+import 'datos_prueba.dart';
 
 // Pruebas de aceptación de HU-08, HU-09 y HU-10 en el emulador contra el backend real.
 // Cada caso (CA-01 a CA-09) sale del criterio de aceptación de su historia; la tabla con
@@ -26,17 +32,13 @@ import 'sesion.dart';
 // "Lo que ve el sitio web" se comprueba con lo que devuelve el servidor para la misma cuenta,
 // que es de donde lee el sitio web.
 // flutter test integration_test/aceptacion_test.dart --dart-define-from-file=env.json
-// Con --dart-define=PAUSA_WEB=40 se detiene 40 s en CA-06 y CA-08 para tomar la captura del sitio web.
-const _correo = String.fromEnvironment('PRUEBAS_CORREO');
-const _contrasena = String.fromEnvironment('PRUEBAS_CONTRASENA');
-const _pausaWeb = int.fromEnvironment('PAUSA_WEB');
 
 void _caso(String id, String descripcion) => debugPrint('ACEPTACION $id Pasa: $descripcion');
 
 Future<void> _pausaParaCaptura(WidgetTester tester, String caso) async {
-  if (_pausaWeb <= 0) return;
-  debugPrint('ACEPTACION $caso: toma ahora la captura del sitio web ($_pausaWeb s)');
-  await tester.runAsync(() => Future<void>.delayed(const Duration(seconds: _pausaWeb)));
+  if (OpcionesPrueba.pausaWeb <= 0) return;
+  debugPrint('ACEPTACION $caso: toma ahora la captura del sitio web ($OpcionesPrueba.pausaWeb s)');
+  await tester.runAsync(() => Future<void>.delayed(const Duration(seconds: OpcionesPrueba.pausaWeb)));
 }
 
 // Consulta el servidor hasta que se cumpla la condición (máximo 10 s).
@@ -57,11 +59,11 @@ void main() {
   setUpAll(despertarServidor);
 
   testWidgets('Aceptación HU-08, HU-09 y HU-10: detalle con galería, carrito y favoritos', (tester) async {
-    expect(_correo, isNotEmpty, reason: 'Falta PRUEBAS_CORREO');
-    expect(_contrasena, isNotEmpty, reason: 'Falta PRUEBAS_CONTRASENA');
+    expect(CuentaPrueba.correo, isNotEmpty, reason: 'Falta PRUEBAS_CORREO');
+    expect(CuentaPrueba.contrasena, isNotEmpty, reason: 'Falta PRUEBAS_CONTRASENA');
 
     await tester.pumpWidget(JoyeriaApp(storage: SecureSessionStorage()));
-    await iniciarSesion(tester, _correo, _contrasena);
+    await iniciarSesion(tester, CuentaPrueba.correo, CuentaPrueba.contrasena);
 
     // Servicios con la misma sesión de la app: devuelven lo que guarda el servidor para la cuenta.
     final contexto = tester.element(find.byType(Scaffold).first);
@@ -74,7 +76,7 @@ void main() {
 
     // Pieza de prueba: el primer anillo con existencias y más de una foto.
     final (anillos, pieza) = (await tester.runAsync(() async {
-      final anillos = (await productos.categorias()).firstWhere((c) => c.nombre == 'Anillos');
+      final anillos = (await productos.categorias()).firstWhere((c) => c.nombre == PiezasPrueba.categoriaCompra);
       for (final p in await productos.productos(categoriaId: anillos.id)) {
         if (p.agotado) continue;
         final detalle = await productos.detalle(p.id);

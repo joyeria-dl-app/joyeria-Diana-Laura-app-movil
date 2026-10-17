@@ -1,3 +1,8 @@
+// TIPO: aceptación simulada (flujo)
+// ALCANCE: HU-12 · criterio: pagar con Mercado Pago y ver si quedó aprobado, en proceso o no completado
+// EJECUCIÓN: pipelines Pruebas unitarias y Flutter CI en cada PR; los archivos de test/ corren EN PARALELO entre sí y los casos de este archivo EN SECUENCIA. flutter test test/pagos_flujo_test.dart
+// DATOS: backend simulado en memoria (sin red); la prueba hace de Mercado Pago y del webhook
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';

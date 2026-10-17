@@ -1,3 +1,8 @@
+// TIPO: integración
+// ALCANCE: HU-09, HU-11, HU-12 y HU-13 · casos I-01 a I-06: carrito, pedido, pago con Mercado Pago y personalización en un recorrido
+// EJECUCIÓN: A MANO, en el emulador: la tienda confirma el pedido y se paga en Mercado Pago. flutter test integration_test/integracion_compra_test.dart --dart-define-from-file=env.json
+// DATOS: integration_test/datos_prueba.dart (cuenta de env.json o de los secretos); comprador de prueba de Mercado Pago; pedido y solicitud reales que se cancelan al terminar
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -19,6 +24,7 @@ import 'package:joyeria_diana_laura/utils/formato.dart';
 
 import 'catalogo_test.dart' show despertarServidor, esperar;
 import 'sesion.dart';
+import 'datos_prueba.dart';
 
 // Prueba de integración del Sprint 3 (#146): un solo recorrido que une HU-09, HU-11, HU-12 y
 // HU-13 en el emulador contra el backend real. En cada paso se compara lo que muestra la app
@@ -29,11 +35,6 @@ import 'sesion.dart';
 //   pagar               pagar en Mercado Pago con el comprador de prueba
 //   limpiar <folio> <solicitud>  cancelar el pedido y cerrar la solicitud de prueba
 // No corre en los pipelines: necesita a la tienda y un pago con la cuenta de prueba.
-// flutter test integration_test/integracion_compra_test.dart --dart-define-from-file=env.json
-const _correo = String.fromEnvironment('PRUEBAS_CORREO');
-const _contrasena = String.fromEnvironment('PRUEBAS_CONTRASENA');
-// Pieza que admite personalización: Esclava personalizada Día del Padre.
-const _piezaPersonalizable = int.fromEnvironment('PIEZA_PERSONALIZABLE', defaultValue: 1);
 
 // Deja la pantalla quieta unos segundos para la captura de evidencia con adb.
 Future<void> _caso(WidgetTester tester, String id, String descripcion) async {
@@ -56,11 +57,11 @@ void main() {
   setUpAll(despertarServidor);
 
   testWidgets('Integración Sprint 3: carrito, pedido, pago con Mercado Pago y personalización', (tester) async {
-    expect(_correo, isNotEmpty, reason: 'Falta PRUEBAS_CORREO');
-    expect(_contrasena, isNotEmpty, reason: 'Falta PRUEBAS_CONTRASENA');
+    expect(CuentaPrueba.correo, isNotEmpty, reason: 'Falta PRUEBAS_CORREO');
+    expect(CuentaPrueba.contrasena, isNotEmpty, reason: 'Falta PRUEBAS_CONTRASENA');
 
     await tester.pumpWidget(JoyeriaApp(storage: SecureSessionStorage()));
-    await iniciarSesion(tester, _correo, _contrasena);
+    await iniciarSesion(tester, CuentaPrueba.correo, CuentaPrueba.contrasena);
 
     final contexto = tester.element(find.byType(Scaffold).first);
     final pedidos = contexto.read<PedidoService>();
@@ -85,7 +86,7 @@ void main() {
     // I-01 (HU-09): la pieza más barata de Anillos con existencia llega al carrito con su precio.
     final pieza = (await tester.runAsync(() async {
       final productos = contexto.read<ProductoService>();
-      final anillos = (await productos.categorias()).firstWhere((c) => c.nombre == 'Anillos');
+      final anillos = (await productos.categorias()).firstWhere((c) => c.nombre == PiezasPrueba.categoriaCompra);
       final lista = (await productos.productos(categoriaId: anillos.id)).where((p) => p.stock >= 2).toList()
         ..sort((a, b) => a.precioFinal.compareTo(b.precioFinal));
       return lista.first;
@@ -130,7 +131,7 @@ void main() {
     // I-04 (HU-12): pago con el comprador de prueba; la app y el servidor lo registran aprobado.
     await tester.tap(find.byTooltip('Pagar con Mercado Pago'));
     _paso('pagar');
-    await esperar(tester, find.text('¡Pago recibido!'), limite: const Duration(minutes: 15));
+    await esperar(tester, find.text('¡Pago recibido!'), limite: TiemposPrueba.pasoManual);
     final pagado = await esperarServidor(() => pedido(folio, (p) => p.pagado), 'el pago de $folio (webhook)');
     await _caso(tester, 'I-04', 'la app muestra "¡Pago recibido!" y el servidor tiene $folio pagado (${formatoPrecioCompleto(pagado.total)})');
 
@@ -145,7 +146,7 @@ void main() {
 
     // I-06 (HU-13): la solicitud de personalización llega al servidor y Mis personalizaciones la muestra en revisión.
     final detalle = 'Prueba de integración #146: grabar las iniciales D & L (${DateTime.now().millisecondsSinceEpoch})';
-    _navegador(tester).push(MaterialPageRoute<void>(builder: (_) => const DetalleScreen(productoId: _piezaPersonalizable)));
+    _navegador(tester).push(MaterialPageRoute<void>(builder: (_) => const DetalleScreen(productoId: PiezasPrueba.personalizable)));
     await esperar(tester, find.text('¿La quieres a tu gusto?'));
     final invitacion = find.bySemanticsLabel('Personalizar esta pieza');
     await tester.ensureVisible(invitacion);

@@ -1,3 +1,8 @@
+// TIPO: apoyo (no es prueba)
+// ALCANCE: inicio de sesión que comparten las pruebas del emulador (#189)
+// EJECUCIÓN: lo usan los archivos de integration_test/
+// DATOS: la cuenta que le pasa cada prueba
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

@@ -1,3 +1,8 @@
+// TIPO: widget
+// ALCANCE: HU-09 · pantalla del carrito
+// EJECUCIÓN: pipelines Pruebas unitarias y Flutter CI en cada PR; los archivos de test/ corren EN PARALELO entre sí y los casos de este archivo EN SECUENCIA. flutter test test/carrito_screen_test.dart
+// DATOS: backend simulado en memoria (sin red); carrito en memoria
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';

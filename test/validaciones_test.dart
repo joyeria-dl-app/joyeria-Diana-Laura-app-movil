@@ -1,3 +1,8 @@
+// TIPO: unitaria
+// ALCANCE: HU-02 · reglas de validación de nombre, correo, teléfono y contraseña
+// EJECUCIÓN: pipelines Pruebas unitarias y Flutter CI en cada PR; los archivos de test/ corren EN PARALELO entre sí y los casos de este archivo EN SECUENCIA. flutter test test/validaciones_test.dart
+// DATOS: valores válidos e inválidos escritos en cada caso
+
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:joyeria_diana_laura/utils/validaciones.dart';

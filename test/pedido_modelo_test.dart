@@ -1,3 +1,8 @@
+// TIPO: unitaria
+// ALCANCE: HU-11 · reglas de pedidos y apartados que calcula la app
+// EJECUCIÓN: pipelines Pruebas unitarias y Flutter CI en cada PR; los archivos de test/ corren EN PARALELO entre sí y los casos de este archivo EN SECUENCIA. flutter test test/pedido_modelo_test.dart
+// DATOS: valores escritos en cada caso
+
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:joyeria_diana_laura/models/pedido.dart';

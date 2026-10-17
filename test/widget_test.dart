@@ -1,3 +1,8 @@
+// TIPO: widget (humo)
+// ALCANCE: arranque de la app: abre en la pantalla de inicio
+// EJECUCIÓN: pipelines Pruebas unitarias y Flutter CI en cada PR; los archivos de test/ corren EN PARALELO entre sí y los casos de este archivo EN SECUENCIA. flutter test test/widget_test.dart
+// DATOS: sin datos externos
+
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:joyeria_diana_laura/main.dart';

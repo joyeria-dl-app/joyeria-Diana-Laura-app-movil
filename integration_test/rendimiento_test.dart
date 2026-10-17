@@ -1,3 +1,8 @@
+// TIPO: rendimiento
+// ALCANCE: HU-07 y HU-08 · arranque < 3 s, catálogo < 2 s, detalle < 3 s y scroll sin cuadros perdidos notables
+// EJECUCIÓN: pipeline Pruebas de rendimiento (develop y etiquetas v*); EN PARALELO con el trabajo de tamaño del APK. flutter test integration_test/rendimiento_test.dart
+// DATOS: sin cuenta; catálogo real del backend
+
 import 'dart:io';
 
 import 'package:flutter/material.dart';
