@@ -14,6 +14,7 @@ import '../utils/formato.dart';
 import '../utils/pago_en_linea.dart';
 import '../widgets/decoracion.dart';
 import '../widgets/estado_pedido.dart';
+import 'detalle_apartado_screen.dart';
 import 'resultado_pago_screen.dart';
 
 // Mis apartados (boceto P12, estados 10a y 10b de Bocetos_Sprint3).
@@ -385,6 +386,19 @@ class _TarjetaApartado extends StatelessWidget {
     final (texto, tono, icono) = _chip;
     final pieza = a.piezas.isEmpty ? null : a.piezas.first;
     final nombre = pieza == null ? 'Apartado' : (a.piezas.length > 1 ? '${pieza.nombre} y ${a.piezas.length - 1} más' : pieza.nombre);
+    // HU-14: al tocarlo se abre el detalle con el historial de abonos.
+    return Semantics(
+      button: true,
+      label: 'Ver abonos de ${a.folio}',
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => Navigator.push(context, MaterialPageRoute<void>(builder: (_) => DetalleApartadoScreen(apartado: a))),
+        child: _tarjeta(a, nombre, pieza, texto, tono, icono),
+      ),
+    );
+  }
+
+  Widget _tarjeta(Apartado a, String nombre, PiezaPedido? pieza, String texto, TonoEstado tono, IconData? icono) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
