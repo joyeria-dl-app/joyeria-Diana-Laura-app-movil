@@ -1,5 +1,5 @@
 // TIPO: seguridad
-// ALCANCE: HU-19 · casos SP-01 a SP-11: el backend rechaza pagos, montos y accesos alterados (#98)
+// ALCANCE: HU-19 · casos SP-01 a SP-12: el backend rechaza pagos, montos y accesos alterados (#98)
 // EJECUCIÓN: A MANO, en el emulador: crea un pedido real. flutter test integration_test/seguridad_pago_test.dart --dart-define-from-file=env.json
 // DATOS: integration_test/datos_prueba.dart (cuenta de env.json o de los secretos); registros de otra cuenta de datos_prueba.dart; el pedido de prueba se cancela al terminar
 
@@ -120,20 +120,25 @@ void main() {
     _caso('SP-05', 'abonos de 20%, 200%, "abc" y -10 rechazados');
 
     // SP-06: el pedido y el apartado de otra cuenta.
-    rechazada(await codigo(() => dio.get('/carrito/pedidos/$RegistrosAjenos.pedido')), 'ver pedido ajeno');
+    rechazada(await codigo(() => dio.get('/carrito/pedidos/${RegistrosAjenos.pedido}')), 'ver pedido ajeno');
     rechazada(await codigo(() => dio.post('/carrito/pago/mercadopago', data: {'venta_id': RegistrosAjenos.pedido})), 'pagar pedido ajeno con MP');
     rechazada(await codigo(() => dio.post('/carrito/pago/paypal/crear', data: {'venta_id': RegistrosAjenos.pedido})), 'pagar pedido ajeno con PayPal');
     rechazada(await codigo(() => dio.post('/apartados/pago/mercadopago', data: {'apartado_id': RegistrosAjenos.apartado})), 'pagar apartado ajeno');
     rechazada(await codigo(() => dio.post('/apartados/pago/mercadopago/abono', data: {'abono_id': RegistrosAjenos.abono})), 'pagar abono ajeno');
     _caso(
       'SP-06',
-      'no deja ver ni pagar el pedido $RegistrosAjenos.pedido, el apartado $RegistrosAjenos.apartado ni el abono $RegistrosAjenos.abono de otra cuenta',
+      'no deja ver ni pagar el pedido ${RegistrosAjenos.pedido}, el apartado ${RegistrosAjenos.apartado} ni el abono ${RegistrosAjenos.abono} de otra cuenta',
     );
+
+    // SP-12 (#216): ver el detalle de un apartado ajeno. Antes de la corrección del backend
+    // respondía 200 con las piezas, los abonos y el comprobante de otra clienta.
+    rechazada(await codigo(() => dio.get('/apartados/${RegistrosAjenos.apartado}')), 'ver apartado ajeno');
+    _caso('SP-12', 'no deja ver el detalle del apartado ${RegistrosAjenos.apartado} de otra cuenta');
 
     // SP-07: acciones del personal hechas por el cliente.
     rechazada(await codigo(() => dio.patch('/carrito/pedidos/$pedidoId/estado', data: {'estado': 'entregado'})), 'cambiar estado');
     rechazada(await codigo(() => dio.post('/carrito/pedidos/$pedidoId/confirmar-pago-efectivo')), 'confirmar pago en efectivo');
-    rechazada(await codigo(() => dio.post('/apartados/$RegistrosAjenos.apartado/confirmar-pago')), 'confirmar pago de apartado');
+    rechazada(await codigo(() => dio.post('/apartados/${RegistrosAjenos.apartado}/confirmar-pago')), 'confirmar pago de apartado');
     _caso('SP-07', 'el cliente no puede marcar su pedido entregado ni confirmar pagos');
 
     // SP-08: aviso falso de Mercado Pago con un pago que no existe y la referencia del pedido.

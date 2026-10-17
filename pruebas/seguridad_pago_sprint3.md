@@ -25,8 +25,17 @@ No corre en los pipelines: crea un pedido real de la cuenta de prueba, que se ca
 | SP-09 | Captura de PayPal con una orden inventada | 400 y el pedido sigue sin pagar | Pasa |
 | SP-10 | Sin sesión: enlace de pago, crear pedido y recibo | 401 | Pasa |
 | SP-11 | Token inventado | 401 / 403 | Pasa |
+| SP-12 | Ver el detalle (`GET /apartados/4`) del apartado de otra cuenta | 404 (antes de la corrección: 200 con piezas, abonos y comprobante) | **Fallaba → corregido** (#216) |
 
-**11 de 11 casos pasan.** No se encontró ninguna petición alterada que el backend aceptara.
+**12 de 12 casos pasan.** SP-12 se agregó el 17 de octubre de 2026 (ver abajo).
+
+## Hallazgo corregido: ver el apartado de otra cuenta (#216)
+
+Al preparar el historial de abonos de la HU-14 (#51) se encontró que `GET /apartados/:id` no revisaba de quién era el apartado: con la cuenta de prueba se pudo ver el apartado 4 de otra clienta (HTTP 200), con sus piezas, montos, abonos y la URL del comprobante. La prueba SP-06 revisaba que no se pudiera **pagar** un apartado ajeno, no que no se pudiera **ver**.
+
+- **Corrección en el backend** (repositorio Joyeria-Diana-Laura, PR #4): el endpoint responde 404 si el apartado no es del cliente; el personal lo sigue viendo. Publicado el 17 de octubre de 2026; desde entonces el apartado 4 responde 404 y los apartados propios siguen respondiendo 200.
+- **Prueba:** nuevo caso SP-12.
+- **Error en la propia prueba, corregido:** al pasar los datos a `datos_prueba.dart` (#208), las direcciones de SP-06 quedaron como `'/carrito/pedidos/$RegistrosAjenos.pedido'`, que Dart convierte en `/carrito/pedidos/RegistrosAjenos.pedido` en lugar de `/carrito/pedidos/16`. La prueba pasaba porque esa dirección también se rechaza, pero no probaba el pedido real. Se cambió a `${RegistrosAjenos.pedido}` en todas las pruebas del emulador. Pedido de prueba de esta corrida: 21, cancelado y sin transacciones.
 
 ## Revisado en el código, sin prueba automática
 
