@@ -1,3 +1,8 @@
+// TIPO: widget
+// ALCANCE: HU-11 · confirmar pedido o apartado: métodos de pago, envío y abono
+// EJECUCIÓN: pipelines Pruebas unitarias y Flutter CI en cada PR; los archivos de test/ corren EN PARALELO entre sí y los casos de este archivo EN SECUENCIA. flutter test test/confirmar_pedido_screen_test.dart
+// DATOS: backend simulado en memoria (sin red); dos anillos de $580.32 como en los bocetos
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';

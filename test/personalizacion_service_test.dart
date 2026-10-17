@@ -1,3 +1,8 @@
+// TIPO: unitaria
+// ALCANCE: HU-13 · servicio de personalización: solicitar, subir foto y consultar
+// EJECUCIÓN: pipelines Pruebas unitarias y Flutter CI en cada PR; los archivos de test/ corren EN PARALELO entre sí y los casos de este archivo EN SECUENCIA. flutter test test/personalizacion_service_test.dart
+// DATOS: backend simulado en memoria (sin red); respuestas fijas por ruta
+
 import 'dart:convert';
 import 'dart:typed_data';
 

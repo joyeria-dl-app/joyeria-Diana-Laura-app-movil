@@ -1,3 +1,8 @@
+// TIPO: widget
+// ALCANCE: HU-13 · formulario de solicitud y tarjeta del detalle
+// EJECUCIÓN: pipelines Pruebas unitarias y Flutter CI en cada PR; los archivos de test/ corren EN PARALELO entre sí y los casos de este archivo EN SECUENCIA. flutter test test/solicitar_personalizacion_test.dart
+// DATOS: backend simulado en memoria (sin red); anillo de ejemplo y foto PNG de 1×1
+
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';

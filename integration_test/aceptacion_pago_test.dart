@@ -1,3 +1,8 @@
+// TIPO: aceptación
+// ALCANCE: HU-12 · casos CA-16 a CA-20: pagar con Mercado Pago (rechazado y aprobado) contra el backend real
+// EJECUCIÓN: A MANO, en el emulador: alguien paga en la página de Mercado Pago. flutter test integration_test/aceptacion_pago_test.dart --dart-define-from-file=env.json --dart-define=PAGO_MP=true
+// DATOS: integration_test/datos_prueba.dart (cuenta de env.json o de los secretos); vendedor y comprador de prueba de Mercado Pago; pedido y apartado reales que después se cancelan
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -19,6 +24,7 @@ import 'package:joyeria_diana_laura/utils/formato.dart';
 
 import 'catalogo_test.dart' show despertarServidor, esperar;
 import 'sesion.dart';
+import 'datos_prueba.dart';
 
 // Pruebas de aceptación de HU-12 en el emulador contra el backend real y las cuentas de
 // vendedor y comprador de prueba de Mercado Pago (no hay cobros reales). La tabla con los
@@ -32,10 +38,6 @@ import 'sesion.dart';
 //   pagar aprobado      pagar con el saldo del comprador de prueba (o titular APRO)
 // No corre en los pipelines: necesita a alguien que pague. Crea un pedido y un apartado
 // reales que después la tienda cancela.
-// flutter test integration_test/aceptacion_pago_test.dart --dart-define-from-file=env.json --dart-define=PAGO_MP=true
-const _correo = String.fromEnvironment('PRUEBAS_CORREO');
-const _contrasena = String.fromEnvironment('PRUEBAS_CONTRASENA');
-const _pagoMp = bool.fromEnvironment('PAGO_MP');
 
 void _caso(String id, String descripcion) => debugPrint('ACEPTACION $id Pasa: $descripcion');
 void _paso(String paso) => debugPrint('ACEPTACION PASO $paso');
@@ -48,11 +50,11 @@ void main() {
   setUpAll(despertarServidor);
 
   testWidgets('Aceptación HU-12: pagar con Mercado Pago desde la app', (tester) async {
-    expect(_correo, isNotEmpty, reason: 'Falta PRUEBAS_CORREO');
-    expect(_contrasena, isNotEmpty, reason: 'Falta PRUEBAS_CONTRASENA');
+    expect(CuentaPrueba.correo, isNotEmpty, reason: 'Falta PRUEBAS_CORREO');
+    expect(CuentaPrueba.contrasena, isNotEmpty, reason: 'Falta PRUEBAS_CONTRASENA');
 
     await tester.pumpWidget(JoyeriaApp(storage: SecureSessionStorage()));
-    await iniciarSesion(tester, _correo, _contrasena);
+    await iniciarSesion(tester, CuentaPrueba.correo, CuentaPrueba.contrasena);
 
     final contexto = tester.element(find.byType(Scaffold).first);
     final pedidosServidor = contexto.read<PedidoService>();
@@ -77,7 +79,7 @@ void main() {
     // Pieza de prueba: el anillo más barato con existencia.
     final pieza = (await tester.runAsync(() async {
       final productos = contexto.read<ProductoService>();
-      final anillos = (await productos.categorias()).firstWhere((c) => c.nombre == 'Anillos');
+      final anillos = (await productos.categorias()).firstWhere((c) => c.nombre == PiezasPrueba.categoriaCompra);
       final lista = (await productos.productos(categoriaId: anillos.id)).where((p) => p.stock >= 2).toList()
         ..sort((a, b) => a.precioFinal.compareTo(b.precioFinal));
       return lista.first;
@@ -96,9 +98,9 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    Future<void> esperarResultado() => esperar(tester, find.byType(ResultadoPagoScreen), limite: const Duration(minutes: 15));
+    Future<void> esperarResultado() => esperar(tester, find.byType(ResultadoPagoScreen), limite: TiemposPrueba.pasoManual);
 
-    if (!_pagoMp) {
+    if (!OpcionesPrueba.pagoMercadoPago) {
       markTestSkipped('Necesita pagar a mano en Mercado Pago: corre con --dart-define=PAGO_MP=true');
       return;
     }
@@ -130,7 +132,7 @@ void main() {
     // CA-18: intenta de nuevo y el pago queda aprobado en la app y en el servidor.
     await tester.tap(find.text('Intentar de nuevo'));
     _paso('pagar aprobado');
-    await esperar(tester, find.text('¡Pago recibido!'), limite: const Duration(minutes: 15));
+    await esperar(tester, find.text('¡Pago recibido!'), limite: TiemposPrueba.pasoManual);
     expect(find.text('Pedido $folio'), findsOneWidget);
     final pagado = await esperarServidor(() => pedido(folio, (p) => p.pagado), 'el pago aprobado de $folio (webhook)');
     _caso('CA-18', 'con la tarjeta aprobada la app muestra "¡Pago recibido!" y el servidor tiene $folio pagado (${formatoPrecioCompleto(pagado.total)})');
@@ -160,7 +162,7 @@ void main() {
     await esperar(tester, find.text('Pagar $folioApartado con Mercado Pago'));
     await tester.tap(find.text('Pagar $folioApartado con Mercado Pago'));
     _paso('pagar aprobado');
-    await esperar(tester, find.text('¡Pago recibido!'), limite: const Duration(minutes: 15));
+    await esperar(tester, find.text('¡Pago recibido!'), limite: TiemposPrueba.pasoManual);
     expect(find.text('Apartado $folioApartado'), findsOneWidget);
     await esperarServidor(
       () async => (await pedidosServidor.misApartados()).where((a) => a.folio == folioApartado && a.estado != 'pendiente_pago').firstOrNull,

@@ -1,3 +1,8 @@
+// TIPO: widget
+// ALCANCE: HU-02 · pantalla de registro: validaciones, reglas de contraseña y pregunta secreta
+// EJECUCIÓN: pipelines Pruebas unitarias y Flutter CI en cada PR; los archivos de test/ corren EN PARALELO entre sí y los casos de este archivo EN SECUENCIA. flutter test test/register_screen_test.dart
+// DATOS: backend simulado en memoria (sin red); datos de registro ficticios
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

@@ -1,3 +1,8 @@
+// TIPO: widget
+// ALCANCE: HU-12 · abrir Mercado Pago desde el seguimiento y desde Mis apartados
+// EJECUCIÓN: pipelines Pruebas unitarias y Flutter CI en cada PR; los archivos de test/ corren EN PARALELO entre sí y los casos de este archivo EN SECUENCIA. flutter test test/pago_en_linea_test.dart
+// DATOS: backend simulado en memoria (sin red); enlace de pago ficticio
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';

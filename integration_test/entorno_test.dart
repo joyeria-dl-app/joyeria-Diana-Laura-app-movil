@@ -1,3 +1,8 @@
+// TIPO: entorno
+// ALCANCE: casos CE-01 a CE-05: batería baja, llamada, segundo plano y sin señal (simulados con adb)
+// EJECUCIÓN: pipeline Pruebas de entorno (develop y PR a main); EN SECUENCIA porque cada caso parte del anterior. bash pruebas/entorno.sh
+// DATOS: integration_test/datos_prueba.dart (cuenta de env.json o de los secretos ENTORNO_*)
+
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -15,15 +20,13 @@ import 'package:joyeria_diana_laura/services/session_storage.dart';
 
 import 'catalogo_test.dart' show despertarServidor, esperar;
 import 'sesion.dart';
+import 'datos_prueba.dart';
 
 // Pruebas del entorno: cómo se comporta la app ante lo que pasa en el teléfono.
 // La app no puede cambiar la batería, recibir una llamada ni quitarse la señal, así que
 // lo hace pruebas/entorno.sh desde la computadora con adb: cuando la prueba imprime
 // "ENTORNO PASO <caso>", el script aplica la situación en el emulador y la prueba
 // comprueba cómo reaccionó la app. Resultados en pruebas/entorno_sprint3.md.
-// bash pruebas/entorno.sh
-const _correo = String.fromEnvironment('PRUEBAS_CORREO');
-const _contrasena = String.fromEnvironment('PRUEBAS_CONTRASENA');
 
 // Cada aviso va por dos caminos: debugPrint llega a la salida de flutter test y el archivo
 // entorno_pasos.txt (en la carpeta temporal de la app) lo lee entorno.sh con adb run-as, por si
@@ -80,12 +83,12 @@ void main() {
   setUpAll(despertarServidor);
 
   testWidgets('Entorno: batería baja, llamada entrante y sin señal', (tester) async {
-    expect(_correo, isNotEmpty, reason: 'Falta PRUEBAS_CORREO');
-    expect(_contrasena, isNotEmpty, reason: 'Falta PRUEBAS_CONTRASENA');
+    expect(CuentaPrueba.correo, isNotEmpty, reason: 'Falta PRUEBAS_CORREO');
+    expect(CuentaPrueba.contrasena, isNotEmpty, reason: 'Falta PRUEBAS_CONTRASENA');
     if (_pasos.existsSync()) _pasos.deleteSync();
 
     await tester.pumpWidget(JoyeriaApp(storage: SecureSessionStorage()));
-    await iniciarSesion(tester, _correo, _contrasena);
+    await iniciarSesion(tester, CuentaPrueba.correo, CuentaPrueba.contrasena);
 
     final contexto = tester.element(find.byType(Scaffold).first);
     final carritoServidor = contexto.read<CarritoService>();

@@ -1,3 +1,8 @@
+// TIPO: unitaria
+// ALCANCE: HU-11 y HU-12 · servicio de pedidos, apartados y preferencias de pago
+// EJECUCIÓN: pipelines Pruebas unitarias y Flutter CI en cada PR; los archivos de test/ corren EN PARALELO entre sí y los casos de este archivo EN SECUENCIA. flutter test test/pedido_service_test.dart
+// DATOS: backend simulado en memoria (sin red); respuestas fijas por ruta
+
 import 'dart:convert';
 import 'dart:typed_data';
 

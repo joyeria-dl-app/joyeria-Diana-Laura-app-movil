@@ -1,3 +1,8 @@
+// TIPO: aceptación
+// ALCANCE: HU-11 · casos CA-10 a CA-15: comprar, apartar y ver el estado contra el backend real
+// EJECUCIÓN: pipeline Pruebas de aceptación y Regresión (CA-14 y CA-15); CA-10 a CA-13 a mano porque crean pedidos reales. flutter test integration_test/aceptacion_pedidos_test.dart --dart-define-from-file=env.json --dart-define=CREAR_PEDIDO=true
+// DATOS: integration_test/datos_prueba.dart (cuenta de env.json o de los secretos ACEPTACION_*); los pedidos creados los cancela la tienda
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -18,6 +23,7 @@ import 'package:joyeria_diana_laura/utils/formato.dart';
 
 import 'catalogo_test.dart' show despertarServidor, esperar;
 import 'sesion.dart';
+import 'datos_prueba.dart';
 
 // Pruebas de aceptación de HU-11 en el emulador contra el backend real.
 // Cada caso (CA-10 a CA-15) sale del criterio de aceptación; la tabla con los
@@ -28,18 +34,13 @@ import 'sesion.dart';
 // después la tienda los cancela desde el panel. CA-14 y CA-15 solo leen y corren
 // siempre, también en el pipeline de cada integración a develop.
 // flutter test integration_test/aceptacion_pedidos_test.dart --dart-define-from-file=env.json --dart-define=CREAR_PEDIDO=true
-// Con --dart-define=PAUSA_WEB=40 se detiene 40 s en CA-14 para tomar la captura del sitio web.
-const _correo = String.fromEnvironment('PRUEBAS_CORREO');
-const _contrasena = String.fromEnvironment('PRUEBAS_CONTRASENA');
-const _crearPedido = bool.fromEnvironment('CREAR_PEDIDO');
-const _pausaWeb = int.fromEnvironment('PAUSA_WEB');
 
 void _caso(String id, String descripcion) => debugPrint('ACEPTACION $id Pasa: $descripcion');
 
 Future<void> _pausaParaCaptura(WidgetTester tester, String caso) async {
-  if (_pausaWeb <= 0) return;
-  debugPrint('ACEPTACION $caso: toma ahora la captura del sitio web ($_pausaWeb s)');
-  await tester.runAsync(() => Future<void>.delayed(const Duration(seconds: _pausaWeb)));
+  if (OpcionesPrueba.pausaWeb <= 0) return;
+  debugPrint('ACEPTACION $caso: toma ahora la captura del sitio web ($OpcionesPrueba.pausaWeb s)');
+  await tester.runAsync(() => Future<void>.delayed(const Duration(seconds: OpcionesPrueba.pausaWeb)));
 }
 
 NavigatorState _navegador(WidgetTester tester) => tester.state<NavigatorState>(find.byType(Navigator).first);
@@ -50,11 +51,11 @@ void main() {
   setUpAll(despertarServidor);
 
   testWidgets('Aceptación HU-11: comprar o apartar y ver el estado del pedido', (tester) async {
-    expect(_correo, isNotEmpty, reason: 'Falta PRUEBAS_CORREO');
-    expect(_contrasena, isNotEmpty, reason: 'Falta PRUEBAS_CONTRASENA');
+    expect(CuentaPrueba.correo, isNotEmpty, reason: 'Falta PRUEBAS_CORREO');
+    expect(CuentaPrueba.contrasena, isNotEmpty, reason: 'Falta PRUEBAS_CONTRASENA');
 
     await tester.pumpWidget(JoyeriaApp(storage: SecureSessionStorage()));
-    await iniciarSesion(tester, _correo, _contrasena);
+    await iniciarSesion(tester, CuentaPrueba.correo, CuentaPrueba.contrasena);
 
     // Servicios con la misma sesión de la app: devuelven lo que guarda el servidor para la cuenta.
     final contexto = tester.element(find.byType(Scaffold).first);
@@ -62,11 +63,11 @@ void main() {
     final carritoServidor = contexto.read<CarritoService>();
     final carrito = contexto.read<CarritoProvider>();
 
-    if (_crearPedido) {
+    if (OpcionesPrueba.crearPedido) {
       // Pieza de prueba: el anillo más barato con al menos 2 piezas en existencia.
       final pieza = (await tester.runAsync(() async {
         final productos = contexto.read<ProductoService>();
-        final anillos = (await productos.categorias()).firstWhere((c) => c.nombre == 'Anillos');
+        final anillos = (await productos.categorias()).firstWhere((c) => c.nombre == PiezasPrueba.categoriaCompra);
         final lista = (await productos.productos(categoriaId: anillos.id)).where((p) => p.stock >= 2).toList()
           ..sort((a, b) => a.precioFinal.compareTo(b.precioFinal));
         return lista.isEmpty ? null : lista.first;

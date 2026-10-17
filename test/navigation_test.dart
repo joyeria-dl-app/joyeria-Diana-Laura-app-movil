@@ -1,3 +1,8 @@
+// TIPO: widget
+// ALCANCE: HU-01 y HU-02 · navegación entre inicio, inicio de sesión y registro
+// EJECUCIÓN: pipelines Pruebas unitarias y Flutter CI en cada PR; los archivos de test/ corren EN PARALELO entre sí y los casos de este archivo EN SECUENCIA. flutter test test/navigation_test.dart
+// DATOS: sin datos externos
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

@@ -1,3 +1,8 @@
+// TIPO: aceptación
+// ALCANCE: HU-13 · casos CA-21 a CA-25: solicitar la personalización y verla en el sistema del negocio
+// EJECUCIÓN: A MANO, en el emulador: la tienda revisa y rechaza la solicitud. flutter test integration_test/aceptacion_personalizacion_test.dart --dart-define-from-file=env.json
+// DATOS: integration_test/datos_prueba.dart (cuenta de env.json o de los secretos); pieza personalizable de datos_prueba.dart; la solicitud se cierra como rechazada
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -13,6 +18,7 @@ import 'package:joyeria_diana_laura/services/session_storage.dart';
 
 import 'catalogo_test.dart' show despertarServidor, esperar;
 import 'sesion.dart';
+import 'datos_prueba.dart';
 
 // Pruebas de aceptación de HU-13 en el emulador contra el backend real. La tabla con los
 // resultados está en pruebas/aceptacion_hu13.md.
@@ -23,11 +29,6 @@ import 'sesion.dart';
 //   revisar <id>    la solicitud aparece en Personalizaciones del panel del trabajador
 //   rechazar <id>   la tienda la rechaza con un motivo (panel o base de datos)
 // No corre en los pipelines: crea una solicitud real y necesita a alguien que la responda.
-// flutter test integration_test/aceptacion_personalizacion_test.dart --dart-define-from-file=env.json
-const _correo = String.fromEnvironment('PRUEBAS_CORREO');
-const _contrasena = String.fromEnvironment('PRUEBAS_CONTRASENA');
-// Pieza que admite personalización: Esclava personalizada Día del Padre.
-const _pieza = int.fromEnvironment('PIEZA_PERSONALIZABLE', defaultValue: 1);
 
 // Deja la pantalla quieta unos segundos para tomar la captura de evidencia con adb.
 Future<void> _caso(WidgetTester tester, String id, String descripcion) async {
@@ -50,11 +51,11 @@ void main() {
   setUpAll(despertarServidor);
 
   testWidgets('Aceptación HU-13: solicitar la personalización de una pieza', (tester) async {
-    expect(_correo, isNotEmpty, reason: 'Falta PRUEBAS_CORREO');
-    expect(_contrasena, isNotEmpty, reason: 'Falta PRUEBAS_CONTRASENA');
+    expect(CuentaPrueba.correo, isNotEmpty, reason: 'Falta PRUEBAS_CORREO');
+    expect(CuentaPrueba.contrasena, isNotEmpty, reason: 'Falta PRUEBAS_CONTRASENA');
 
     await tester.pumpWidget(JoyeriaApp(storage: SecureSessionStorage()));
-    await iniciarSesion(tester, _correo, _contrasena);
+    await iniciarSesion(tester, CuentaPrueba.correo, CuentaPrueba.contrasena);
 
     final servicio = tester.element(find.byType(Scaffold).first).read<PersonalizacionService>();
 
@@ -70,7 +71,7 @@ void main() {
     }
 
     // CA-21: la pieza que admite personalización invita a pedirla desde su detalle.
-    _navegador(tester).push(MaterialPageRoute<void>(builder: (_) => const DetalleScreen(productoId: _pieza)));
+    _navegador(tester).push(MaterialPageRoute<void>(builder: (_) => const DetalleScreen(productoId: PiezasPrueba.personalizable)));
     await esperar(tester, find.text('¿La quieres a tu gusto?'));
     final invitacion = find.bySemanticsLabel('Personalizar esta pieza');
     await tester.ensureVisible(invitacion);
@@ -104,7 +105,7 @@ void main() {
       minutos: 1,
     );
     expect(solicitud.estado, EstadoSolicitud.pendiente);
-    expect(solicitud.productoId, _pieza);
+    expect(solicitud.productoId, PiezasPrueba.personalizable);
     await _caso(tester, 'CA-23', 'solicitud ${solicitud.id} enviada; el servidor la registra pendiente');
     _paso('revisar ${solicitud.id}');
 

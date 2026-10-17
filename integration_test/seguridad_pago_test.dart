@@ -1,3 +1,8 @@
+// TIPO: seguridad
+// ALCANCE: HU-19 · casos SP-01 a SP-11: el backend rechaza pagos, montos y accesos alterados (#98)
+// EJECUCIÓN: A MANO, en el emulador: crea un pedido real. flutter test integration_test/seguridad_pago_test.dart --dart-define-from-file=env.json
+// DATOS: integration_test/datos_prueba.dart (cuenta de env.json o de los secretos); registros de otra cuenta de datos_prueba.dart; el pedido de prueba se cancela al terminar
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -11,6 +16,7 @@ import 'package:joyeria_diana_laura/services/session_storage.dart';
 
 import 'catalogo_test.dart' show despertarServidor;
 import 'sesion.dart';
+import 'datos_prueba.dart';
 
 // Pruebas de seguridad del pago (HU-19, #98). Una app modificada puede mandar al backend lo
 // que quiera; aquí se inicia sesión con la cuenta de prueba y, con el mismo cliente HTTP de
@@ -19,15 +25,6 @@ import 'sesion.dart';
 // rechazarlas y el pedido no debe cambiar. Resultados en pruebas/seguridad_pago_sprint3.md.
 //
 // Crea un pedido real de la cuenta de prueba que después se cancela en la base de datos.
-// flutter test integration_test/seguridad_pago_test.dart --dart-define-from-file=env.json
-const _correo = String.fromEnvironment('PRUEBAS_CORREO');
-const _contrasena = String.fromEnvironment('PRUEBAS_CONTRASENA');
-// Pedido, apartado y abono de otra cuenta.
-const _pedidoAjeno = int.fromEnvironment('PEDIDO_AJENO', defaultValue: 16);
-const _apartadoAjeno = int.fromEnvironment('APARTADO_AJENO', defaultValue: 4);
-const _abonoAjeno = int.fromEnvironment('ABONO_AJENO', defaultValue: 4);
-// Pieza para el pedido de prueba: Esclava personalizada Día del Padre.
-const _pieza = int.fromEnvironment('PIEZA_PEDIDO', defaultValue: 1);
 
 void _caso(String id, String descripcion) => debugPrint('SEGURIDAD $id Pasa: $descripcion');
 
@@ -37,11 +34,11 @@ void main() {
   setUpAll(despertarServidor);
 
   testWidgets('Seguridad del pago: el backend rechaza peticiones alteradas', (tester) async {
-    expect(_correo, isNotEmpty, reason: 'Falta PRUEBAS_CORREO');
-    expect(_contrasena, isNotEmpty, reason: 'Falta PRUEBAS_CONTRASENA');
+    expect(CuentaPrueba.correo, isNotEmpty, reason: 'Falta PRUEBAS_CORREO');
+    expect(CuentaPrueba.contrasena, isNotEmpty, reason: 'Falta PRUEBAS_CONTRASENA');
 
     await tester.pumpWidget(JoyeriaApp(storage: SecureSessionStorage()));
-    await iniciarSesion(tester, _correo, _contrasena);
+    await iniciarSesion(tester, CuentaPrueba.correo, CuentaPrueba.contrasena);
 
     final contexto = tester.element(find.byType(Scaffold).first);
     final dio = contexto.read<ApiClient>().dio;
@@ -63,7 +60,7 @@ void main() {
     void rechazada(int estado, String que) => expect(estado, inInclusiveRange(400, 499), reason: '$que debió rechazarse y respondió $estado');
 
     // Pedido propio de prueba: precio y envío alterados en lo que manda la app.
-    final pieza = (await tester.runAsync(() => contexto.read<ProductoService>().detalle(_pieza)))!.producto;
+    final pieza = (await tester.runAsync(() => contexto.read<ProductoService>().detalle(PiezasPrueba.pedidoSeguridad)))!.producto;
     final metodos = (await datos(() => dio.get('/carrito/metodos-pago')));
     final mp = (metodos['metodos'] as List<dynamic>? ?? const []).cast<Map<String, dynamic>>().firstWhere(
       (m) => m['codigo'] == 'mercadopago',
@@ -73,7 +70,7 @@ void main() {
 
     // SP-01: agregar al carrito con un precio inventado; el carrito usa el precio del catálogo.
     expect(
-      await codigo(() => dio.post('/carrito', data: {'producto_id': _pieza, 'cantidad': 1, 'precio_venta': 1, 'precio_unitario': 1})),
+      await codigo(() => dio.post('/carrito', data: {'producto_id': PiezasPrueba.pedidoSeguridad, 'cantidad': 1, 'precio_venta': 1, 'precio_unitario': 1})),
       inInclusiveRange(200, 201),
     );
     final carrito = (await tester.runAsync(() => dio.get('/carrito')))!.data as Map<String, dynamic>;
@@ -83,7 +80,7 @@ void main() {
 
     // SP-02: cantidades fuera de rango.
     for (final cantidad in [0, -3, 100000]) {
-      rechazada(await codigo(() => dio.post('/carrito', data: {'producto_id': _pieza, 'cantidad': cantidad})), 'cantidad $cantidad');
+      rechazada(await codigo(() => dio.post('/carrito', data: {'producto_id': PiezasPrueba.pedidoSeguridad, 'cantidad': cantidad})), 'cantidad $cantidad');
     }
     _caso('SP-02', 'cantidades 0, -3 y 100000 rechazadas');
 
@@ -123,17 +120,20 @@ void main() {
     _caso('SP-05', 'abonos de 20%, 200%, "abc" y -10 rechazados');
 
     // SP-06: el pedido y el apartado de otra cuenta.
-    rechazada(await codigo(() => dio.get('/carrito/pedidos/$_pedidoAjeno')), 'ver pedido ajeno');
-    rechazada(await codigo(() => dio.post('/carrito/pago/mercadopago', data: {'venta_id': _pedidoAjeno})), 'pagar pedido ajeno con MP');
-    rechazada(await codigo(() => dio.post('/carrito/pago/paypal/crear', data: {'venta_id': _pedidoAjeno})), 'pagar pedido ajeno con PayPal');
-    rechazada(await codigo(() => dio.post('/apartados/pago/mercadopago', data: {'apartado_id': _apartadoAjeno})), 'pagar apartado ajeno');
-    rechazada(await codigo(() => dio.post('/apartados/pago/mercadopago/abono', data: {'abono_id': _abonoAjeno})), 'pagar abono ajeno');
-    _caso('SP-06', 'no deja ver ni pagar el pedido $_pedidoAjeno, el apartado $_apartadoAjeno ni el abono $_abonoAjeno de otra cuenta');
+    rechazada(await codigo(() => dio.get('/carrito/pedidos/$RegistrosAjenos.pedido')), 'ver pedido ajeno');
+    rechazada(await codigo(() => dio.post('/carrito/pago/mercadopago', data: {'venta_id': RegistrosAjenos.pedido})), 'pagar pedido ajeno con MP');
+    rechazada(await codigo(() => dio.post('/carrito/pago/paypal/crear', data: {'venta_id': RegistrosAjenos.pedido})), 'pagar pedido ajeno con PayPal');
+    rechazada(await codigo(() => dio.post('/apartados/pago/mercadopago', data: {'apartado_id': RegistrosAjenos.apartado})), 'pagar apartado ajeno');
+    rechazada(await codigo(() => dio.post('/apartados/pago/mercadopago/abono', data: {'abono_id': RegistrosAjenos.abono})), 'pagar abono ajeno');
+    _caso(
+      'SP-06',
+      'no deja ver ni pagar el pedido $RegistrosAjenos.pedido, el apartado $RegistrosAjenos.apartado ni el abono $RegistrosAjenos.abono de otra cuenta',
+    );
 
     // SP-07: acciones del personal hechas por el cliente.
     rechazada(await codigo(() => dio.patch('/carrito/pedidos/$pedidoId/estado', data: {'estado': 'entregado'})), 'cambiar estado');
     rechazada(await codigo(() => dio.post('/carrito/pedidos/$pedidoId/confirmar-pago-efectivo')), 'confirmar pago en efectivo');
-    rechazada(await codigo(() => dio.post('/apartados/$_apartadoAjeno/confirmar-pago')), 'confirmar pago de apartado');
+    rechazada(await codigo(() => dio.post('/apartados/$RegistrosAjenos.apartado/confirmar-pago')), 'confirmar pago de apartado');
     _caso('SP-07', 'el cliente no puede marcar su pedido entregado ni confirmar pagos');
 
     // SP-08: aviso falso de Mercado Pago con un pago que no existe y la referencia del pedido.

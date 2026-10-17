@@ -1,3 +1,8 @@
+// TIPO: widget
+// ALCANCE: HU-01 · pantalla de inicio de sesión: diseño, validación y error de contraseña
+// EJECUCIÓN: pipelines Pruebas unitarias y Flutter CI en cada PR; los archivos de test/ corren EN PARALELO entre sí y los casos de este archivo EN SECUENCIA. flutter test test/login_screen_test.dart
+// DATOS: backend simulado en memoria (sin red); usuario de prueba ficticio
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
