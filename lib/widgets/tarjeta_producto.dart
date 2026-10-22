@@ -24,14 +24,14 @@ class TarjetaProducto extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(26),
-        boxShadow: const [BoxShadow(color: Color(0xBF000000), blurRadius: 40, offset: Offset(0, 18), spreadRadius: -12)],
+        boxShadow: [BoxShadow(color: AppColors.sombra, blurRadius: 40, offset: Offset(0, 18), spreadRadius: -12)],
       ),
       child: Material(
-        color: const Color(0xFF1A0F18),
+        color: AppColors.tarjeta,
         clipBehavior: Clip.antiAlias,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(26),
-          side: const BorderSide(color: AppColors.borde),
+          side: BorderSide(color: AppColors.borde),
         ),
         child: InkWell(
           onTap: onTap,
@@ -63,7 +63,7 @@ class TarjetaProducto extends StatelessWidget {
                       producto.nombre,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: AppColors.texto, fontSize: 12.5, fontWeight: FontWeight.w500),
+                      style: TextStyle(color: AppColors.texto, fontSize: 12.5, fontWeight: FontWeight.w500),
                     ),
                     const SizedBox(height: 4),
                     Row(
@@ -71,7 +71,7 @@ class TarjetaProducto extends StatelessWidget {
                       children: [
                         Text(
                           formatoPrecio(producto.precioFinal),
-                          style: const TextStyle(color: AppColors.primario, fontSize: 16, fontWeight: FontWeight.w700, letterSpacing: -0.3),
+                          style: TextStyle(color: AppColors.primario, fontSize: 16, fontWeight: FontWeight.w700, letterSpacing: -0.3),
                         ),
                         if (producto.tieneDescuento) ...[
                           const SizedBox(width: 6),
@@ -79,7 +79,7 @@ class TarjetaProducto extends StatelessWidget {
                             child: Text(
                               formatoPrecio(producto.precioVenta),
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(color: AppColors.textoSuave, fontSize: 11, decoration: TextDecoration.lineThrough),
+                              style: TextStyle(color: AppColors.textoSuave, fontSize: 11, decoration: TextDecoration.lineThrough),
                             ),
                           ),
                         ],
@@ -116,7 +116,7 @@ class _Foto extends StatelessWidget {
     // Si está agotada la píldora ocupa el centro; el diamante se encimaría.
     final sinFoto = ColoredBox(
       color: AppColors.superficie2,
-      child: apagada ? null : const Center(child: Icon(Icons.diamond_outlined, size: 40, color: AppColors.textoSuave)),
+      child: apagada ? null : Center(child: Icon(Icons.diamond_outlined, size: 40, color: AppColors.textoSuave)),
     );
     final Widget foto = (url == null || url!.isEmpty)
         ? sinFoto
@@ -124,7 +124,7 @@ class _Foto extends StatelessWidget {
             url!,
             fit: BoxFit.cover,
             errorBuilder: (_, _, _) => sinFoto,
-            loadingBuilder: (_, hijo, progreso) => progreso == null ? hijo : const ColoredBox(color: AppColors.superficie2),
+            loadingBuilder: (_, hijo, progreso) => progreso == null ? hijo : ColoredBox(color: AppColors.superficie2),
           );
     return apagada ? ColorFiltered(colorFilter: _gris, child: foto) : foto;
   }
@@ -145,7 +145,7 @@ class _Estrellas extends StatelessWidget {
         children: [
           const Icon(Icons.star_rounded, size: 14, color: Color(0xFFF6A723)),
           const SizedBox(width: 2),
-          Text(formatoCalificacion(promedio), style: const TextStyle(color: AppColors.textoSuave, fontSize: 11)),
+          Text(formatoCalificacion(promedio), style: TextStyle(color: AppColors.textoSuave, fontSize: 11)),
         ],
       ),
     );
@@ -171,9 +171,9 @@ class _Corazon extends StatelessWidget {
           width: 34,
           height: 34,
           decoration: BoxDecoration(
-            color: const Color(0x8C281224),
+            color: AppColors.cristal,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0x2EFFAAD7)),
+            border: Border.all(color: AppColors.cristalBorde),
           ),
           child: Icon(favorita ? Icons.favorite_rounded : Icons.favorite_border_rounded, size: 17, color: favorita ? const Color(0xFFF4A6C6) : Colors.white),
         ),

@@ -72,7 +72,7 @@ class ResultadoPagoScreen extends StatelessWidget {
                 Text(
                   texto,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.textoSuave, fontSize: 13),
+                  style: TextStyle(color: AppColors.textoSuave, fontSize: 13),
                 ),
                 const SizedBox(height: 20),
                 Container(
@@ -87,7 +87,7 @@ class ResultadoPagoScreen extends StatelessWidget {
                       Row(
                         children: [
                           Expanded(
-                            child: Text('${apartado ? 'Apartado' : 'Pedido'} $folio', style: const TextStyle(color: AppColors.textoSuave, fontSize: 12)),
+                            child: Text('${apartado ? 'Apartado' : 'Pedido'} $folio', style: TextStyle(color: AppColors.textoSuave, fontSize: 12)),
                           ),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -103,12 +103,12 @@ class ResultadoPagoScreen extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(apartado ? 'Pago inicial' : 'Total', style: const TextStyle(color: AppColors.textoSuave, fontSize: 12)),
+                          Text(apartado ? 'Pago inicial' : 'Total', style: TextStyle(color: AppColors.textoSuave, fontSize: 12)),
                           Text(formatoPrecioCompleto(monto), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                         ],
                       ),
                       const SizedBox(height: 4),
-                      const Row(
+                      Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text('Método', style: TextStyle(color: AppColors.textoSuave, fontSize: 12)),

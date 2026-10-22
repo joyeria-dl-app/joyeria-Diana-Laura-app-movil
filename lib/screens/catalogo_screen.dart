@@ -195,7 +195,7 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
                 ? Center(
                     child: TextButton(onPressed: _cargarMas, child: const Text('No se pudieron cargar más. Reintentar')),
                   )
-                : const Column(
+                : Column(
                     children: [
                       SizedBox(
                         width: 28,
@@ -244,14 +244,14 @@ class _TarjetaCargando extends StatelessWidget {
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: const Color(0xFF1A0F18),
+        color: AppColors.tarjeta,
         borderRadius: BorderRadius.circular(26),
         border: Border.all(color: AppColors.borde),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Expanded(child: ColoredBox(color: Color(0xB3261C22))),
+          Expanded(child: ColoredBox(color: AppColors.superficie2)),
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 16),
             child: Column(children: [barra(0.8, 12), const SizedBox(height: 8), barra(0.4, 14)]),
@@ -310,7 +310,7 @@ class _Encabezado extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
               // Mientras falten páginas por cargar no se conoce el total exacto.
-              child: Text(completo ? '$total piezas' : '$total+ piezas', style: const TextStyle(color: AppColors.textoSuave, fontSize: 12)),
+              child: Text(completo ? '$total piezas' : '$total+ piezas', style: TextStyle(color: AppColors.textoSuave, fontSize: 12)),
             ),
         ],
       ),
@@ -327,7 +327,7 @@ class _CirculoCategoria extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const sinFoto = ColoredBox(
+    final sinFoto = ColoredBox(
       color: AppColors.superficie2,
       child: Center(child: Icon(Icons.diamond_outlined, size: 26, color: AppColors.textoSuave)),
     );
@@ -396,7 +396,7 @@ class _Aviso extends StatelessWidget {
           const SizedBox(height: 18),
           Text(
             titulo,
-            style: const TextStyle(color: AppColors.texto, fontSize: 20, fontWeight: FontWeight.w700),
+            style: TextStyle(color: AppColors.texto, fontSize: 20, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 6),
           ConstrainedBox(
@@ -404,7 +404,7 @@ class _Aviso extends StatelessWidget {
             child: Text(
               texto,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textoSuave, fontSize: 13),
+              style: TextStyle(color: AppColors.textoSuave, fontSize: 13),
             ),
           ),
           if (onReintentar != null) ...[

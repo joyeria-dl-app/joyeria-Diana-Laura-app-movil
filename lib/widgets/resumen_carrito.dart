@@ -12,7 +12,7 @@ class ResumenCarrito extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const suave = TextStyle(color: AppColors.textoSuave, fontSize: 13);
+    final suave = TextStyle(color: AppColors.textoSuave, fontSize: 13);
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -23,12 +23,12 @@ class ResumenCarrito extends StatelessWidget {
       child: Column(
         children: [
           _Renglon(
-            izquierda: const Text('Subtotal', style: suave),
+            izquierda: Text('Subtotal', style: suave),
             derecha: Text(formatoPrecioCompleto(subtotal), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
           ),
           const SizedBox(height: 8),
           // El envío depende de la dirección y se calcula al pagar (HU-12).
-          const _Renglon(
+          _Renglon(
             izquierda: Text('Envío', style: suave),
             derecha: Text(
               'Se calcula al pagar',
@@ -40,7 +40,7 @@ class ResumenCarrito extends StatelessWidget {
             izquierda: const Text('Total', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
             derecha: Text(
               formatoPrecioCompleto(total),
-              style: const TextStyle(color: AppColors.primario, fontSize: 22, fontWeight: FontWeight.w700, letterSpacing: -0.5),
+              style: TextStyle(color: AppColors.primario, fontSize: 22, fontWeight: FontWeight.w700, letterSpacing: -0.5),
             ),
           ),
         ],
@@ -64,10 +64,10 @@ class BarraPagar extends StatelessWidget {
         margin: const EdgeInsets.fromLTRB(14, 0, 14, 16),
         padding: const EdgeInsets.fromLTRB(22, 8, 8, 8),
         decoration: BoxDecoration(
-          color: const Color(0x8C281224),
+          color: AppColors.cristal,
           borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: const Color(0x2EFFAAD7)),
-          boxShadow: const [BoxShadow(color: Color(0x80000000), blurRadius: 40, offset: Offset(0, 20), spreadRadius: -10)],
+          border: Border.all(color: AppColors.cristalBorde),
+          boxShadow: [BoxShadow(color: AppColors.sombra, blurRadius: 40, offset: Offset(0, 20), spreadRadius: -10)],
         ),
         child: Row(
           children: [
@@ -76,7 +76,7 @@ class BarraPagar extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
+                  Text(
                     'Total',
                     style: TextStyle(color: AppColors.textoSuave, fontSize: 11, fontWeight: FontWeight.w500),
                   ),
@@ -142,7 +142,7 @@ class _LineaPunteada extends StatelessWidget {
         final guiones = (limites.maxWidth / 7).floor();
         return Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: List.generate(guiones, (_) => const SizedBox(width: 4, height: 1.5, child: ColoredBox(color: AppColors.borde))),
+          children: List.generate(guiones, (_) => SizedBox(width: 4, height: 1.5, child: ColoredBox(color: AppColors.borde))),
         );
       },
     );
