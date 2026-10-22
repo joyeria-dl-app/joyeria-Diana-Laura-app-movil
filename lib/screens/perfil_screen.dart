@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../models/perfil.dart';
@@ -8,11 +9,15 @@ import '../theme/app_theme.dart';
 import '../utils/fechas.dart';
 import '../widgets/barra_navegacion.dart';
 import '../widgets/estado_pedido.dart';
+import 'ajustes_perfil_screen.dart';
+
+// Abre la galería o la cámara para la foto de perfil. Las pruebas lo cambian para no abrir nada.
+Future<XFile?> Function(ImageSource) elegirFotoPerfil = (origen) => ImagePicker().pickImage(source: origen, imageQuality: 85, maxWidth: 1080);
 
 // Mi perfil (HU-14, #50): boceto 10 "Perfil (P15)" de A3 Interfaces con los datos reales
 // de la cuenta. Del boceto, "Clienta frecuente" se muestra como "Clienta desde" (el segmento
-// no se guarda por cliente) y se agrega Mis personalizaciones (HU-13). El tema (#212), los
-// ajustes y el cambio de foto (#213) y cerrar sesión (#52) se conectan en sus tareas.
+// no se guarda por cliente) y se agrega Mis personalizaciones (HU-13). El engrane abre Ajustes y
+// la cámara cambia la foto (#213); el tema (#212) y cerrar sesión (#52) se conectan en sus tareas.
 class PerfilScreen extends StatefulWidget {
   const PerfilScreen({super.key});
 
@@ -22,6 +27,7 @@ class PerfilScreen extends StatefulWidget {
 
 class _PerfilScreenState extends State<PerfilScreen> {
   late Future<(Perfil, ResumenCliente)> _datos;
+  bool _subiendoFoto = false;
 
   @override
   void initState() {
@@ -42,9 +48,45 @@ class _PerfilScreenState extends State<PerfilScreen> {
     });
   }
 
-  void _pronto() => ScaffoldMessenger.of(context)
+  void _aviso(String texto) => ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
-    ..showSnackBar(const SnackBar(content: Text('Disponible muy pronto')));
+    ..showSnackBar(SnackBar(content: Text(texto)));
+
+  void _pronto() => _aviso('Disponible muy pronto');
+
+  Future<void> _abrirAjustes(Perfil perfil) async {
+    final guardado = await Navigator.push<bool>(context, MaterialPageRoute(builder: (_) => AjustesPerfilScreen(perfil: perfil)));
+    if (guardado != true || !mounted) return;
+    _recargar();
+    _aviso('Tus datos se guardaron');
+  }
+
+  // Galería o cámara; la foto se sube como en el sitio web y se guarda con PUT /auth/profile.
+  Future<void> _cambiarFoto() async {
+    if (_subiendoFoto) return;
+    final origen = await showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: AppColors.fondo,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
+      builder: (context) => const _ElegirOrigen(),
+    );
+    if (origen == null || !mounted) return;
+    final foto = await elegirFotoPerfil(origen);
+    if (foto == null || !mounted) return;
+    setState(() => _subiendoFoto = true);
+    final servicio = context.read<PerfilService>();
+    try {
+      final url = await servicio.subirFoto(await foto.readAsBytes(), foto.name);
+      await servicio.actualizar(fotoUrl: url);
+      if (!mounted) return;
+      _recargar();
+      _aviso('Tu foto se actualizó');
+    } on PerfilException catch (e) {
+      if (mounted) _aviso(e.mensaje);
+    } finally {
+      if (mounted) setState(() => _subiendoFoto = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -80,7 +122,14 @@ class _PerfilScreenState extends State<PerfilScreen> {
               return RefreshIndicator(
                 color: AppColors.primario,
                 onRefresh: () async => _recargar(),
-                child: _Contenido(perfil: perfil, resumen: resumen, onPronto: _pronto),
+                child: _Contenido(
+                  perfil: perfil,
+                  resumen: resumen,
+                  subiendoFoto: _subiendoFoto,
+                  onAjustes: () => _abrirAjustes(perfil),
+                  onFoto: _cambiarFoto,
+                  onPronto: _pronto,
+                ),
               );
             },
           ),
@@ -97,10 +146,20 @@ class _PerfilScreenState extends State<PerfilScreen> {
 }
 
 class _Contenido extends StatelessWidget {
-  const _Contenido({required this.perfil, required this.resumen, required this.onPronto});
+  const _Contenido({
+    required this.perfil,
+    required this.resumen,
+    required this.subiendoFoto,
+    required this.onAjustes,
+    required this.onFoto,
+    required this.onPronto,
+  });
 
   final Perfil perfil;
   final ResumenCliente resumen;
+  final bool subiendoFoto;
+  final VoidCallback onAjustes;
+  final VoidCallback onFoto;
   final VoidCallback onPronto;
 
   @override
@@ -128,11 +187,11 @@ class _Contenido extends StatelessWidget {
                             style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600),
                           ),
                         ),
-                        _BotonClaro(icono: Icons.settings_outlined, descripcion: 'Ajustes', onPressed: onPronto),
+                        _BotonClaro(icono: Icons.settings_outlined, descripcion: 'Ajustes', onPressed: onAjustes),
                       ],
                     ),
                     const SizedBox(height: 14),
-                    _Identidad(perfil: perfil, onFoto: onPronto),
+                    _Identidad(perfil: perfil, subiendoFoto: subiendoFoto, onFoto: onFoto),
                     const SizedBox(height: 22),
                     _Numeros(resumen: resumen),
                   ],
@@ -217,8 +276,9 @@ class _BotonClaro extends StatelessWidget {
 }
 
 class _Identidad extends StatelessWidget {
-  const _Identidad({required this.perfil, required this.onFoto});
+  const _Identidad({required this.perfil, required this.subiendoFoto, required this.onFoto});
   final Perfil perfil;
+  final bool subiendoFoto;
   final VoidCallback onFoto;
 
   @override
@@ -273,6 +333,15 @@ class _Identidad extends StatelessWidget {
                             ),
                           ),
                   ),
+                  // Mientras se sube la foto nueva, un velo con el indicador sobre el avatar.
+                  if (subiendoFoto)
+                    Container(
+                      width: 72,
+                      height: 72,
+                      decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.45), borderRadius: BorderRadius.circular(26)),
+                      alignment: Alignment.center,
+                      child: const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white)),
+                    ),
                   Positioned(
                     right: 0,
                     bottom: 0,
@@ -411,7 +480,7 @@ class _Opciones extends StatelessWidget {
 }
 
 class _Renglon extends StatelessWidget {
-  const _Renglon({required this.icono, required this.texto, required this.onTap, this.final_, this.peligro = false});
+  const _Renglon({super.key, required this.icono, required this.texto, required this.onTap, this.final_, this.peligro = false});
 
   final IconData icono;
   final String texto;
@@ -442,6 +511,35 @@ class _Renglon extends StatelessWidget {
               ),
             ),
             final_ ?? (peligro ? const SizedBox.shrink() : const Icon(Icons.chevron_right_rounded, color: AppColors.textoSuave)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Hoja inferior para elegir de dónde sale la foto de perfil.
+class _ElegirOrigen extends StatelessWidget {
+  const _ElegirOrigen();
+
+  @override
+  Widget build(BuildContext context) {
+    Widget opcion(IconData icono, String texto, ImageSource origen, Key key) =>
+        _Renglon(key: key, icono: icono, texto: texto, onTap: () => Navigator.pop(context, origen));
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(4, 18, 4, 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: Text('Foto de perfil', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+            ),
+            const SizedBox(height: 8),
+            opcion(Icons.photo_library_rounded, 'Elegir de la galería', ImageSource.gallery, const Key('foto_galeria')),
+            opcion(Icons.photo_camera_rounded, 'Tomar foto', ImageSource.camera, const Key('foto_camara')),
           ],
         ),
       ),

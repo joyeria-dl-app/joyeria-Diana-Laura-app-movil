@@ -113,13 +113,13 @@ void main() {
     }
   });
 
-  testWidgets('El tema, los ajustes, la foto y cerrar sesión están visibles y avisan que llegan pronto', (tester) async {
+  testWidgets('El tema y cerrar sesión están visibles y avisan que llegan pronto', (tester) async {
     await _abrir(tester, _PerfilFalso(cuenta: _ana));
     expect(find.text('Tema oscuro'), findsOneWidget);
     expect(find.byType(Switch), findsOneWidget);
     expect(find.text('Cerrar sesión'), findsOneWidget);
 
-    for (final toque in [find.byTooltip('Ajustes'), find.byKey(const Key('perfil_foto')), find.text('Cerrar sesión')]) {
+    for (final toque in [find.text('Tema oscuro'), find.text('Cerrar sesión')]) {
       await tester.ensureVisible(toque);
       await tester.tap(toque);
       await tester.pump();
