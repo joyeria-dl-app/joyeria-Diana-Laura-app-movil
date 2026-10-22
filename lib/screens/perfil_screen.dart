@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../models/perfil.dart';
+import '../providers/tema_provider.dart';
 import '../routes/app_routes.dart';
 import '../services/perfil_service.dart';
 import '../theme/app_theme.dart';
@@ -11,8 +13,9 @@ import '../widgets/estado_pedido.dart';
 
 // Mi perfil (HU-14, #50): boceto 10 "Perfil (P15)" de A3 Interfaces con los datos reales
 // de la cuenta. Del boceto, "Clienta frecuente" se muestra como "Clienta desde" (el segmento
-// no se guarda por cliente) y se agrega Mis personalizaciones (HU-13). El tema (#212), los
-// ajustes y el cambio de foto (#213) y cerrar sesión (#52) se conectan en sus tareas.
+// no se guarda por cliente) y se agrega Mis personalizaciones (HU-13). El interruptor cambia
+// entre tema oscuro y claro (#212); los ajustes y el cambio de foto (#213) y cerrar sesión (#52)
+// se conectan en sus tareas.
 class PerfilScreen extends StatefulWidget {
   const PerfilScreen({super.key});
 
@@ -48,49 +51,53 @@ class _PerfilScreenState extends State<PerfilScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          FutureBuilder<(Perfil, ResumenCliente)>(
-            future: _datos,
-            builder: (context, estado) {
-              if (estado.connectionState != ConnectionState.done) return const Center(child: CircularProgressIndicator(color: AppColors.primario));
-              final error = estado.error;
-              if (error is PerfilException && error.sinSesion) {
-                return AvisoVacio(
-                  icono: Icons.lock_outline_rounded,
-                  titulo: 'Inicia sesión para ver tu perfil',
-                  texto: 'Con tu cuenta ves tus datos, tus pedidos y tus apartados.',
-                  boton: 'Iniciar sesión',
-                  iconoBoton: Icons.login_rounded,
-                  onPressed: () => Navigator.pushNamed(context, AppRoutes.login),
+    // Foto o degradado detrás de la barra de estado: íconos blancos en los dos temas.
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: Scaffold(
+        body: Stack(
+          children: [
+            FutureBuilder<(Perfil, ResumenCliente)>(
+              future: _datos,
+              builder: (context, estado) {
+                if (estado.connectionState != ConnectionState.done) return Center(child: CircularProgressIndicator(color: AppColors.primario));
+                final error = estado.error;
+                if (error is PerfilException && error.sinSesion) {
+                  return AvisoVacio(
+                    icono: Icons.lock_outline_rounded,
+                    titulo: 'Inicia sesión para ver tu perfil',
+                    texto: 'Con tu cuenta ves tus datos, tus pedidos y tus apartados.',
+                    boton: 'Iniciar sesión',
+                    iconoBoton: Icons.login_rounded,
+                    onPressed: () => Navigator.pushNamed(context, AppRoutes.login),
+                  );
+                }
+                if (error != null) {
+                  return AvisoVacio(
+                    icono: Icons.wifi_off_rounded,
+                    titulo: 'Sin conexión',
+                    texto: 'No se pudo cargar tu perfil. Revisa tu conexión e intenta de nuevo.',
+                    boton: 'Reintentar',
+                    iconoBoton: Icons.refresh_rounded,
+                    onPressed: _recargar,
+                  );
+                }
+                final (perfil, resumen) = estado.data!;
+                return RefreshIndicator(
+                  color: AppColors.primario,
+                  onRefresh: () async => _recargar(),
+                  child: _Contenido(perfil: perfil, resumen: resumen, onPronto: _pronto),
                 );
-              }
-              if (error != null) {
-                return AvisoVacio(
-                  icono: Icons.wifi_off_rounded,
-                  titulo: 'Sin conexión',
-                  texto: 'No se pudo cargar tu perfil. Revisa tu conexión e intenta de nuevo.',
-                  boton: 'Reintentar',
-                  iconoBoton: Icons.refresh_rounded,
-                  onPressed: _recargar,
-                );
-              }
-              final (perfil, resumen) = estado.data!;
-              return RefreshIndicator(
-                color: AppColors.primario,
-                onRefresh: () async => _recargar(),
-                child: _Contenido(perfil: perfil, resumen: resumen, onPronto: _pronto),
-              );
-            },
-          ),
-          const Positioned(
-            left: 16,
-            right: 16,
-            bottom: 16,
-            child: SafeArea(top: false, child: BarraNavegacion(actual: Seccion.perfil)),
-          ),
-        ],
+              },
+            ),
+            const Positioned(
+              left: 16,
+              right: 16,
+              bottom: 16,
+              child: SafeArea(top: false, child: BarraNavegacion(actual: Seccion.perfil)),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -159,7 +166,7 @@ class _Encabezado extends StatelessWidget {
     return Container(
       height: 250 + MediaQuery.paddingOf(context).top,
       clipBehavior: Clip.antiAlias,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(40)),
         gradient: LinearGradient(
           begin: Alignment(-0.6, -1),
@@ -345,9 +352,9 @@ class _Numeros extends StatelessWidget {
           children: [
             Text(
               valor?.toString() ?? '–',
-              style: const TextStyle(color: AppColors.primario, fontSize: 20, fontWeight: FontWeight.w700),
+              style: TextStyle(color: AppColors.primario, fontSize: 20, fontWeight: FontWeight.w700),
             ),
-            Text(nombre, style: const TextStyle(color: AppColors.textoSuave, fontSize: 11)),
+            Text(nombre, style: TextStyle(color: AppColors.textoSuave, fontSize: 11)),
           ],
         ),
       ),
@@ -357,9 +364,9 @@ class _Numeros extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 6),
       decoration: BoxDecoration(
-        color: const Color(0xE61A0F18),
+        color: AppColors.cristal,
         borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: const Color(0x2EFFAAD7)),
+        border: Border.all(color: AppColors.cristalBorde),
         boxShadow: const [BoxShadow(color: Color(0x66000000), blurRadius: 30, offset: Offset(0, 14), spreadRadius: -12)],
       ),
       child: Row(
@@ -381,9 +388,10 @@ class _Opciones extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tema = context.watch<TemaProvider>();
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF1A0F18),
+        color: AppColors.tarjeta,
         borderRadius: BorderRadius.circular(26),
         border: Border.all(color: AppColors.borde),
       ),
@@ -398,10 +406,19 @@ class _Opciones extends StatelessWidget {
             onTap: () => Navigator.pushNamed(context, AppRoutes.misPersonalizaciones),
           ),
           _Renglon(
-            icono: Icons.dark_mode_rounded,
+            icono: tema.oscuro ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
             texto: 'Tema oscuro',
-            final_: Switch(value: true, onChanged: (_) => onPronto(), activeThumbColor: Colors.white, activeTrackColor: AppColors.primario2),
-            onTap: onPronto,
+            final_: Switch(
+              key: const Key('perfil_tema'),
+              value: tema.oscuro,
+              onChanged: (oscuro) => tema.cambiar(oscuro: oscuro),
+              activeThumbColor: Colors.white,
+              activeTrackColor: AppColors.primario2,
+              inactiveThumbColor: AppColors.primario2,
+              inactiveTrackColor: AppColors.superficie2,
+              trackOutlineColor: WidgetStatePropertyAll(AppColors.borde),
+            ),
+            onTap: () => tema.cambiar(oscuro: !tema.oscuro),
           ),
           _Renglon(icono: Icons.logout_rounded, texto: 'Cerrar sesión', peligro: true, onTap: onPronto),
         ],
@@ -441,7 +458,7 @@ class _Renglon extends StatelessWidget {
                 style: TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.w500),
               ),
             ),
-            final_ ?? (peligro ? const SizedBox.shrink() : const Icon(Icons.chevron_right_rounded, color: AppColors.textoSuave)),
+            final_ ?? (peligro ? const SizedBox.shrink() : Icon(Icons.chevron_right_rounded, color: AppColors.textoSuave)),
           ],
         ),
       ),

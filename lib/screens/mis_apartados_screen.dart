@@ -150,7 +150,7 @@ class _MisApartadosScreenState extends State<MisApartadosScreen> {
       context: context,
       backgroundColor: AppColors.fondo,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(32))),
-      builder: (_) => const SafeArea(
+      builder: (_) => SafeArea(
         child: Padding(
           padding: EdgeInsets.fromLTRB(24, 22, 24, 24),
           child: Column(
@@ -239,7 +239,7 @@ class _MisApartadosScreenState extends State<MisApartadosScreen> {
             );
     }
     final apartados = _apartados;
-    if (apartados == null) return const Center(child: CircularProgressIndicator(color: AppColors.primario));
+    if (apartados == null) return Center(child: CircularProgressIndicator(color: AppColors.primario));
     if (apartados.isEmpty) {
       // 10b.
       return AvisoVacio(
@@ -299,7 +299,7 @@ class _Resumen extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text('${(avance * 100).round()}%', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
-                    const Text('pagado', style: TextStyle(color: AppColors.textoSuave, fontSize: 10.5)),
+                    Text('pagado', style: TextStyle(color: AppColors.textoSuave, fontSize: 10.5)),
                   ],
                 ),
               ),
@@ -310,15 +310,12 @@ class _Resumen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Te falta por pagar', style: TextStyle(color: AppColors.textoSuave, fontSize: 12)),
+                Text('Te falta por pagar', style: TextStyle(color: AppColors.textoSuave, fontSize: 12)),
                 Text(
                   formatoPrecioCompleto(falta),
-                  style: const TextStyle(color: AppColors.primario, fontSize: 24, fontWeight: FontWeight.w700, letterSpacing: -0.5),
+                  style: TextStyle(color: AppColors.primario, fontSize: 24, fontWeight: FontWeight.w700, letterSpacing: -0.5),
                 ),
-                Text(
-                  'en $activos ${activos == 1 ? 'apartado activo' : 'apartados activos'}',
-                  style: const TextStyle(color: AppColors.textoSuave, fontSize: 11.5),
-                ),
+                Text('en $activos ${activos == 1 ? 'apartado activo' : 'apartados activos'}', style: TextStyle(color: AppColors.textoSuave, fontSize: 11.5)),
               ],
             ),
           ),
@@ -355,7 +352,7 @@ class _Anillo extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = 10
         ..strokeCap = StrokeCap.round
-        ..shader = const SweepGradient(colors: [AppColors.primario, AppColors.lila, AppColors.primario]).createShader(rect),
+        ..shader = SweepGradient(colors: [AppColors.primario, AppColors.lila, AppColors.primario]).createShader(rect),
     );
   }
 
@@ -410,7 +407,7 @@ class _TarjetaApartado extends StatelessWidget {
                     ),
                     Text(
                       [a.folio, if (a.fechaLimite != null) 'vence ${fechaCorta(a.fechaLimite!)}', ?a.plan].join(' · '),
-                      style: const TextStyle(color: AppColors.textoSuave, fontSize: 11),
+                      style: TextStyle(color: AppColors.textoSuave, fontSize: 11),
                     ),
                   ],
                 ),
@@ -425,7 +422,7 @@ class _TarjetaApartado extends StatelessWidget {
               Expanded(
                 child: Text(
                   '${formatoPrecioCompleto(a.montoPagado)} de ${formatoPrecioCompleto(a.montoTotal)}',
-                  style: const TextStyle(color: AppColors.textoSuave, fontSize: 11.5),
+                  style: TextStyle(color: AppColors.textoSuave, fontSize: 11.5),
                 ),
               ),
               Text(
@@ -446,7 +443,7 @@ class _TarjetaApartado extends StatelessWidget {
                     height: 7,
                     decoration: BoxDecoration(
                       color: tono == TonoEstado.aviso ? colorAviso : null,
-                      gradient: tono == TonoEstado.aviso ? null : const LinearGradient(colors: [AppColors.primario, AppColors.lila]),
+                      gradient: tono == TonoEstado.aviso ? null : LinearGradient(colors: [AppColors.primario, AppColors.lila]),
                     ),
                   ),
                 ),
@@ -551,7 +548,7 @@ class _HojaAbonoState extends State<HojaAbono> {
               ),
               const SizedBox(height: 14),
             ],
-            const Text('¿Cuánto abonas?', style: TextStyle(color: AppColors.textoSuave, fontSize: 12.5)),
+            Text('¿Cuánto abonas?', style: TextStyle(color: AppColors.textoSuave, fontSize: 12.5)),
             const SizedBox(height: 8),
             Row(
               children: [
@@ -570,7 +567,7 @@ class _HojaAbonoState extends State<HojaAbono> {
               ],
             ),
             const SizedBox(height: 16),
-            const Text('¿Cómo pagas?', style: TextStyle(color: AppColors.textoSuave, fontSize: 12.5)),
+            Text('¿Cómo pagas?', style: TextStyle(color: AppColors.textoSuave, fontSize: 12.5)),
             const SizedBox(height: 8),
             for (final m in widget.metodos) ...[
               _Opcion(texto: _nombre(m), detalle: _detalle(m), elegida: m.id == metodo?.id, onTap: () => setState(() => _metodo = m)),
@@ -579,7 +576,7 @@ class _HojaAbonoState extends State<HojaAbono> {
             if (_error != null) ...[const SizedBox(height: 4), Text(_error!, style: const TextStyle(color: colorAviso, fontSize: 12))],
             const SizedBox(height: 12),
             if (_enviando)
-              const Center(child: CircularProgressIndicator(color: AppColors.primario))
+              Center(child: CircularProgressIndicator(color: AppColors.primario))
             else
               Opacity(
                 opacity: metodo == null || enLinea ? 0.5 : 1,
@@ -615,7 +612,7 @@ class _Opcion extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
           decoration: BoxDecoration(
-            color: elegida ? const Color(0x14FF8CC6) : AppColors.superficie,
+            color: elegida ? AppColors.suave : AppColors.superficie,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(color: elegida ? AppColors.primario : AppColors.borde, width: elegida ? 1.5 : 1),
           ),
@@ -624,7 +621,7 @@ class _Opcion extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(texto, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-              if (detalle != null) Text(detalle!, style: const TextStyle(color: AppColors.textoSuave, fontSize: 11)),
+              if (detalle != null) Text(detalle!, style: TextStyle(color: AppColors.textoSuave, fontSize: 11)),
             ],
           ),
         ),

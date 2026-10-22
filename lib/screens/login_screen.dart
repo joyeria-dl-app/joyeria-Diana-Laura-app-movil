@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -59,140 +60,144 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
 
-    return Scaffold(
-      body: Stack(
-        children: [
-          const _FotoSuperior(),
-          const Destellos(),
-          SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: 28),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Container(
-                        width: 78,
-                        height: 78,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(26),
-                          border: Border.all(color: const Color(0x26FFFFFF)),
-                          boxShadow: const [BoxShadow(color: Color(0x80000000), blurRadius: 30, offset: Offset(0, 12))],
-                          image: const DecorationImage(image: AssetImage('assets/images/logo.jpg'), fit: BoxFit.cover),
+    // Foto o degradado detrás de la barra de estado: íconos blancos en los dos temas.
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: Scaffold(
+        body: Stack(
+          children: [
+            const _FotoSuperior(),
+            const Destellos(),
+            SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const SizedBox(height: 28),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Container(
+                          width: 78,
+                          height: 78,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(26),
+                            border: Border.all(color: const Color(0x26FFFFFF)),
+                            boxShadow: [BoxShadow(color: AppColors.sombra, blurRadius: 30, offset: Offset(0, 12))],
+                            image: const DecorationImage(image: AssetImage('assets/images/logo.jpg'), fit: BoxFit.cover),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 120),
-                    const Text(
-                      'JOYERÍA DIANA LAURA',
-                      style: TextStyle(color: AppColors.primario, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 2),
-                    ),
-                    const SizedBox(height: 6),
-                    const TituloDegradado('Tu brillo,\nen tu bolsillo.'),
-                    const SizedBox(height: 18),
-                    CampoTexto(
-                      key: const Key('login_email'),
-                      controller: _email,
-                      hint: 'Correo electrónico',
-                      icono: Icons.alternate_email_rounded,
-                      teclado: TextInputType.emailAddress,
-                      autofill: const [AutofillHints.email],
-                      sufijo: _correoValido ? const Icon(Icons.check_circle_rounded, color: AppColors.exito, size: 21) : null,
-                      validator: (v) => _patronCorreo.hasMatch((v ?? '').trim()) ? null : 'Ingresa un correo válido',
-                    ),
-                    const SizedBox(height: 12),
-                    CampoTexto(
-                      key: const Key('login_password'),
-                      controller: _password,
-                      hint: 'Contraseña',
-                      icono: Icons.lock_outline_rounded,
-                      oculto: _ocultar,
-                      autofill: const [AutofillHints.password],
-                      sufijo: IconButton(
-                        tooltip: _ocultar ? 'Mostrar contraseña' : 'Ocultar contraseña',
-                        icon: Icon(_ocultar ? Icons.visibility_rounded : Icons.visibility_off_rounded, size: 21),
-                        onPressed: () => setState(() => _ocultar = !_ocultar),
+                      const SizedBox(height: 120),
+                      Text(
+                        'JOYERÍA DIANA LAURA',
+                        style: TextStyle(color: AppColors.primario, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 2),
                       ),
-                      validator: (v) => (v == null || v.isEmpty) ? 'Ingresa tu contraseña' : null,
-                    ),
-                    if (auth.error != null) ...[
+                      const SizedBox(height: 6),
+                      const TituloDegradado('Tu brillo,\nen tu bolsillo.'),
+                      const SizedBox(height: 18),
+                      CampoTexto(
+                        key: const Key('login_email'),
+                        controller: _email,
+                        hint: 'Correo electrónico',
+                        icono: Icons.alternate_email_rounded,
+                        teclado: TextInputType.emailAddress,
+                        autofill: const [AutofillHints.email],
+                        sufijo: _correoValido ? const Icon(Icons.check_circle_rounded, color: AppColors.exito, size: 21) : null,
+                        validator: (v) => _patronCorreo.hasMatch((v ?? '').trim()) ? null : 'Ingresa un correo válido',
+                      ),
                       const SizedBox(height: 12),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Icon(Icons.error_rounded, size: 16, color: AppColors.error),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(auth.error!, style: const TextStyle(color: AppColors.error, fontSize: 12.5)),
-                          ),
-                        ],
+                      CampoTexto(
+                        key: const Key('login_password'),
+                        controller: _password,
+                        hint: 'Contraseña',
+                        icono: Icons.lock_outline_rounded,
+                        oculto: _ocultar,
+                        autofill: const [AutofillHints.password],
+                        sufijo: IconButton(
+                          tooltip: _ocultar ? 'Mostrar contraseña' : 'Ocultar contraseña',
+                          icon: Icon(_ocultar ? Icons.visibility_rounded : Icons.visibility_off_rounded, size: 21),
+                          onPressed: () => setState(() => _ocultar = !_ocultar),
+                        ),
+                        validator: (v) => (v == null || v.isEmpty) ? 'Ingresa tu contraseña' : null,
                       ),
-                    ],
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(4, 8, 0, 8),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          InkWell(
-                            borderRadius: BorderRadius.circular(8),
-                            onTap: () => setState(() => _recordar = !_recordar),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 6),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    _recordar ? Icons.toggle_on_rounded : Icons.toggle_off_rounded,
-                                    size: 26,
-                                    color: _recordar ? AppColors.primario : AppColors.textoSuave,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  const Text('Recordarme', style: TextStyle(color: AppColors.textoSuave, fontSize: 12.5)),
-                                ],
-                              ),
+                      if (auth.error != null) ...[
+                        const SizedBox(height: 12),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(Icons.error_rounded, size: 16, color: AppColors.error),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(auth.error!, style: const TextStyle(color: AppColors.error, fontSize: 12.5)),
                             ),
-                          ),
-                          TextButton(
-                            onPressed: () => launchUrl(_urlRecuperar, mode: LaunchMode.externalApplication),
-                            style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 4)),
-                            child: const Text('¿Olvidaste tu contraseña?', style: TextStyle(fontSize: 12.5)),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    BotonPrimario(texto: 'Iniciar sesión', cargando: auth.cargando, onPressed: _enviar),
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text('¿Nueva por aquí?', style: TextStyle(color: AppColors.textoSuave, fontSize: 13)),
-                        TextButton(
-                          onPressed: () => Navigator.pushReplacementNamed(context, AppRoutes.register),
-                          child: const Text('Crea tu cuenta', style: TextStyle(fontSize: 13)),
+                          ],
                         ),
                       ],
-                    ),
-                    Center(
-                      child: TextButton(
-                        onPressed: () => Navigator.pushNamedAndRemoveUntil(context, AppRoutes.home, (_) => false),
-                        style: TextButton.styleFrom(foregroundColor: AppColors.textoSuave),
-                        child: const Text(
-                          'o explora sin cuenta',
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, decoration: TextDecoration.underline),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(4, 8, 0, 8),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            InkWell(
+                              borderRadius: BorderRadius.circular(8),
+                              onTap: () => setState(() => _recordar = !_recordar),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 6),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      _recordar ? Icons.toggle_on_rounded : Icons.toggle_off_rounded,
+                                      size: 26,
+                                      color: _recordar ? AppColors.primario : AppColors.textoSuave,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text('Recordarme', style: TextStyle(color: AppColors.textoSuave, fontSize: 12.5)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () => launchUrl(_urlRecuperar, mode: LaunchMode.externalApplication),
+                              style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 4)),
+                              child: const Text('¿Olvidaste tu contraseña?', style: TextStyle(fontSize: 12.5)),
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 24),
-                  ],
+                      const SizedBox(height: 8),
+                      BotonPrimario(texto: 'Iniciar sesión', cargando: auth.cargando, onPressed: _enviar),
+                      const SizedBox(height: 20),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text('¿Nueva por aquí?', style: TextStyle(color: AppColors.textoSuave, fontSize: 13)),
+                          TextButton(
+                            onPressed: () => Navigator.pushReplacementNamed(context, AppRoutes.register),
+                            child: const Text('Crea tu cuenta', style: TextStyle(fontSize: 13)),
+                          ),
+                        ],
+                      ),
+                      Center(
+                        child: TextButton(
+                          onPressed: () => Navigator.pushNamedAndRemoveUntil(context, AppRoutes.home, (_) => false),
+                          style: TextButton.styleFrom(foregroundColor: AppColors.textoSuave),
+                          child: const Text(
+                            'o explora sin cuenta',
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, decoration: TextDecoration.underline),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -210,7 +215,7 @@ class _FotoSuperior extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           Image.asset('assets/images/login_fondo.jpg', fit: BoxFit.cover),
-          const DecoratedBox(
+          DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
