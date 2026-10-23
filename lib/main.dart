@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -9,14 +10,24 @@ import 'services/api_client.dart';
 import 'services/auth_service.dart';
 import 'services/carrito_service.dart';
 import 'services/favorito_service.dart';
+import 'services/notificaciones_service.dart';
 import 'services/pedido_service.dart';
 import 'services/personalizacion_service.dart';
 import 'services/producto_service.dart';
 import 'services/session_storage.dart';
 import 'theme/app_theme.dart';
 
-void main() {
-  runApp(JoyeriaApp(storage: SecureSessionStorage()));
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Firebase Cloud Messaging para los avisos del pedido (#55). Si no arranca, la app funciona sin avisos.
+  var conFirebase = true;
+  try {
+    await Firebase.initializeApp();
+  } on Object catch (e) {
+    conFirebase = false;
+    debugPrint('Firebase no se inició: $e');
+  }
+  runApp(JoyeriaApp(storage: SecureSessionStorage(), mensajeria: conFirebase ? FirebaseMensajeria() : null));
 }
 
 class JoyeriaApp extends StatelessWidget {
@@ -29,6 +40,7 @@ class JoyeriaApp extends StatelessWidget {
     this.favoritoService,
     this.pedidoService,
     this.personalizacionService,
+    this.mensajeria,
   });
 
   final SessionStorage storage;
@@ -38,6 +50,8 @@ class JoyeriaApp extends StatelessWidget {
   final FavoritoService? favoritoService;
   final PedidoService? pedidoService;
   final PersonalizacionService? personalizacionService;
+  // Sin mensajería (pruebas o Firebase sin iniciar) la app no registra el teléfono para avisos.
+  final MensajeriaPush? mensajeria;
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +69,10 @@ class JoyeriaApp extends StatelessWidget {
         ChangeNotifierProvider<FavoritosProvider>(create: (_) => FavoritosProvider(favoritos)),
         ChangeNotifierProvider<CarritoProvider>(create: (_) => CarritoProvider(carrito)),
         ChangeNotifierProvider<AuthProvider>(
-          create: (_) => AuthProvider(authService ?? AuthService(api: api, storage: storage))..restaurarSesion(),
+          create: (_) => AuthProvider(
+            authService ?? AuthService(api: api, storage: storage),
+            notificaciones: mensajeria == null ? null : NotificacionesService(api: api, mensajeria: mensajeria!),
+          )..restaurarSesion(),
         ),
       ],
       child: MaterialApp(

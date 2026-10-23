@@ -38,6 +38,7 @@ jobs:
       FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
       PRUEBAS_CORREO: ${{ secrets.PRUEBAS_CORREO }}
       PRUEBAS_CONTRASENA: ${{ secrets.PRUEBAS_CONTRASENA }}
+      GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
 
   # 2. Solo si la regresión pasó.
   compilar-apk:
@@ -86,6 +87,13 @@ jobs:
 
       - name: Instalar dependencias
         run: flutter pub get
+
+      # google-services.json (Firebase Cloud Messaging, #55) no se sube al repositorio porque el
+      # repositorio es público; Gradle lo necesita para compilar y aquí se crea desde un secreto.
+      - name: Crear google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
 
       # La clave pública de Firebase se guarda como secreto del repositorio, no en el código.
       - name: Crear env.json
