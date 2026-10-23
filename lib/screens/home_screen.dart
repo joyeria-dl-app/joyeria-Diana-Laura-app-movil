@@ -36,7 +36,10 @@ class HomeScreen extends StatelessWidget {
                     const SizedBox(height: 24),
                     FilledButton(onPressed: () => Navigator.pushNamed(context, AppRoutes.catalogo), child: const Text('Ver catálogo')),
                     const SizedBox(height: 12),
-                    // Mientras llega el perfil (HU-14), los pedidos, apartados y personalizaciones se abren desde aquí.
+                    OutlinedButton(onPressed: () => Navigator.pushNamed(context, AppRoutes.perfil), child: const Text('Mi perfil')),
+                    const SizedBox(height: 12),
+                    // También se abren desde Mi perfil (HU-14); se quedan aquí porque las pruebas del
+                    // emulador (aceptación y entorno) entran por estos botones.
                     OutlinedButton(onPressed: () => Navigator.pushNamed(context, AppRoutes.misPedidos), child: const Text('Mis pedidos')),
                     const SizedBox(height: 12),
                     OutlinedButton(onPressed: () => Navigator.pushNamed(context, AppRoutes.misApartados), child: const Text('Mis apartados')),

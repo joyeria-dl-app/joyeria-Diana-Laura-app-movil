@@ -10,6 +10,7 @@ import 'services/auth_service.dart';
 import 'services/carrito_service.dart';
 import 'services/favorito_service.dart';
 import 'services/pedido_service.dart';
+import 'services/perfil_service.dart';
 import 'services/personalizacion_service.dart';
 import 'services/producto_service.dart';
 import 'services/session_storage.dart';
@@ -29,6 +30,7 @@ class JoyeriaApp extends StatelessWidget {
     this.favoritoService,
     this.pedidoService,
     this.personalizacionService,
+    this.perfilService,
   });
 
   final SessionStorage storage;
@@ -38,20 +40,25 @@ class JoyeriaApp extends StatelessWidget {
   final FavoritoService? favoritoService;
   final PedidoService? pedidoService;
   final PersonalizacionService? personalizacionService;
+  final PerfilService? perfilService;
 
   @override
   Widget build(BuildContext context) {
     final api = ApiClient(storage: storage);
     final carrito = carritoService ?? CarritoService(api: api);
     final favoritos = favoritoService ?? FavoritoService(api: api);
+    final pedidos = pedidoService ?? PedidoService(api: api);
     return MultiProvider(
       providers: [
         Provider<ApiClient>.value(value: api),
         Provider<ProductoService>.value(value: productoService ?? ProductoService(api: api)),
         Provider<CarritoService>.value(value: carrito),
         Provider<FavoritoService>.value(value: favoritos),
-        Provider<PedidoService>.value(value: pedidoService ?? PedidoService(api: api)),
+        Provider<PedidoService>.value(value: pedidos),
         Provider<PersonalizacionService>.value(value: personalizacionService ?? PersonalizacionService(api: api)),
+        Provider<PerfilService>.value(
+          value: perfilService ?? PerfilService(api: api, pedidos: pedidos, favoritos: favoritos),
+        ),
         ChangeNotifierProvider<FavoritosProvider>(create: (_) => FavoritosProvider(favoritos)),
         ChangeNotifierProvider<CarritoProvider>(create: (_) => CarritoProvider(carrito)),
         ChangeNotifierProvider<AuthProvider>(

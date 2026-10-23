@@ -34,10 +34,7 @@ class BarraNavegacion extends StatelessWidget {
       case Seccion.favoritos:
         Navigator.pushNamed(context, AppRoutes.favoritos);
       case Seccion.perfil:
-        // Se conecta en su historia (HU-14).
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(const SnackBar(content: Text('Disponible muy pronto')));
+        Navigator.pushNamed(context, AppRoutes.perfil);
     }
   }
 
