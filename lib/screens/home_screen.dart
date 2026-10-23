@@ -43,6 +43,8 @@ class HomeScreen extends StatelessWidget {
                     const SizedBox(height: 12),
                     OutlinedButton(onPressed: () => Navigator.pushNamed(context, AppRoutes.misPersonalizaciones), child: const Text('Mis personalizaciones')),
                     const SizedBox(height: 12),
+                    OutlinedButton(onPressed: () => Navigator.pushNamed(context, AppRoutes.zonasEntrega), child: const Text('Zonas de entrega')),
+                    const SizedBox(height: 12),
                     OutlinedButton(onPressed: auth.cerrarSesion, child: const Text('Cerrar sesión')),
                   ],
           ),
