@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Color del ícono de las notificaciones del pedido (#56): el rosa primario de los bocetos. -->
+    <color name="notificacion">#CF819F</color>
+</resources>
