@@ -57,6 +57,7 @@ class JoyeriaApp extends StatelessWidget {
     this.pedidoService,
     this.personalizacionService,
     this.mensajeria,
+    this.apiClient,
   });
 
   final SessionStorage storage;
@@ -68,10 +69,12 @@ class JoyeriaApp extends StatelessWidget {
   final PersonalizacionService? personalizacionService;
   // Sin mensajería (pruebas o Firebase sin iniciar) la app no registra el teléfono para avisos.
   final MensajeriaPush? mensajeria;
+  // Cliente del backend; las pruebas pasan uno con el backend simulado.
+  final ApiClient? apiClient;
 
   @override
   Widget build(BuildContext context) {
-    final api = ApiClient(storage: storage);
+    final api = apiClient ?? ApiClient(storage: storage);
     final carrito = carritoService ?? CarritoService(api: api);
     final favoritos = favoritoService ?? FavoritoService(api: api);
     return MultiProvider(
