@@ -13,6 +13,7 @@ import 'services/pedido_service.dart';
 import 'services/personalizacion_service.dart';
 import 'services/producto_service.dart';
 import 'services/session_storage.dart';
+import 'services/zonas_service.dart';
 import 'theme/app_theme.dart';
 
 void main() {
@@ -29,6 +30,7 @@ class JoyeriaApp extends StatelessWidget {
     this.favoritoService,
     this.pedidoService,
     this.personalizacionService,
+    this.zonasService,
   });
 
   final SessionStorage storage;
@@ -38,6 +40,7 @@ class JoyeriaApp extends StatelessWidget {
   final FavoritoService? favoritoService;
   final PedidoService? pedidoService;
   final PersonalizacionService? personalizacionService;
+  final ZonasService? zonasService;
 
   @override
   Widget build(BuildContext context) {
@@ -52,6 +55,7 @@ class JoyeriaApp extends StatelessWidget {
         Provider<FavoritoService>.value(value: favoritos),
         Provider<PedidoService>.value(value: pedidoService ?? PedidoService(api: api)),
         Provider<PersonalizacionService>.value(value: personalizacionService ?? PersonalizacionService(api: api)),
+        Provider<ZonasService>.value(value: zonasService ?? ZonasService(api: api)),
         ChangeNotifierProvider<FavoritosProvider>(create: (_) => FavoritosProvider(favoritos)),
         ChangeNotifierProvider<CarritoProvider>(create: (_) => CarritoProvider(carrito)),
         ChangeNotifierProvider<AuthProvider>(
