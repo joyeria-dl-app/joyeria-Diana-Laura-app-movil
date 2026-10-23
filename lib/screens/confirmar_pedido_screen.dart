@@ -285,6 +285,16 @@ class _ConfirmarPedidoScreenState extends State<ConfirmarPedidoScreen> {
               ? const _Nota(icono: Icons.check_circle_outline_rounded, texto: 'Entregamos en tu zona.', color: AppColors.texto)
               : _Nota(icono: Icons.info_outline_rounded, texto: 'Por ahora solo entregamos en ${_lista(_zonas)}.', color: _aviso),
         ],
+        // HU-16 (#59): la lista de zonas con los datos de la tienda.
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            key: const Key('confirmar_ver_zonas'),
+            onPressed: () => Navigator.pushNamed(context, AppRoutes.zonasEntrega),
+            icon: const Icon(Icons.map_outlined, size: 17),
+            label: const Text('Ver zonas de entrega', style: TextStyle(fontSize: 12.5)),
+          ),
+        ),
       ],
       const SizedBox(height: 16),
       const _Subtitulo('Método de pago'),
