@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ícono de las notificaciones (#56): un diamante, como el de la barra de navegación de la app.
+     Android pinta los íconos de notificación de un solo color, por eso es blanco con fondo transparente. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M6.5,3h11l4,5.5L12,21L2.5,8.5L6.5,3zM7.4,5L5.2,8h3.5l1.6,-3H7.4zM12.6,5H11.4l-1.6,3h4.4L12.6,5zM16.6,5h-2.9l1.6,3h3.5L16.6,5zM14.6,10H9.4L12,17.2L14.6,10zM7.3,10H5.4l4.3,5.6L7.3,10zM18.6,10h-1.9l-2.4,5.6L18.6,10z" />
+</vector>

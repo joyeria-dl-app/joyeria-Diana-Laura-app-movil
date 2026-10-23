@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="joyeria_diana_laura"
+        android:label="Joyería Diana Laura"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:allowBackup="false"
@@ -42,6 +42,17 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- Avisos del pedido (HU-15, #56): con la app cerrada o en segundo plano, Firebase muestra
+             la notificación en el canal Pedidos (lo crea la app al abrir) con el ícono de la tienda. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="pedidos" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_notificacion" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/notificacion" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

@@ -6,6 +6,8 @@ import 'providers/auth_provider.dart';
 import 'providers/carrito_provider.dart';
 import 'providers/favoritos_provider.dart';
 import 'routes/app_routes.dart';
+import 'screens/abrir_pedido_screen.dart';
+import 'services/avisos_pedido.dart';
 import 'services/api_client.dart';
 import 'services/auth_service.dart';
 import 'services/carrito_service.dart';
@@ -28,6 +30,20 @@ Future<void> main() async {
     debugPrint('Firebase no se inició: $e');
   }
   runApp(JoyeriaApp(storage: SecureSessionStorage(), mensajeria: conFirebase ? FirebaseMensajeria() : null));
+  if (conFirebase) {
+    // Avisos del pedido (#56). Se inicia después del primer cuadro para que ya exista el navegador
+    // si la app se abrió desde un aviso.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      AvisosPedido(fuente: FirebaseFuenteAvisos(), abrirPedido: abrirPedidoDesdeAviso).iniciar();
+    });
+  }
+}
+
+// Navegador de la app, para abrir un pedido al tocar su aviso desde fuera de una pantalla.
+final navegadorApp = GlobalKey<NavigatorState>();
+
+void abrirPedidoDesdeAviso(int pedidoId) {
+  navegadorApp.currentState?.push(MaterialPageRoute<void>(builder: (_) => AbrirPedidoScreen(pedidoId: pedidoId)));
 }
 
 class JoyeriaApp extends StatelessWidget {
@@ -78,6 +94,7 @@ class JoyeriaApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Joyería Diana Laura',
         debugShowCheckedModeBanner: false,
+        navigatorKey: navegadorApp,
         theme: AppTheme.oscuro(),
         initialRoute: AppRoutes.home,
         routes: AppRoutes.routes,
