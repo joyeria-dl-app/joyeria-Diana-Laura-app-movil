@@ -4,7 +4,6 @@
 -- PostgreSQL database dump
 --
 
-\restrict FlsdwTqABU2bFEhqqr2zDEfTvGPcKxo2ZtDoqhSBWQ8nsZ8rgGJd4Au0n9XzKjP
 
 -- Dumped from database version 17.6
 -- Dumped by pg_dump version 17.9
@@ -5545,5 +5544,4 @@ ALTER TABLE public.temas_temporada ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict FlsdwTqABU2bFEhqqr2zDEfTvGPcKxo2ZtDoqhSBWQ8nsZ8rgGJd4Au0n9XzKjP
 
