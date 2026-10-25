@@ -19,6 +19,8 @@ on:
     branches: [develop]
   # Desde Actions → Run workflow.
   workflow_dispatch:
+  # Lo llaman Pruebas de aceptación (antes de usar el emulador) y otros workflows (#230).
+  workflow_call:
 
 jobs:
   analisis:
@@ -34,7 +36,7 @@ jobs:
       # Seguridad (#97): falla si encuentra claves o contraseñas en el código o en el historial de Git.
       - name: Buscar claves con gitleaks
         id: gitleaks
-        run: docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:latest git /repo --redact --verbose
+        run: docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:latest git /repo --redact --verbose --report-format json --report-path /repo/reporte-gitleaks.json
 
       - name: Instalar Flutter
         uses: subosito/flutter-action@v2
@@ -50,13 +52,15 @@ jobs:
       # informativos detengan el workflow.
       - name: Analizar con flutter analyze
         id: analyze
-        run: flutter analyze --fatal-infos
+        # tee guarda el reporte; el shell de Actions usa pipefail, así que el código de salida del
+        # analizador se respeta (#230).
+        run: flutter analyze --fatal-infos | tee reporte-flutter-analyze.txt
 
       # Falla si un PR trae código sin formato (líneas de hasta 160 caracteres).
       - name: Revisar formato con dart format
         id: formato
         if: always() && steps.analyze.outcome != 'skipped'
-        run: dart format --output=none --set-exit-if-changed --line-length 160 lib test integration_test
+        run: dart format --output=none --set-exit-if-changed --line-length 160 lib test integration_test | tee reporte-formato.txt
 
       # Solo informa: lista las dependencias con versión nueva (la revisión de vulnerabilidades la
       # hace Dependabot, ver .github/dependabot.yml).
@@ -80,3 +84,16 @@ jobs:
           echo '```' >> $GITHUB_STEP_SUMMARY
           cat dependencias.txt >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "Sin reporte de dependencias" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
+
+      # Informe descargable desde la corrida (Artifacts): gitleaks, analizador, formato y dependencias (#230).
+      - name: Guardar evidencia
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: analisis-estatico
+          path: |
+            reporte-gitleaks.json
+            reporte-flutter-analyze.txt
+            reporte-formato.txt
+            dependencias.txt
+          if-no-files-found: ignore
