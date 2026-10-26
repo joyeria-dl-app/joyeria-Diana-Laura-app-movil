@@ -1,3 +1,8 @@
+// TIPO: integración
+// ALCANCE: HU-07 y HU-08 · explorar el catálogo sin cuenta, filtrar y abrir el detalle contra el backend real
+// EJECUCIÓN: pipeline Pruebas de integración (develop y PR a main) y Regresión; EN SECUENCIA en el emulador. flutter test integration_test/catalogo_test.dart --dart-define-from-file=env.json
+// DATOS: sin cuenta; categoría de integration_test/datos_prueba.dart (cuenta de env.json o de los secretos)
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -7,11 +12,13 @@ import 'package:joyeria_diana_laura/main.dart';
 import 'package:joyeria_diana_laura/services/api_client.dart';
 import 'package:joyeria_diana_laura/services/session_storage.dart';
 
+import 'datos_prueba.dart';
+
 // Pruebas de integración y aceptación: la app real contra el backend de Render.
 // Se ejecutan en un emulador Android (pipeline pruebas-integracion.yml).
 
 // Render apaga el servicio sin uso; la primera respuesta puede tardar.
-Future<void> esperar(WidgetTester tester, Finder buscado, {Duration limite = const Duration(seconds: 90)}) async {
+Future<void> esperar(WidgetTester tester, Finder buscado, {Duration limite = TiemposPrueba.espera}) async {
   final fin = DateTime.now().add(limite);
   while (DateTime.now().isBefore(fin)) {
     await tester.pump(const Duration(milliseconds: 500));
@@ -54,9 +61,9 @@ void main() {
     expect(find.text('Nuestras joyas'), findsOneWidget);
 
     // Filtro por categoría.
-    await esperar(tester, find.text('Anillos'));
-    await tester.tap(find.text('Anillos').first);
-    await esperar(tester, find.text('Anillos').at(1));
+    await esperar(tester, find.text(PiezasPrueba.categoriaCompra));
+    await tester.tap(find.text(PiezasPrueba.categoriaCompra).first);
+    await esperar(tester, find.text(PiezasPrueba.categoriaCompra).at(1));
 
     // Detalle de la primera pieza.
     await esperar(tester, find.textContaining('\$'));

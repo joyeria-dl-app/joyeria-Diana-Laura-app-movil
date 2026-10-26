@@ -95,7 +95,7 @@ class _CarritoScreenState extends State<CarritoScreen> {
             bottom: conPiezas ? 0 : 16,
             // Con piezas, la barra de navegación se cambia por el total (6a).
             child: conPiezas
-                ? BarraPagar(total: carrito.total, onPagar: () => _mostrar('Disponible muy pronto'))
+                ? BarraPagar(total: carrito.total, onPagar: () => Navigator.pushNamed(context, AppRoutes.confirmarPedido))
                 : const SafeArea(top: false, child: BarraNavegacion(actual: Seccion.carrito)),
           ),
         ],

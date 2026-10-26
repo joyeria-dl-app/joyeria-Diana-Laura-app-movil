@@ -1,3 +1,8 @@
+// TIPO: unitaria
+// ALCANCE: HU-09 · servicio del carrito: agregar, cambiar cantidad, quitar y vaciar
+// EJECUCIÓN: pipelines Pruebas unitarias y Flutter CI en cada PR; los archivos de test/ corren EN PARALELO entre sí y los casos de este archivo EN SECUENCIA. flutter test test/carrito_service_test.dart
+// DATOS: backend simulado en memoria (sin red); respuestas fijas por ruta
+
 import 'dart:convert';
 import 'dart:typed_data';
 

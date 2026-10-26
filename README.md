@@ -3,7 +3,7 @@
 Aplicación móvil para los clientes de Joyería Diana Laura, hecha con Flutter. Usa el mismo backend que el sitio web del negocio, así que la cuenta, el carrito y los pedidos son los mismos en la app y en la web.
 
 - **Planeación y seguimiento:** [GitHub Projects](https://github.com/orgs/joyeria-dl-app/projects/1)
-- **Versión actual:** [v0.2.0 – Sprint 2](https://github.com/joyeria-dl-app/joyeria-Diana-Laura-app-movil/releases/tag/v0.2.0)
+- **Versión actual:** [v0.3.0 – Sprint 3](https://github.com/joyeria-dl-app/joyeria-Diana-Laura-app-movil/releases/tag/v0.3.0)
 
 ## Equipo
 
@@ -73,6 +73,8 @@ Reglas:
 |---|---|---|
 | `flutter-ci.yml` (integración continua) | En cada Pull Request y push a `develop` y `main` | Analiza el código (`flutter analyze`) y corre las pruebas (`flutter test`). Si falla, el Pull Request no se puede integrar. |
 | `release-apk.yml` (entrega continua) | Al publicar una versión | Corre las pruebas, compila el APK y lo adjunta a la versión para descargarlo e instalarlo. |
+
+Cada tipo de prueba (unitarias, análisis estático, aceptación, integración, regresión, rendimiento y esfuerzo) tiene su propio pipeline. Las herramientas, los cambios respecto a lo planeado y en qué momento del versionamiento corre cada uno están en [pruebas/herramientas_y_pipelines.md](pruebas/herramientas_y_pipelines.md).
 
 ## Seguridad
 

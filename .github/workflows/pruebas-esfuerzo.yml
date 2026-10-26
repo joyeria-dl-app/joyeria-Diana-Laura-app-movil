@@ -1,28 +1,176 @@
-# PRUEBAS DE ESFUERZO: carga creciente sobre el backend que usa la app.
-# Solo se lanza a mano porque genera tráfico real en el servidor de Render.
+# PRUEBAS DE ESFUERZO
+# Tipo: esfuerzo · Alcance: el backend que usa la app (catálogo, carrito y pedidos con sesión)
+# bajo carga creciente, con k6.
+#
+# Dos entornos (#230):
+# - aislado: el backend del repositorio joyeria258076-cell/Joyeria-Diana-Laura se levanta dentro
+#   de este runner con una base PostgreSQL propia, cargada con la estructura de la base y el
+#   catálogo público (pruebas/esfuerzo/bd). No toca Render ni la base de producción; solo prueba
+#   el catálogo, porque no hay cuentas de clientes.
+# - produccion: el servidor real de Render con la cuenta de prueba (catálogo, carrito y pedidos).
+#   Antes de correrlo hay que subir el límite por IP del backend en Render (RASP_RATE_LIMIT_MAX);
+#   ver pruebas/esfuerzo_sprint3.md.
+# No corre en cada cambio: se lanza a mano o al publicar una etiqueta de versión (v0.3.0…); con
+# la etiqueta corre el entorno aislado.
+#
+# Ejecución: los usuarios virtuales de k6 hacen sus peticiones EN PARALELO (ese es el esfuerzo);
+# los pasos del workflow van EN SECUENCIA.
+#
+# Acción según el resultado: k6 falla si en la carga del escenario criterio el 95 % de las
+# respuestas pasa de 2 s o hay más de 1 % de errores, o si en la fase de recuperación (1 minuto
+# después de la carga) el 95 % pasa de 1 s o hay algún error; entonces "Avisar fallas" abre una
+# issue. El escenario quiebre no tiene umbrales de carga: busca hasta dónde llega el servidor,
+# pero sí revisa la recuperación. El resumen de k6 queda como evidencia en cada corrida.
 name: Pruebas de esfuerzo
 
 on:
+  push:
+    tags: ['v*']
   workflow_dispatch:
     inputs:
+      entorno:
+        description: aislado (backend y base dentro del runner) o produccion (servidor de Render)
+        type: choice
+        options: [aislado, produccion]
+        default: aislado
+      escenario:
+        description: criterio (50 usuarios con umbrales) o quiebre (subida por escalones)
+        type: choice
+        options: [criterio, quiebre]
+        default: criterio
       usuarios:
-        description: Usuarios simultáneos al punto máximo
+        description: Usuarios simultáneos del escenario criterio
         default: '50'
+      maximo:
+        description: Usuarios al último escalón del escenario quiebre
+        default: '150'
 
 jobs:
-  esfuerzo:
-    name: Esfuerzo del backend con k6
-    runs-on: ubuntu-latest
+  aislado:
+    name: Esfuerzo en entorno aislado
+    if: github.event_name == 'push' || inputs.entorno == 'aislado'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      CLAVE_BD: prueba-esfuerzo
     steps:
-      - name: Descargar el código
+      - name: Descargar el código de la app
         uses: actions/checkout@v7
+
+      # El backend es público; se usa la versión de main, la misma que está en Render.
+      - name: Descargar el código del backend
+        uses: actions/checkout@v7
+        with:
+          repository: joyeria258076-cell/Joyeria-Diana-Laura
+          ref: main
+          path: backend
+
+      # El backend siempre se conecta con SSL, así que la base de prueba usa un certificado propio.
+      - name: Levantar PostgreSQL con SSL
+        run: |
+          mkdir -p bd-ssl
+          openssl req -new -x509 -days 1 -nodes -subj "/CN=localhost" -keyout bd-ssl/servidor.key -out bd-ssl/servidor.crt
+          sudo chown 999:999 bd-ssl/servidor.key bd-ssl/servidor.crt && sudo chmod 600 bd-ssl/servidor.key
+          docker run -d --name bd -p 5432:5432 -e POSTGRES_PASSWORD="$CLAVE_BD" -e POSTGRES_DB=joyeria \
+            -v "$PWD/bd-ssl:/ssl" postgres:17 \
+            -c ssl=on -c ssl_cert_file=/ssl/servidor.crt -c ssl_key_file=/ssl/servidor.key
+          for i in $(seq 1 30); do docker exec bd pg_isready -U postgres -d joyeria && break; sleep 2; done
+
+      # Estructura de la base de producción (sin datos) y el catálogo público, sin datos internos.
+      - name: Cargar la estructura y el catálogo
+        run: |
+          docker exec -i bd psql -v ON_ERROR_STOP=1 -q -U postgres -d joyeria < pruebas/esfuerzo/bd/esquema.sql
+          docker exec -i bd psql -v ON_ERROR_STOP=1 -q -U postgres -d joyeria < pruebas/esfuerzo/bd/catalogo.sql
+          docker exec bd psql -U postgres -d joyeria -tAc "SELECT 'productos activos: ' || count(*) FROM productos WHERE activo"
+
+      - name: Instalar Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+
+      - name: Instalar dependencias del backend
+        working-directory: backend/Backend
+        run: npm ci --no-audit --no-fund
+
+      # Variables solo de prueba: claves generadas en el momento, sin ninguna de producción. El
+      # límite por IP se sube porque toda la carga sale de esta misma máquina.
+      - name: Levantar el backend
+        working-directory: backend/Backend
+        run: |
+          openssl genrsa -out firebase-prueba.pem 2048
+          export FIREBASE_PRIVATE_KEY="$(cat firebase-prueba.pem)"
+          export FIREBASE_PROJECT_ID=prueba-esfuerzo FIREBASE_CLIENT_EMAIL=prueba@prueba-esfuerzo.iam.gserviceaccount.com
+          export JWT_SECRET="$(openssl rand -hex 32)"
+          export DATABASE_URL="postgresql://postgres:$CLAVE_BD@localhost:5432/joyeria"
+          export RASP_RATE_LIMIT_MAX=1000000 PORT=5000 NODE_ENV=production
+          nohup npx ts-node --transpile-only src/server.ts > ../../servidor.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl -sf http://localhost:5000/api/products/categorias > /dev/null && echo "Backend listo" && exit 0
+            sleep 3
+          done
+          echo "El backend no respondió"; tail -50 ../../servidor.log; exit 1
 
       - name: Instalar k6
         uses: grafana/setup-k6-action@v1
 
+      # pruebas/esfuerzo/catalogo.js define los escenarios, los umbrales y la recuperación.
       - name: Ejecutar prueba de esfuerzo
-        uses: grafana/run-k6-action@v1
         env:
-          USUARIOS: ${{ inputs.usuarios }}
+          API_URL: http://localhost:5000/api
+          ESCENARIO: ${{ inputs.escenario || 'criterio' }}
+          USUARIOS: ${{ inputs.usuarios || '50' }}
+          MAXIMO: ${{ inputs.maximo || '150' }}
+        run: |
+          mkdir -p resultados
+          k6 run --summary-export resultados/esfuerzo-aislado.json pruebas/esfuerzo/catalogo.js
+
+      # Resumen de k6 (tiempos, errores y umbrales por fase) y registro del servidor (#230).
+      - name: Guardar evidencia
+        if: always()
+        run: |
+          mkdir -p resultados
+          cp servidor.log resultados/ 2>/dev/null || true
+
+      - name: Subir evidencia
+        if: always()
+        uses: actions/upload-artifact@v7
         with:
-          path: pruebas/esfuerzo/catalogo.js
+          name: esfuerzo-aislado
+          path: resultados/
+          if-no-files-found: ignore
+
+  produccion:
+    name: Esfuerzo del backend en Render
+    if: github.event_name == 'workflow_dispatch' && inputs.entorno == 'produccion'
+    runs-on: ubuntu-24.04
+    steps:
+      # Descarga el código del commit que disparó el workflow.
+      - name: Descargar el código
+        uses: actions/checkout@v7
+
+      # k6 es la herramienta de pruebas de carga de Grafana.
+      - name: Instalar k6
+        uses: grafana/setup-k6-action@v1
+
+      # pruebas/esfuerzo/catalogo.js define los escenarios, los umbrales y la recuperación.
+      - name: Ejecutar prueba de esfuerzo
+        env:
+          ESCENARIO: ${{ inputs.escenario }}
+          USUARIOS: ${{ inputs.usuarios }}
+          MAXIMO: ${{ inputs.maximo }}
+          # Cuenta de prueba para el carrito y los pedidos con sesión.
+          PRUEBAS_CORREO: ${{ secrets.PRUEBAS_CORREO }}
+          PRUEBAS_CONTRASENA: ${{ secrets.PRUEBAS_CONTRASENA }}
+          FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+        run: |
+          mkdir -p resultados
+          k6 run --summary-export resultados/esfuerzo-produccion.json pruebas/esfuerzo/catalogo.js
+
+      # Resumen de k6 descargable desde la corrida (#230).
+      - name: Subir evidencia
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: esfuerzo-produccion
+          path: resultados/
+          if-no-files-found: ignore

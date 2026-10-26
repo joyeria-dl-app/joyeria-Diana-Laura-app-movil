@@ -9,6 +9,8 @@ import 'services/api_client.dart';
 import 'services/auth_service.dart';
 import 'services/carrito_service.dart';
 import 'services/favorito_service.dart';
+import 'services/pedido_service.dart';
+import 'services/personalizacion_service.dart';
 import 'services/producto_service.dart';
 import 'services/session_storage.dart';
 import 'theme/app_theme.dart';
@@ -18,13 +20,24 @@ void main() {
 }
 
 class JoyeriaApp extends StatelessWidget {
-  const JoyeriaApp({super.key, required this.storage, this.authService, this.productoService, this.carritoService, this.favoritoService});
+  const JoyeriaApp({
+    super.key,
+    required this.storage,
+    this.authService,
+    this.productoService,
+    this.carritoService,
+    this.favoritoService,
+    this.pedidoService,
+    this.personalizacionService,
+  });
 
   final SessionStorage storage;
   final AuthService? authService;
   final ProductoService? productoService;
   final CarritoService? carritoService;
   final FavoritoService? favoritoService;
+  final PedidoService? pedidoService;
+  final PersonalizacionService? personalizacionService;
 
   @override
   Widget build(BuildContext context) {
@@ -37,6 +50,8 @@ class JoyeriaApp extends StatelessWidget {
         Provider<ProductoService>.value(value: productoService ?? ProductoService(api: api)),
         Provider<CarritoService>.value(value: carrito),
         Provider<FavoritoService>.value(value: favoritos),
+        Provider<PedidoService>.value(value: pedidoService ?? PedidoService(api: api)),
+        Provider<PersonalizacionService>.value(value: personalizacionService ?? PersonalizacionService(api: api)),
         ChangeNotifierProvider<FavoritosProvider>(create: (_) => FavoritosProvider(favoritos)),
         ChangeNotifierProvider<CarritoProvider>(create: (_) => CarritoProvider(carrito)),
         ChangeNotifierProvider<AuthProvider>(

@@ -26,6 +26,16 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- El enlace joyeriadl://pago solo trae la app al frente; la pantalla abierta vuelve a
+                 consultar el pedido. Sin esto Flutter intenta abrirlo como una ruta y falla. -->
+            <meta-data android:name="flutter_deeplinking_enabled" android:value="false"/>
+            <!-- HU-12: Mercado Pago regresa a la app con joyeriadl://pago al terminar el pago. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="joyeriadl" android:host="pago"/>
+            </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->

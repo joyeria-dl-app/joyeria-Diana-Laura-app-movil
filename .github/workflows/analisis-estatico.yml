@@ -1,17 +1,31 @@
-# ANÁLISIS DE CÓDIGO ESTÁTICO: revisa el código sin ejecutarlo en cada PR.
+# ANÁLISIS DE CÓDIGO ESTÁTICO
+# Tipo: análisis estático · Alcance: todo el código (lib, test, integration_test), el historial
+# de Git y las dependencias de pubspec.yaml.
+# Revisa el código sin ejecutarlo: reglas de calidad, formato, claves expuestas y dependencias.
+#
+# Ejecución: los pasos van EN SECUENCIA. gitleaks corre primero: si encuentra una clave, el
+# workflow se detiene. Este workflow corre EN PARALELO con Flutter CI y Pruebas unitarias.
+#
+# Acción según el resultado: es un check obligatorio en los PR; si falla, no se puede unir. El
+# resumen muestra el resultado real de cada revisión (pasó o falló).
 name: Análisis de código estático
 
 on:
+  # En cada PR hacia develop o main.
   pull_request:
     branches: [develop, main]
+  # Al unir a develop.
   push:
     branches: [develop]
+  # Desde Actions → Run workflow.
   workflow_dispatch:
+  # Lo llaman Pruebas de aceptación (antes de usar el emulador) y otros workflows (#230).
+  workflow_call:
 
 jobs:
   analisis:
     name: Análisis estático
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Descargar el código
         uses: actions/checkout@v7
@@ -21,7 +35,8 @@ jobs:
 
       # Seguridad (#97): falla si encuentra claves o contraseñas en el código o en el historial de Git.
       - name: Buscar claves con gitleaks
-        run: docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:latest git /repo --redact --verbose
+        id: gitleaks
+        run: docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:latest git /repo --redact --verbose --report-format json --report-path /repo/reporte-gitleaks.json
 
       - name: Instalar Flutter
         uses: subosito/flutter-action@v2
@@ -33,24 +48,52 @@ jobs:
       - name: Instalar dependencias
         run: flutter pub get
 
-      # Reglas de flutter_lints (analysis_options.yaml); falla si hay avisos.
+      # Reglas de flutter_lints (analysis_options.yaml); --fatal-infos hace que hasta los avisos
+      # informativos detengan el workflow.
       - name: Analizar con flutter analyze
-        run: flutter analyze --fatal-infos
+        id: analyze
+        # tee guarda el reporte; el shell de Actions usa pipefail, así que el código de salida del
+        # analizador se respeta (#230).
+        run: flutter analyze --fatal-infos | tee reporte-flutter-analyze.txt
 
       # Falla si un PR trae código sin formato (líneas de hasta 160 caracteres).
       - name: Revisar formato con dart format
-        run: dart format --output=none --set-exit-if-changed --line-length 160 lib test integration_test
+        id: formato
+        if: always() && steps.analyze.outcome != 'skipped'
+        run: dart format --output=none --set-exit-if-changed --line-length 160 lib test integration_test | tee reporte-formato.txt
 
+      # Solo informa: lista las dependencias con versión nueva (la revisión de vulnerabilidades la
+      # hace Dependabot, ver .github/dependabot.yml).
       - name: Revisar dependencias desactualizadas
+        if: always() && steps.analyze.outcome != 'skipped'
         run: flutter pub outdated --no-dev-dependencies | tee dependencias.txt
 
+      # Resumen visible en la página de la corrida, con el resultado real de cada revisión.
       - name: Resumen
         if: always()
+        env:
+          GITLEAKS: ${{ steps.gitleaks.outcome }}
+          ANALYZE: ${{ steps.analyze.outcome }}
+          FORMATO: ${{ steps.formato.outcome }}
         run: |
+          estado() { case "$1" in success) echo "pasó";; failure) echo "**falló**";; *) echo "no se ejecutó";; esac; }
           echo "## Análisis de código estático" >> $GITHUB_STEP_SUMMARY
-          echo "- flutter analyze: sin problemas" >> $GITHUB_STEP_SUMMARY
-          echo "- dart format: código con formato" >> $GITHUB_STEP_SUMMARY
-          echo "- gitleaks: sin claves en el código ni en el historial" >> $GITHUB_STEP_SUMMARY
+          echo "- gitleaks (claves en el código y el historial): $(estado "$GITLEAKS")" >> $GITHUB_STEP_SUMMARY
+          echo "- flutter analyze: $(estado "$ANALYZE")" >> $GITHUB_STEP_SUMMARY
+          echo "- dart format: $(estado "$FORMATO")" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          cat dependencias.txt >> $GITHUB_STEP_SUMMARY || true
+          cat dependencias.txt >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "Sin reporte de dependencias" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
+
+      # Informe descargable desde la corrida (Artifacts): gitleaks, analizador, formato y dependencias (#230).
+      - name: Guardar evidencia
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: analisis-estatico
+          path: |
+            reporte-gitleaks.json
+            reporte-flutter-analyze.txt
+            reporte-formato.txt
+            dependencias.txt
+          if-no-files-found: ignore

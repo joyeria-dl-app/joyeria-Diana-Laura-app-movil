@@ -1,0 +1,82 @@
+# PRUEBAS DE ENTORNO
+# Tipo: entorno · Alcance: comportamiento de la app ante lo que pasa en el teléfono (batería
+# baja, llamada entrante, segundo plano y sin señal), simulado con adb en el emulador Android
+# contra el backend de Render.
+#
+# Ejecución: los pasos van EN SECUENCIA; los cinco casos (CE-01 a CE-05) corren EN SECUENCIA
+# porque cada uno parte del estado que deja el anterior. Este workflow corre EN PARALELO con
+# Integración, Aceptación y Rendimiento.
+#
+# Acción según el resultado: en develop, si falla, "Avisar fallas" abre una issue; en el PR de
+# develop a main es un check obligatorio y bloquea el paso a main. Las capturas de cada caso
+# se guardan aunque la prueba falle.
+name: Pruebas de entorno
+
+on:
+  push:
+    branches: [develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  entorno:
+    name: Entorno en emulador Android
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      # Descarga el código del commit que disparó el workflow.
+      - name: Descargar el código
+        uses: actions/checkout@v7
+
+      # Misma versión de Flutter en todos los workflows para que los resultados sean comparables.
+      - name: Instalar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.5'
+          channel: stable
+          cache: true
+
+      # Librerías de pubspec.yaml.
+      - name: Instalar dependencias
+        run: flutter pub get
+
+      # El emulador y la compilación de Android necesitan Java 17.
+      - name: Instalar Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      # Permite al emulador usar la aceleración por hardware del runner.
+      - name: Habilitar KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      # La clave de Firebase viene de los secretos del repositorio. Este pipeline usa su propia
+      # cuenta de cliente de prueba (ENTORNO_CORREO): integración, aceptación y entorno corren al
+      # mismo tiempo y, con una sola cuenta, se cambiaban el carrito entre ellos (#185).
+      - name: Preparar la configuración de la app
+        run: echo '{"FIREBASE_API_KEY":"${{ secrets.FIREBASE_API_KEY }}","PRUEBAS_CORREO":"${{ secrets.ENTORNO_CORREO }}","PRUEBAS_CONTRASENA":"${{ secrets.ENTORNO_CONTRASENA }}"}' > env.json
+
+      # pruebas/entorno.sh corre la prueba y aplica cada situación con adb cuando la prueba lo pide.
+      - name: Ejecutar pruebas de entorno en el emulador
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          script: CAPTURAS=capturas-entorno bash pruebas/entorno.sh
+
+      # Capturas descargables desde la página de la corrida (Artifacts), aunque la prueba falle.
+      - name: Guardar las capturas de cada caso
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: capturas-entorno
+          path: capturas-entorno
+          if-no-files-found: ignore

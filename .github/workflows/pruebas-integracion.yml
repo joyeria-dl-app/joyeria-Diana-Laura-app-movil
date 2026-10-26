@@ -1,7 +1,20 @@
-# PRUEBAS DE INTEGRACIÓN Y ACEPTACIÓN: la app real en un emulador Android contra el backend de Render.
+# PRUEBAS DE INTEGRACIÓN
+# Tipo: integración · Alcance: recorridos completos de la app real contra el backend de Render
+# (HU-07 a HU-10: catálogo, filtro, detalle, carrito y favoritos con sesión).
+# El recorrido que une carrito, pedido, pago y personalización (Sprint 3, #146) se corre a mano
+# porque necesita un pago en Mercado Pago (ver pruebas/integracion_sprint3.md).
+#
+# Ejecución: los pasos van EN SECUENCIA y las pruebas corren EN SECUENCIA dentro del mismo
+# emulador. Este workflow corre EN PARALELO con Aceptación, Entorno y Rendimiento; cada uno usa
+# su propia cuenta de prueba para no cambiarse el carrito entre ellos (#185).
+#
+# Acción según el resultado: en develop, si falla, "Avisar fallas" abre una issue; en el PR de
+# develop a main es un check obligatorio y bloquea el paso a main.
 name: Pruebas de integración
 
 on:
+  push:
+    branches: [develop]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -9,12 +22,14 @@ on:
 jobs:
   integracion:
     name: Integración en emulador Android
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
+      # Descarga el código del commit que disparó el workflow.
       - name: Descargar el código
         uses: actions/checkout@v7
 
+      # Misma versión de Flutter en todos los workflows para que los resultados sean comparables.
       - name: Instalar Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -22,9 +37,11 @@ jobs:
           channel: stable
           cache: true
 
+      # Librerías de pubspec.yaml.
       - name: Instalar dependencias
         run: flutter pub get
 
+      # El emulador y la compilación de Android necesitan Java 17.
       - name: Instalar Java
         uses: actions/setup-java@v6
         with:
@@ -42,6 +59,7 @@ jobs:
       - name: Preparar la configuración de la app
         run: echo '{"FIREBASE_API_KEY":"${{ secrets.FIREBASE_API_KEY }}","PRUEBAS_CORREO":"${{ secrets.PRUEBAS_CORREO }}","PRUEBAS_CONTRASENA":"${{ secrets.PRUEBAS_CONTRASENA }}"}' > env.json
 
+      # Levanta un Pixel 6 con Android 14 (API 34) sin animaciones y corre las pruebas en él.
       - name: Ejecutar pruebas de integración en el emulador
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -50,4 +68,13 @@ jobs:
           target: google_apis
           profile: pixel_6
           disable-animations: true
-          script: flutter test integration_test/catalogo_test.dart integration_test/recorrido_cliente_test.dart integration_test/aceptacion_test.dart --dart-define-from-file=env.json --reporter expanded
+          script: flutter test integration_test/catalogo_test.dart integration_test/recorrido_cliente_test.dart --dart-define-from-file=env.json --reporter expanded --file-reporter json:resultados/integracion.json
+
+      # Resultado de cada recorrido de integración en JSON, descargable desde la corrida (#230).
+      - name: Guardar evidencia
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: resultados-integracion
+          path: resultados/
+          if-no-files-found: ignore

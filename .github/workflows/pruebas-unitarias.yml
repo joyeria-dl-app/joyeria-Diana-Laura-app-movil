@@ -1,17 +1,31 @@
-# PRUEBAS UNITARIAS: modelos, servicios y widgets con respuestas simuladas del backend.
+# PRUEBAS UNITARIAS
+# Tipo: unitarias y de widgets · Alcance: modelos, servicios y pantallas de todas las HU, con
+# respuestas simuladas del backend (sin red ni emulador).
+#
+# Ejecución: los pasos van EN SECUENCIA; dentro de `flutter test` los archivos de prueba corren
+# EN PARALELO (Flutter reparte los archivos entre los núcleos del runner). Este workflow corre EN
+# PARALELO con Flutter CI y Análisis de código estático.
+#
+# Acción según el resultado: es un check obligatorio en los PR; si una prueba falla, no se
+# puede unir. El reporte de cobertura se guarda aunque fallen pruebas.
 name: Pruebas unitarias
 
 on:
+  # En cada PR hacia develop o main.
   pull_request:
     branches: [develop, main]
+  # Al unir a develop.
   push:
     branches: [develop]
+  # Desde Actions → Run workflow.
   workflow_dispatch:
+  # Lo llaman Pruebas de aceptación (antes de usar el emulador) y otros workflows (#230).
+  workflow_call:
 
 jobs:
   unitarias:
     name: Pruebas unitarias y de widgets
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Descargar el código
         uses: actions/checkout@v7
@@ -26,18 +40,26 @@ jobs:
       - name: Instalar dependencias
         run: flutter pub get
 
+      # --coverage genera coverage/lcov.info con las líneas que tocaron las pruebas.
       - name: Ejecutar pruebas con cobertura
-        run: flutter test --coverage --reporter expanded
+        # --file-reporter guarda el resultado de cada prueba en JSON para la evidencia (#230).
+        run: flutter test --coverage --reporter expanded --file-reporter json:resultados/unitarias.json
 
+      # Porcentaje de líneas cubiertas, visible en el resumen de la corrida.
       - name: Calcular cobertura
+        if: always() && hashFiles('coverage/lcov.info') != ''
         run: |
           total=$(grep -c '^DA:' coverage/lcov.info)
           cubiertas=$(grep '^DA:' coverage/lcov.info | grep -vc ',0$')
           echo "## Pruebas unitarias" >> $GITHUB_STEP_SUMMARY
           echo "Cobertura de líneas: $((100 * cubiertas / total)) % ($cubiertas de $total)" >> $GITHUB_STEP_SUMMARY
 
+      # Reporte descargable desde la página de la corrida (Artifacts).
       - name: Guardar reporte de cobertura
+        if: always() && hashFiles('coverage/lcov.info') != ''
         uses: actions/upload-artifact@v7
         with:
           name: cobertura-pruebas-unitarias
-          path: coverage/lcov.info
+          path: |
+            coverage/lcov.info
+            resultados/unitarias.json
