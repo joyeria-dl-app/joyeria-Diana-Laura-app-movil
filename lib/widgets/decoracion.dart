@@ -9,11 +9,11 @@ class FondoResplandor extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Degradado radial en lugar de desenfoque: el blur se veía en anillos en el emulador.
-    return const IgnorePointer(
+    return IgnorePointer(
       child: Stack(
         children: [
-          Positioned(top: -170, right: -180, child: _Mancha(tamano: 440, color: Color(0xFFB8708F))),
-          Positioned(bottom: -30, left: -190, child: _Mancha(tamano: 380, color: Color(0xFF6E5A8A))),
+          Positioned(top: -170, right: -180, child: _Mancha(tamano: 440, color: AppColors.mancha1)),
+          Positioned(bottom: -30, left: -190, child: _Mancha(tamano: 380, color: AppColors.mancha2)),
         ],
       ),
     );
@@ -44,7 +44,7 @@ class Destellos extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Positioned(
+    return Positioned(
       top: 70,
       left: 24,
       right: 0,
@@ -80,7 +80,7 @@ class TituloDegradado extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, limites) {
         final pintura = Paint()
-          ..shader = const LinearGradient(
+          ..shader = LinearGradient(
             colors: [AppColors.texto, AppColors.texto, AppColors.primario],
             stops: [0, 0.6, 0.95],
           ).createShader(Rect.fromLTWH(0, 0, limites.maxWidth, 70));
@@ -110,7 +110,7 @@ class Antetitulo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ShaderMask(
-      shaderCallback: (r) => const LinearGradient(colors: [AppColors.primario, AppColors.lila]).createShader(r),
+      shaderCallback: (r) => LinearGradient(colors: [AppColors.primario, AppColors.lila]).createShader(r),
       child: Text(
         texto.toUpperCase(),
         style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 2),
@@ -132,10 +132,10 @@ class BotonCristal extends StatelessWidget {
     return Tooltip(
       message: descripcion,
       child: Material(
-        color: const Color(0x8C281224),
+        color: AppColors.cristal,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: Color(0x2EFFAAD7)),
+          side: BorderSide(color: AppColors.cristalBorde),
         ),
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
@@ -159,7 +159,7 @@ class Etiqueta extends StatelessWidget {
       decoration: BoxDecoration(color: AppColors.suave, borderRadius: BorderRadius.circular(20)),
       child: Text(
         texto,
-        style: const TextStyle(color: AppColors.primario, fontSize: 10.5, fontWeight: FontWeight.w600),
+        style: TextStyle(color: AppColors.primario, fontSize: 10.5, fontWeight: FontWeight.w600),
       ),
     );
   }
@@ -190,7 +190,7 @@ class CasillaDegradado extends StatelessWidget {
                 height: 24,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
-                  gradient: valor ? const LinearGradient(colors: [AppColors.primario, AppColors.primario2]) : null,
+                  gradient: valor ? LinearGradient(colors: [AppColors.primario, AppColors.primario2]) : null,
                   border: valor ? null : Border.all(color: AppColors.textoSuave, width: 1.5),
                 ),
                 child: valor ? const Icon(Icons.check_rounded, size: 16, color: Colors.white) : null,

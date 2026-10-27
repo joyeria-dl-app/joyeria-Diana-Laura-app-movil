@@ -168,7 +168,7 @@ class _Paso extends StatelessWidget {
                       color: error ? AppColors.error : (paso.actual ? AppColors.primario : (activo ? AppColors.texto : AppColors.textoSuave)),
                     ),
                   ),
-                  if (paso.fecha != null) Text(fechaHora(paso.fecha!), style: const TextStyle(color: AppColors.textoSuave, fontSize: 11)),
+                  if (paso.fecha != null) Text(fechaHora(paso.fecha!), style: TextStyle(color: AppColors.textoSuave, fontSize: 11)),
                 ],
               ),
             ),
@@ -202,9 +202,9 @@ class _Punto extends StatelessWidget {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           border: Border.all(color: AppColors.primario, width: 2),
-          boxShadow: const [BoxShadow(color: AppColors.suave, spreadRadius: 4)],
+          boxShadow: [BoxShadow(color: AppColors.suave, spreadRadius: 4)],
         ),
-        child: const DecoratedBox(
+        child: DecoratedBox(
           decoration: BoxDecoration(color: AppColors.primario, shape: BoxShape.circle),
         ),
       );
@@ -213,7 +213,7 @@ class _Punto extends StatelessWidget {
       return Container(
         width: 26,
         height: 26,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(colors: [AppColors.primario, AppColors.primario2]),
           shape: BoxShape.circle,
         ),
@@ -223,7 +223,7 @@ class _Punto extends StatelessWidget {
     return Container(
       width: 26,
       height: 26,
-      decoration: const BoxDecoration(color: AppColors.superficie2, shape: BoxShape.circle),
+      decoration: BoxDecoration(color: AppColors.superficie2, shape: BoxShape.circle),
       child: Icon(paso.icono, size: 14, color: AppColors.textoSuave),
     );
   }
@@ -265,7 +265,7 @@ class AvisoVacio extends StatelessWidget {
               child: Text(
                 texto,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.textoSuave, fontSize: 13),
+                style: TextStyle(color: AppColors.textoSuave, fontSize: 13),
               ),
             ),
             if (boton != null) ...[const SizedBox(height: 22), BotonDegradado(texto: boton!, icono: iconoBoton, onPressed: onPressed)],
@@ -332,7 +332,7 @@ class FotoPieza extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const sinFoto = ColoredBox(
+    final sinFoto = ColoredBox(
       color: AppColors.superficie2,
       child: Center(child: Icon(Icons.diamond_outlined, size: 20, color: AppColors.textoSuave)),
     );

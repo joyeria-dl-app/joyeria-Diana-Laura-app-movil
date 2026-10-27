@@ -22,7 +22,7 @@ import 'datos_prueba.dart';
 
 // Prueba de integración del recorrido del cliente con sesión (HU-07 a HU-10):
 // catálogo → filtro → detalle → agregar al carrito → favoritos, contra el backend real.
-// La cuenta de prueba va en env.json (PRUEBAS_CORREO y PRUEBAS_CONTRASENA); en GitHub viene de los secretos:
+// La cuenta de prueba va en env.json (ver datos_prueba.dart); en GitHub viene de los secretos:
 
 // Abre la primera pieza del filtro con existencias (las agotadas no se pueden agregar).
 Future<void> _abrirPiezaDisponible(WidgetTester tester) async {
@@ -47,8 +47,8 @@ void main() {
   setUpAll(despertarServidor);
 
   testWidgets('HU-07 a HU-10: el cliente filtra, abre una pieza, la agrega al carrito y la guarda en favoritos', (tester) async {
-    expect(CuentaPrueba.correo, isNotEmpty, reason: 'Falta PRUEBAS_CORREO');
-    expect(CuentaPrueba.contrasena, isNotEmpty, reason: 'Falta PRUEBAS_CONTRASENA');
+    expect(CuentaPrueba.correo, isNotEmpty, reason: 'Falta el correo de la cuenta de prueba (env.json)');
+    expect(CuentaPrueba.contrasena, isNotEmpty, reason: 'Falta la contraseña de la cuenta de prueba (env.json)');
 
     await tester.pumpWidget(JoyeriaApp(storage: SecureSessionStorage()));
     await iniciarSesion(tester, CuentaPrueba.correo, CuentaPrueba.contrasena);

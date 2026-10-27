@@ -45,7 +45,11 @@ Future<void> _abrir(WidgetTester tester, ProductoService servicio) async {
   await tester.pumpWidget(
     Provider<ProductoService>.value(
       value: servicio,
-      child: MaterialApp(theme: AppTheme.oscuro(), home: const CatalogoScreen()),
+      child: MaterialApp(
+        theme: AppTheme.oscuro(),
+        home: const CatalogoScreen(),
+        routes: {'/perfil': (_) => const Scaffold(body: Text('Pantalla de perfil'))},
+      ),
     ),
   );
   await tester.pumpAndSettle();
@@ -88,10 +92,10 @@ void main() {
     expect(tester.getSemantics(find.bySemanticsLabel('Catálogo')), isSemantics(isSelected: true, isButton: true));
     expect(tester.getSemantics(find.bySemanticsLabel('Carrito')), isSemantics(isSelected: false, isButton: true));
 
-    // Perfil se conecta en la HU-14.
+    // Perfil abre Mi perfil (HU-14).
     await tester.tap(find.bySemanticsLabel('Perfil'));
-    await tester.pump();
-    expect(find.text('Disponible muy pronto'), findsOneWidget);
+    await tester.pumpAndSettle();
+    expect(find.text('Pantalla de perfil'), findsOneWidget);
     semantica.dispose();
   });
 
