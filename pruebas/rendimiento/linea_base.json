@@ -1,0 +1,11 @@
+{
+  "origen": "Corrida 39081130469 de Pruebas de rendimiento en develop (17 oct 2026), la última en verde antes de #230",
+  "metricas": {
+    "apk_mb": { "linea_base": 19.3, "umbral": 30, "nombre": "Tamaño del APK (arm64)", "unidad": "MB" },
+    "arranque_ms": { "linea_base": 1701, "umbral": 3000, "nombre": "Arranque de la app", "unidad": "ms" },
+    "carga_catalogo_ms": { "linea_base": 1759, "umbral": 2000, "nombre": "Carga del catálogo", "unidad": "ms" },
+    "carga_detalle_ms": { "linea_base": 685, "umbral": 3000, "nombre": "Carga del detalle", "unidad": "ms" },
+    "scroll_porcentaje_perdidos": { "linea_base": 13.7, "umbral": 25, "nombre": "Cuadros perdidos en el scroll", "unidad": "%" }
+  },
+  "aviso_por_encima_de_la_linea_base": 20
+}

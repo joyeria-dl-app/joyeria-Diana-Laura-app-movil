@@ -13,6 +13,7 @@ import 'services/pedido_service.dart';
 import 'services/perfil_service.dart';
 import 'services/personalizacion_service.dart';
 import 'services/producto_service.dart';
+import 'services/service_factory.dart';
 import 'services/session_storage.dart';
 import 'theme/app_theme.dart';
 
@@ -45,25 +46,24 @@ class JoyeriaApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final api = ApiClient(storage: storage);
-    final carrito = carritoService ?? CarritoService(api: api);
-    final favoritos = favoritoService ?? FavoritoService(api: api);
-    final pedidos = pedidoService ?? PedidoService(api: api);
+    final fabrica = ServiceFactory(api);
+    final carrito = carritoService ?? fabrica.crearCarritoService();
+    final favoritos = favoritoService ?? fabrica.crearFavoritoService();
+    final pedidos = pedidoService ?? fabrica.crearPedidoService();
     return MultiProvider(
       providers: [
         Provider<ApiClient>.value(value: api),
-        Provider<ProductoService>.value(value: productoService ?? ProductoService(api: api)),
+        Provider<ProductoService>.value(value: productoService ?? fabrica.crearProductoService()),
         Provider<CarritoService>.value(value: carrito),
         Provider<FavoritoService>.value(value: favoritos),
         Provider<PedidoService>.value(value: pedidos),
-        Provider<PersonalizacionService>.value(value: personalizacionService ?? PersonalizacionService(api: api)),
+        Provider<PersonalizacionService>.value(value: personalizacionService ?? fabrica.crearPersonalizacionService()),
         Provider<PerfilService>.value(
-          value: perfilService ?? PerfilService(api: api, pedidos: pedidos, favoritos: favoritos),
+          value: perfilService ?? fabrica.crearPerfilService(pedidos: pedidos, favoritos: favoritos),
         ),
         ChangeNotifierProvider<FavoritosProvider>(create: (_) => FavoritosProvider(favoritos)),
         ChangeNotifierProvider<CarritoProvider>(create: (_) => CarritoProvider(carrito)),
-        ChangeNotifierProvider<AuthProvider>(
-          create: (_) => AuthProvider(authService ?? AuthService(api: api, storage: storage))..restaurarSesion(),
-        ),
+        ChangeNotifierProvider<AuthProvider>(create: (_) => AuthProvider(authService ?? fabrica.crearAuthService(storage))..restaurarSesion()),
       ],
       child: MaterialApp(
         title: 'Joyería Diana Laura',

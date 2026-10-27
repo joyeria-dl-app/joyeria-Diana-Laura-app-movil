@@ -6,6 +6,13 @@
 // ESCENARIO=quiebre: sube por escalones hasta MAXIMO usuarios para ver dónde empiezan a fallar
 //   los tiempos; no tiene umbrales que detengan la prueba, se lee el resultado por escalón.
 //
+// RECUPERACIÓN (#230): al terminar la carga, 2 usuarios siguen pidiendo el catálogo durante 1 minuto.
+//   El servidor se considera recuperado si en esa fase el 95 % de las respuestas tarda menos de 1 s y
+//   no hay errores; si no, la prueba falla aunque la carga haya pasado. Aplica a los dos escenarios.
+//
+// Entorno: API_URL apunta al backend de Render (por defecto) o al backend levantado dentro de GitHub
+// Actions con una base de datos propia (pipeline, trabajo "aislado"), que no toca producción.
+//
 // El carrito y los pedidos solo se leen (no se crean pedidos ni pagos). La sesión es la de la
 // cuenta de prueba (PRUEBAS_CORREO / PRUEBAS_CONTRASENA) y se abre una vez en setup().
 //
@@ -20,9 +27,14 @@ const ESCENARIO = __ENV.ESCENARIO || 'criterio';
 const USUARIOS = Number(__ENV.USUARIOS || 50);
 const MAXIMO = Number(__ENV.MAXIMO || 150);
 
+// Duración total de las etapas de carga, para que la recuperación empiece justo al terminar.
+const segundos = (d) => Number.parseInt(d, 10) * (d.endsWith('m') ? 60 : 1);
+const duracion = (stages) => stages.reduce((total, e) => total + segundos(e.duration), 0);
+
 const escenarios = {
   criterio: {
     executor: 'ramping-vus',
+    tags: { fase: 'carga' },
     stages: [
       { duration: '30s', target: Math.ceil(USUARIOS / 5) },
       { duration: '1m', target: USUARIOS },
@@ -32,6 +44,7 @@ const escenarios = {
   },
   quiebre: {
     executor: 'ramping-vus',
+    tags: { fase: 'carga' },
     stages: [25, 50, 75, 100, 125, MAXIMO]
       .filter((n, i, lista) => n <= MAXIMO && lista.indexOf(n) === i)
       .flatMap((n) => [
@@ -42,15 +55,27 @@ const escenarios = {
   },
 };
 
+const recuperacion = {
+  executor: 'constant-vus',
+  vus: 2,
+  duration: '1m',
+  startTime: `${duracion(escenarios[ESCENARIO].stages)}s`,
+  tags: { fase: 'recuperacion' },
+};
+
 export const options = {
-  scenarios: { [ESCENARIO]: escenarios[ESCENARIO] },
-  thresholds:
-    ESCENARIO === 'criterio'
+  scenarios: { [ESCENARIO]: escenarios[ESCENARIO], recuperacion },
+  thresholds: {
+    ...(ESCENARIO === 'criterio'
       ? {
-          http_req_duration: ['p(95)<2000'], // 95 % de respuestas en menos de 2 s
-          http_req_failed: ['rate<0.01'], // menos del 1 % de errores
+          'http_req_duration{fase:carga}': ['p(95)<2000'], // 95 % de respuestas en menos de 2 s
+          'http_req_failed{fase:carga}': ['rate<0.01'], // menos del 1 % de errores
         }
-      : {},
+      : {}),
+    // Recuperación: después de la carga el servidor vuelve a responder como sin carga.
+    'http_req_duration{fase:recuperacion}': ['p(95)<1000'],
+    'http_req_failed{fase:recuperacion}': ['rate==0'],
+  },
   summaryTrendStats: ['avg', 'med', 'p(90)', 'p(95)', 'max'],
 };
 
