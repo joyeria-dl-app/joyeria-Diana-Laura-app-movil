@@ -94,7 +94,7 @@ void main() {
 
     test('La app solo se conecta por HTTPS', () {
       expect(manifiesto, isNot(contains('usesCleartextTraffic="true"')));
-      final api = File('lib/services/api_client.dart').readAsStringSync();
+      final api = File('lib/services/app_config.dart').readAsStringSync();
       expect(api, contains("defaultValue: 'https://"));
     });
   });

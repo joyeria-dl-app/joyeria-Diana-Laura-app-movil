@@ -1,5 +1,5 @@
 // TIPO: seguridad
-// ALCANCE: HU-19 · casos SP-01 a SP-11: el backend rechaza pagos, montos y accesos alterados (#98)
+// ALCANCE: HU-19 · casos SP-01 a SP-13: el backend rechaza pagos, montos, accesos y datos de perfil alterados (#98, #216, #220)
 // EJECUCIÓN: A MANO, en el emulador: crea un pedido real. flutter test integration_test/seguridad_pago_test.dart --dart-define-from-file=env.json
 // DATOS: integration_test/datos_prueba.dart (cuenta de env.json o de los secretos); registros de otra cuenta de datos_prueba.dart; el pedido de prueba se cancela al terminar
 
@@ -34,8 +34,8 @@ void main() {
   setUpAll(despertarServidor);
 
   testWidgets('Seguridad del pago: el backend rechaza peticiones alteradas', (tester) async {
-    expect(CuentaPrueba.correo, isNotEmpty, reason: 'Falta PRUEBAS_CORREO');
-    expect(CuentaPrueba.contrasena, isNotEmpty, reason: 'Falta PRUEBAS_CONTRASENA');
+    expect(CuentaPrueba.correo, isNotEmpty, reason: 'Falta el correo de la cuenta de prueba (env.json)');
+    expect(CuentaPrueba.contrasena, isNotEmpty, reason: 'Falta la contraseña de la cuenta de prueba (env.json)');
 
     await tester.pumpWidget(JoyeriaApp(storage: SecureSessionStorage()));
     await iniciarSesion(tester, CuentaPrueba.correo, CuentaPrueba.contrasena);
@@ -120,20 +120,25 @@ void main() {
     _caso('SP-05', 'abonos de 20%, 200%, "abc" y -10 rechazados');
 
     // SP-06: el pedido y el apartado de otra cuenta.
-    rechazada(await codigo(() => dio.get('/carrito/pedidos/$RegistrosAjenos.pedido')), 'ver pedido ajeno');
+    rechazada(await codigo(() => dio.get('/carrito/pedidos/${RegistrosAjenos.pedido}')), 'ver pedido ajeno');
     rechazada(await codigo(() => dio.post('/carrito/pago/mercadopago', data: {'venta_id': RegistrosAjenos.pedido})), 'pagar pedido ajeno con MP');
     rechazada(await codigo(() => dio.post('/carrito/pago/paypal/crear', data: {'venta_id': RegistrosAjenos.pedido})), 'pagar pedido ajeno con PayPal');
     rechazada(await codigo(() => dio.post('/apartados/pago/mercadopago', data: {'apartado_id': RegistrosAjenos.apartado})), 'pagar apartado ajeno');
     rechazada(await codigo(() => dio.post('/apartados/pago/mercadopago/abono', data: {'abono_id': RegistrosAjenos.abono})), 'pagar abono ajeno');
     _caso(
       'SP-06',
-      'no deja ver ni pagar el pedido $RegistrosAjenos.pedido, el apartado $RegistrosAjenos.apartado ni el abono $RegistrosAjenos.abono de otra cuenta',
+      'no deja ver ni pagar el pedido ${RegistrosAjenos.pedido}, el apartado ${RegistrosAjenos.apartado} ni el abono ${RegistrosAjenos.abono} de otra cuenta',
     );
+
+    // SP-12 (#216): ver el detalle de un apartado ajeno. Antes de la corrección del backend
+    // respondía 200 con las piezas, los abonos y el comprobante de otra clienta.
+    rechazada(await codigo(() => dio.get('/apartados/${RegistrosAjenos.apartado}')), 'ver apartado ajeno');
+    _caso('SP-12', 'no deja ver el detalle del apartado ${RegistrosAjenos.apartado} de otra cuenta');
 
     // SP-07: acciones del personal hechas por el cliente.
     rechazada(await codigo(() => dio.patch('/carrito/pedidos/$pedidoId/estado', data: {'estado': 'entregado'})), 'cambiar estado');
     rechazada(await codigo(() => dio.post('/carrito/pedidos/$pedidoId/confirmar-pago-efectivo')), 'confirmar pago en efectivo');
-    rechazada(await codigo(() => dio.post('/apartados/$RegistrosAjenos.apartado/confirmar-pago')), 'confirmar pago de apartado');
+    rechazada(await codigo(() => dio.post('/apartados/${RegistrosAjenos.apartado}/confirmar-pago')), 'confirmar pago de apartado');
     _caso('SP-07', 'el cliente no puede marcar su pedido entregado ni confirmar pagos');
 
     // SP-08: aviso falso de Mercado Pago con un pago que no existe y la referencia del pedido.
@@ -182,6 +187,25 @@ void main() {
     _caso('SP-11', 'con un token inventado el backend rechaza la petición (401/403)');
 
     await codigo(() => dio.delete('/carrito/vaciar'));
+    // SP-13 (#220): datos de perfil alterados. Antes de la corrección del backend se guardaban
+    // un nombre de 1 letra, un teléfono con letras y una foto de otro sitio.
+    final perfil = await datos(() => dio.get('/auth/profile'));
+    for (final (cambio, que) in [
+      ({'nombre': 'A'}, 'nombre de 1 letra'),
+      ({'nombre': '<b>Ana</b>'}, 'nombre con etiquetas'),
+      ({'telefono': 'abc'}, 'teléfono con letras'),
+      ({'foto_perfil_url': 'https://ejemplo-ajeno.test/espia.png'}, 'foto de otro sitio'),
+    ]) {
+      expect(await codigo(() => dio.put('/auth/profile', data: cambio)), 400, reason: '$que debió rechazarse');
+    }
+    final perfilDespues = await datos(() => dio.get('/auth/profile'));
+    expect(perfilDespues['nombre'], perfil['nombre']);
+    expect(perfilDespues['telefono'], perfil['telefono']);
+    expect(perfilDespues['foto_perfil_url'], perfil['foto_perfil_url']);
+    // Los mismos datos válidos se siguen guardando.
+    expect(await codigo(() => dio.put('/auth/profile', data: {'nombre': perfil['nombre']})), 200);
+    _caso('SP-13', 'nombre de 1 letra o con etiquetas, teléfono con letras y foto de otro sitio se rechazan (400); el perfil no cambia');
+
     debugPrint('SEGURIDAD PASO cancelar $pedidoId');
   });
 }
