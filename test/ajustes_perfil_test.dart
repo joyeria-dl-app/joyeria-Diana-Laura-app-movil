@@ -11,6 +11,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import 'package:joyeria_diana_laura/models/perfil.dart';
+import 'package:joyeria_diana_laura/providers/tema_provider.dart';
 import 'package:joyeria_diana_laura/screens/perfil_screen.dart';
 import 'package:joyeria_diana_laura/services/api_client.dart';
 import 'package:joyeria_diana_laura/services/favorito_service.dart';
@@ -64,8 +65,12 @@ Future<void> _abrir(WidgetTester tester, PerfilService servicio) async {
   tester.view.devicePixelRatio = 2.6;
   addTearDown(tester.view.reset);
   await tester.pumpWidget(
-    Provider<PerfilService>.value(
-      value: servicio,
+    MultiProvider(
+      providers: [
+        Provider<PerfilService>.value(value: servicio),
+        // Mi perfil lee el tema (#212) para el interruptor de tema oscuro.
+        ChangeNotifierProvider<TemaProvider>(create: (_) => TemaProvider(MemoriaPreferenciaTema())),
+      ],
       child: MaterialApp(theme: AppTheme.oscuro(), home: const PerfilScreen()),
     ),
   );

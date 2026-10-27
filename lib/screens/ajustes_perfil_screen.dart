@@ -146,22 +146,22 @@ class _AjustesPerfilScreenState extends State<AjustesPerfilScreen> {
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.alternate_email_rounded, size: 21, color: AppColors.textoSuave),
+                              Icon(Icons.alternate_email_rounded, size: 21, color: AppColors.textoSuave),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
                                   widget.perfil.email,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(color: AppColors.textoSuave, fontSize: 14),
+                                  style: TextStyle(color: AppColors.textoSuave, fontSize: 14),
                                 ),
                               ),
-                              const Icon(Icons.lock_outline_rounded, size: 18, color: AppColors.textoSuave),
+                              Icon(Icons.lock_outline_rounded, size: 18, color: AppColors.textoSuave),
                             ],
                           ),
                         ),
                         const SizedBox(height: 6),
-                        const Text('El correo es el de tu cuenta y no se cambia desde aquí.', style: TextStyle(color: AppColors.textoSuave, fontSize: 11.5)),
+                        Text('El correo es el de tu cuenta y no se cambia desde aquí.', style: TextStyle(color: AppColors.textoSuave, fontSize: 11.5)),
                         if (_error != null) ...[
                           const SizedBox(height: 16),
                           Row(

@@ -14,6 +14,7 @@ import 'package:joyeria_diana_laura/models/usuario.dart';
 import 'package:joyeria_diana_laura/providers/auth_provider.dart';
 import 'package:joyeria_diana_laura/providers/carrito_provider.dart';
 import 'package:joyeria_diana_laura/providers/favoritos_provider.dart';
+import 'package:joyeria_diana_laura/providers/tema_provider.dart';
 import 'package:joyeria_diana_laura/screens/perfil_screen.dart';
 import 'package:joyeria_diana_laura/services/api_client.dart';
 import 'package:joyeria_diana_laura/services/auth_service.dart';
@@ -86,6 +87,8 @@ Future<(AuthProvider, CarritoProvider, FavoritosProvider, _AuthFalso)> _abrir(Wi
         ChangeNotifierProvider.value(value: auth),
         ChangeNotifierProvider.value(value: carrito),
         ChangeNotifierProvider.value(value: favoritos),
+        // Mi perfil lee el tema (#212) para el interruptor de tema oscuro.
+        ChangeNotifierProvider<TemaProvider>(create: (_) => TemaProvider(MemoriaPreferenciaTema())),
       ],
       child: MaterialApp(
         theme: AppTheme.oscuro(),

@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 
 import 'package:joyeria_diana_laura/models/perfil.dart';
+import 'package:joyeria_diana_laura/providers/tema_provider.dart';
 import 'package:joyeria_diana_laura/screens/perfil_screen.dart';
 import 'package:joyeria_diana_laura/services/api_client.dart';
 import 'package:joyeria_diana_laura/services/favorito_service.dart';
@@ -48,13 +49,18 @@ final _ana = Perfil.fromJson({
   'fecha_creacion': '2026-10-02T15:20:00.000Z',
 });
 
-Future<void> _abrir(WidgetTester tester, PerfilService servicio) async {
+Future<void> _abrir(WidgetTester tester, PerfilService servicio, {TemaProvider? tema}) async {
   tester.view.physicalSize = const Size(1080, 2400);
   tester.view.devicePixelRatio = 2.6;
   addTearDown(tester.view.reset);
+  // El tema es global (AppColors): cada prueba deja el oscuro de nuevo.
+  addTearDown(() => AppColors.usar(Paleta.oscuraBoceto));
   await tester.pumpWidget(
-    Provider<PerfilService>.value(
-      value: servicio,
+    MultiProvider(
+      providers: [
+        Provider<PerfilService>.value(value: servicio),
+        ChangeNotifierProvider<TemaProvider>.value(value: tema ?? TemaProvider(MemoriaPreferenciaTema())),
+      ],
       child: MaterialApp(
         theme: AppTheme.oscuro(),
         home: const PerfilScreen(),
@@ -113,23 +119,6 @@ void main() {
     }
   });
 
-  testWidgets('El tema está visible y avisa que llega pronto', (tester) async {
-    await _abrir(tester, _PerfilFalso(cuenta: _ana));
-    expect(find.text('Tema oscuro'), findsOneWidget);
-    expect(find.byType(Switch), findsOneWidget);
-    expect(find.text('Cerrar sesión'), findsOneWidget);
-
-    // Cerrar sesión (#52) y los ajustes y la foto (#213) ya funcionan; se prueban en sus archivos.
-    for (final toque in [find.text('Tema oscuro')]) {
-      await tester.ensureVisible(toque);
-      await tester.tap(toque);
-      await tester.pump();
-      expect(find.text('Disponible muy pronto'), findsOneWidget);
-      ScaffoldMessenger.of(tester.element(find.byType(PerfilScreen))).removeCurrentSnackBar();
-      await tester.pumpAndSettle();
-    }
-  });
-
   testWidgets('Con un solo nombre usa su inicial y sin fecha no muestra Clienta desde', (tester) async {
     await _abrir(tester, _PerfilFalso(cuenta: Perfil.fromJson({'nombre': 'Valentina', 'email': 'vale@correo.com'})));
     expect(find.text('V'), findsOneWidget);
@@ -155,4 +144,60 @@ void main() {
     expect(servicio.consultas, 2);
     expect(find.text('Ana Martínez'), findsOneWidget);
   });
+
+  group('Tema (#212)', () {
+    testWidgets('El interruptor empieza encendido con el tema oscuro', (tester) async {
+      await _abrir(tester, _PerfilFalso(cuenta: _ana));
+      expect(find.text('Tema oscuro'), findsOneWidget);
+      expect(tester.widget<Switch>(find.byKey(const Key('perfil_tema'))).value, isTrue);
+      expect(AppColors.fondo, Paleta.oscuraBoceto.fondo);
+    });
+
+    testWidgets('Al apagarlo cambia a la paleta clara del boceto y guarda la preferencia', (tester) async {
+      final preferencia = MemoriaPreferenciaTema();
+      final tema = TemaProvider(preferencia);
+      await _abrir(tester, _PerfilFalso(cuenta: _ana), tema: tema);
+      await tester.ensureVisible(find.byKey(const Key('perfil_tema')));
+      await tester.tap(find.byKey(const Key('perfil_tema')));
+      await tester.pumpAndSettle();
+
+      expect(tema.oscuro, isFalse);
+      expect(tester.widget<Switch>(find.byKey(const Key('perfil_tema'))).value, isFalse);
+      expect(AppColors.fondo, const Color(0xFFFFF6FA));
+      expect(AppColors.primario, const Color(0xFFC9668F));
+      expect(await preferencia.leerOscuro(), isFalse);
+    });
+
+    testWidgets('Tocar el renglón también cambia el tema y se puede regresar al oscuro', (tester) async {
+      final tema = TemaProvider(MemoriaPreferenciaTema());
+      await _abrir(tester, _PerfilFalso(cuenta: _ana), tema: tema);
+      await tester.ensureVisible(find.text('Tema oscuro'));
+      await tester.tap(find.text('Tema oscuro'));
+      await tester.pumpAndSettle();
+      expect(tema.oscuro, isFalse);
+
+      await tester.tap(find.text('Tema oscuro'));
+      await tester.pumpAndSettle();
+      expect(tema.oscuro, isTrue);
+      expect(AppColors.fondo, Paleta.oscuraBoceto.fondo);
+    });
+
+    test('Al abrir la app usa la preferencia guardada y, si no hay, el oscuro', () async {
+      expect(await TemaProvider.leerInicial(MemoriaPreferenciaTema()), isTrue);
+      expect(await TemaProvider.leerInicial(MemoriaPreferenciaTema(false)), isFalse);
+      expect(await TemaProvider.leerInicial(_PreferenciaRota()), isTrue);
+      TemaProvider(MemoriaPreferenciaTema(), oscuro: false);
+      expect(AppColors.fondo, Paleta.claraBoceto.fondo);
+      AppColors.usar(Paleta.oscuraBoceto);
+    });
+  });
+}
+
+// Teléfono que no deja leer la preferencia.
+class _PreferenciaRota implements PreferenciaTema {
+  @override
+  Future<bool?> leerOscuro() => Future.error(Exception('sin acceso'));
+
+  @override
+  Future<void> guardarOscuro(bool oscuro) async {}
 }
