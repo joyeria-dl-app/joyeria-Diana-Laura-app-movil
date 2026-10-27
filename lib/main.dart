@@ -78,6 +78,7 @@ class JoyeriaApp extends StatelessWidget {
     this.perfilService,
     this.preferenciaTema,
     this.temaOscuro = true,
+    this.apiClient,
   });
 
   final SessionStorage storage;
@@ -93,10 +94,12 @@ class JoyeriaApp extends StatelessWidget {
   // Sin preferencia (pruebas), el tema se recuerda solo mientras la app está abierta.
   final PreferenciaTema? preferenciaTema;
   final bool temaOscuro;
+  // Cliente del backend; las pruebas pasan uno con el backend simulado.
+  final ApiClient? apiClient;
 
   @override
   Widget build(BuildContext context) {
-    final api = ApiClient(storage: storage);
+    final api = apiClient ?? ApiClient(storage: storage);
     final fabrica = ServiceFactory(api);
     final carrito = carritoService ?? fabrica.crearCarritoService();
     final favoritos = favoritoService ?? fabrica.crearFavoritoService();
