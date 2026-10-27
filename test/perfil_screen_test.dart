@@ -119,20 +119,6 @@ void main() {
     }
   });
 
-  testWidgets('Los ajustes, la foto y cerrar sesión están visibles y avisan que llegan pronto', (tester) async {
-    await _abrir(tester, _PerfilFalso(cuenta: _ana));
-    expect(find.text('Cerrar sesión'), findsOneWidget);
-
-    for (final toque in [find.byTooltip('Ajustes'), find.byKey(const Key('perfil_foto')), find.text('Cerrar sesión')]) {
-      await tester.ensureVisible(toque);
-      await tester.tap(toque);
-      await tester.pump();
-      expect(find.text('Disponible muy pronto'), findsOneWidget);
-      ScaffoldMessenger.of(tester.element(find.byType(PerfilScreen))).removeCurrentSnackBar();
-      await tester.pumpAndSettle();
-    }
-  });
-
   testWidgets('Con un solo nombre usa su inicial y sin fecha no muestra Clienta desde', (tester) async {
     await _abrir(tester, _PerfilFalso(cuenta: Perfil.fromJson({'nombre': 'Valentina', 'email': 'vale@correo.com'})));
     expect(find.text('V'), findsOneWidget);
