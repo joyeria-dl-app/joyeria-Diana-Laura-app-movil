@@ -39,7 +39,7 @@ void _caso(String id, String descripcion) => debugPrint('ACEPTACION $id Pasa: $d
 
 Future<void> _pausaParaCaptura(WidgetTester tester, String caso) async {
   if (OpcionesPrueba.pausaWeb <= 0) return;
-  debugPrint('ACEPTACION $caso: toma ahora la captura del sitio web ($OpcionesPrueba.pausaWeb s)');
+  debugPrint('ACEPTACION $caso: toma ahora la captura del sitio web (${OpcionesPrueba.pausaWeb} s)');
   await tester.runAsync(() => Future<void>.delayed(const Duration(seconds: OpcionesPrueba.pausaWeb)));
 }
 
@@ -51,8 +51,8 @@ void main() {
   setUpAll(despertarServidor);
 
   testWidgets('Aceptación HU-11: comprar o apartar y ver el estado del pedido', (tester) async {
-    expect(CuentaPrueba.correo, isNotEmpty, reason: 'Falta PRUEBAS_CORREO');
-    expect(CuentaPrueba.contrasena, isNotEmpty, reason: 'Falta PRUEBAS_CONTRASENA');
+    expect(CuentaPrueba.correo, isNotEmpty, reason: 'Falta el correo de la cuenta de prueba (env.json)');
+    expect(CuentaPrueba.contrasena, isNotEmpty, reason: 'Falta la contraseña de la cuenta de prueba (env.json)');
 
     await tester.pumpWidget(JoyeriaApp(storage: SecureSessionStorage()));
     await iniciarSesion(tester, CuentaPrueba.correo, CuentaPrueba.contrasena);
