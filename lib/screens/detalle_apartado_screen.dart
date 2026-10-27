@@ -62,7 +62,7 @@ class _DetalleApartadoScreenState extends State<DetalleApartadoScreen> {
                     future: _detalle,
                     builder: (context, estado) {
                       if (estado.connectionState != ConnectionState.done) {
-                        return const Center(child: CircularProgressIndicator(color: AppColors.primario));
+                        return Center(child: CircularProgressIndicator(color: AppColors.primario));
                       }
                       final error = estado.error;
                       if (error is PedidoException && error.sinSesion) {
@@ -139,7 +139,7 @@ class _Contenido extends StatelessWidget {
                   Expanded(
                     child: Text(
                       '${formatoPrecioCompleto(a.montoPagado)} de ${formatoPrecioCompleto(a.montoTotal)}',
-                      style: const TextStyle(color: AppColors.textoSuave, fontSize: 12),
+                      style: TextStyle(color: AppColors.textoSuave, fontSize: 12),
                     ),
                   ),
                   // Un apartado cancelado ya no tiene saldo por pagar.
@@ -161,7 +161,7 @@ class _Contenido extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   [if (a.fechaLimite != null) 'Liquidar antes del ${fechaCorta(a.fechaLimite!)}', ?a.plan].join(' · '),
-                  style: const TextStyle(color: AppColors.textoSuave, fontSize: 11.5),
+                  style: TextStyle(color: AppColors.textoSuave, fontSize: 11.5),
                 ),
               ],
             ],
@@ -171,7 +171,7 @@ class _Contenido extends StatelessWidget {
         Text(abonos.isEmpty ? 'Abonos' : 'Abonos · ${abonos.length}', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
         const SizedBox(height: 10),
         if (abonos.isEmpty)
-          const _Tarjeta(
+          _Tarjeta(
             child: Text('Todavía no hay abonos registrados en este apartado.', style: TextStyle(color: AppColors.textoSuave, fontSize: 12.5)),
           )
         else
@@ -179,7 +179,7 @@ class _Contenido extends StatelessWidget {
             child: Column(
               children: [
                 for (final (i, abono) in abonos.indexed) ...[
-                  if (i > 0) const Divider(color: AppColors.borde, height: 20),
+                  if (i > 0) Divider(color: AppColors.borde, height: 20),
                   _RenglonAbono(abono: abono, apartadoCancelado: cancelado),
                 ],
               ],
@@ -212,7 +212,7 @@ class _RenglonAbono extends StatelessWidget {
           width: 40,
           height: 40,
           decoration: BoxDecoration(color: AppColors.suave, borderRadius: BorderRadius.circular(14)),
-          child: const Icon(Icons.payments_outlined, size: 20, color: AppColors.primario),
+          child: Icon(Icons.payments_outlined, size: 20, color: AppColors.primario),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -222,7 +222,7 @@ class _RenglonAbono extends StatelessWidget {
               Text(formatoPrecioCompleto(abono.monto), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
               Text(
                 [if (abono.fecha != null) fechaCorta(abono.fecha!), ?abono.metodo].join(' · '),
-                style: const TextStyle(color: AppColors.textoSuave, fontSize: 11.5),
+                style: TextStyle(color: AppColors.textoSuave, fontSize: 11.5),
               ),
             ],
           ),
