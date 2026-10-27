@@ -36,6 +36,43 @@ class PerfilService {
     }
   }
 
+  // PUT /auth/profile (#213): solo se envían los campos que cambian. El teléfono vacío lo borra.
+  Future<void> actualizar({String? nombre, String? telefono, String? fotoUrl}) async {
+    final datos = <String, Object?>{'nombre': ?nombre, if (telefono != null) 'telefono': telefono.isEmpty ? null : telefono, 'foto_perfil_url': ?fotoUrl};
+    await _pedir(() => _api.dio.put('/auth/profile', data: datos), 'No se pudieron guardar tus datos.');
+  }
+
+  // POST /upload/image en la carpeta de usuarios, la misma que usa el perfil del sitio web.
+  Future<String> subirFoto(List<int> bytes, String nombreArchivo) async {
+    final respuesta = await _pedir(
+      () => _api.dio.post(
+        '/upload/image',
+        data: FormData.fromMap({'imagen': MultipartFile.fromBytes(bytes, filename: nombreArchivo), 'folder': 'joyeria/usuarios'}),
+      ),
+      'No se pudo subir la foto. Intenta con otra.',
+    );
+    final url = (respuesta['data'] as Map<String, dynamic>?)?['url'] as String?;
+    if (url == null) throw const PerfilException('No se pudo subir la foto. Intenta con otra.');
+    return url;
+  }
+
+  Future<Map<String, dynamic>> _pedir(Future<Response<dynamic>> Function() peticion, String falla) async {
+    try {
+      final data = (await peticion()).data as Map<String, dynamic>;
+      if (data['success'] != true) throw PerfilException(data['message'] as String? ?? falla);
+      return data;
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      if (status == 401 || status == 403) throw const PerfilException('Inicia sesión para cambiar tus datos.', sinSesion: true);
+      // 400 trae el motivo, por ejemplo "El teléfono debe tener 10 dígitos".
+      final mensaje = switch (e.response?.data) {
+        {'message': final String m} when status == 400 => m,
+        _ => null,
+      };
+      throw PerfilException(mensaje ?? 'No se pudo conectar. Revisa tu conexión e intenta de nuevo.');
+    }
+  }
+
   // Pedidos, apartados y favoritos del cliente. Cada número se pide por su lado: si uno
   // falla, los otros se muestran igual.
   Future<ResumenCliente> resumen() async {
