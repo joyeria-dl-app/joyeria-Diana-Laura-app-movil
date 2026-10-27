@@ -34,10 +34,7 @@ class BarraNavegacion extends StatelessWidget {
       case Seccion.favoritos:
         Navigator.pushNamed(context, AppRoutes.favoritos);
       case Seccion.perfil:
-        // Se conecta en su historia (HU-14).
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(const SnackBar(content: Text('Disponible muy pronto')));
+        Navigator.pushNamed(context, AppRoutes.perfil);
     }
   }
 
@@ -47,8 +44,8 @@ class BarraNavegacion extends StatelessWidget {
       height: 70,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(28),
-        boxShadow: const [
-          BoxShadow(color: Color(0x80000000), blurRadius: 40, offset: Offset(0, 20), spreadRadius: -10),
+        boxShadow: [
+          BoxShadow(color: AppColors.sombra, blurRadius: 40, offset: Offset(0, 20), spreadRadius: -10),
           BoxShadow(color: Color(0x59CF819F), blurRadius: 18, spreadRadius: -10),
         ],
       ),
@@ -58,9 +55,9 @@ class BarraNavegacion extends StatelessWidget {
           filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
           child: Container(
             decoration: BoxDecoration(
-              color: const Color(0x8C281224),
+              color: AppColors.cristal,
               borderRadius: BorderRadius.circular(28),
-              border: Border.all(color: const Color(0x2EFFAAD7)),
+              border: Border.all(color: AppColors.cristalBorde),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -97,7 +94,7 @@ class _Boton extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(18),
-                  gradient: const LinearGradient(
+                  gradient: LinearGradient(
                     begin: Alignment(-0.6, -1),
                     end: Alignment(0.6, 1),
                     colors: [AppColors.primario, AppColors.primario2, AppColors.lila],

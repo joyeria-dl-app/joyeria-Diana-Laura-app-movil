@@ -139,69 +139,73 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
   @override
   Widget build(BuildContext context) {
     final p = _pedido;
-    return Scaffold(
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          Positioned(top: 0, left: 0, right: 0, child: _Encabezado(icono: p.domicilio ? Icons.local_shipping_outlined : Icons.storefront_outlined)),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-              child: Row(
-                children: [
-                  _BotonClaro(icono: Icons.arrow_back_rounded, descripcion: 'Regresar', onPressed: () => Navigator.maybePop(context)),
-                  const Spacer(),
-                  _BotonClaro(
-                    icono: Icons.chat_outlined,
-                    descripcion: 'Escribir a la tienda',
-                    onPressed: () => abrirWhatsApp(context, 'Hola, tengo una duda sobre mi pedido ${p.folio}.'),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Positioned.fill(
-            top: 210,
-            child: Container(
-              decoration: const BoxDecoration(
-                color: AppColors.fondo,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-              ),
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 10, 20, 32),
-                children: [
-                  Center(
-                    child: Container(
-                      width: 44,
-                      height: 5,
-                      decoration: BoxDecoration(color: AppColors.superficie2, borderRadius: BorderRadius.circular(3)),
+    // Foto o degradado detrás de la barra de estado: íconos blancos en los dos temas.
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: Scaffold(
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            Positioned(top: 0, left: 0, right: 0, child: _Encabezado(icono: p.domicilio ? Icons.local_shipping_outlined : Icons.storefront_outlined)),
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                child: Row(
+                  children: [
+                    _BotonClaro(icono: Icons.arrow_back_rounded, descripcion: 'Regresar', onPressed: () => Navigator.maybePop(context)),
+                    const Spacer(),
+                    _BotonClaro(
+                      icono: Icons.chat_outlined,
+                      descripcion: 'Escribir a la tienda',
+                      onPressed: () => abrirWhatsApp(context, 'Hola, tengo una duda sobre mi pedido ${p.folio}.'),
                     ),
-                  ),
-                  const SizedBox(height: 18),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text('Pedido ${p.folio}', style: const TextStyle(color: AppColors.textoSuave, fontSize: 12)),
-                      ),
-                      ChipEstado.pedido(p.estado),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text(tituloPedido(p), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, letterSpacing: -0.5)),
-                  const SizedBox(height: 14),
-                  ..._tarjeta(p),
-                  const SizedBox(height: 18),
-                  const Text(
-                    'Historial',
-                    style: TextStyle(color: AppColors.textoSuave, fontSize: 12.5, fontWeight: FontWeight.w500),
-                  ),
-                  const SizedBox(height: 10),
-                  LineaTiempo(pasos: pasosDe(p), error: p.cancelado),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+            Positioned.fill(
+              top: 210,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.fondo,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+                ),
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 32),
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 44,
+                        height: 5,
+                        decoration: BoxDecoration(color: AppColors.superficie2, borderRadius: BorderRadius.circular(3)),
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text('Pedido ${p.folio}', style: TextStyle(color: AppColors.textoSuave, fontSize: 12)),
+                        ),
+                        ChipEstado.pedido(p.estado),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(tituloPedido(p), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, letterSpacing: -0.5)),
+                    const SizedBox(height: 14),
+                    ..._tarjeta(p),
+                    const SizedBox(height: 18),
+                    Text(
+                      'Historial',
+                      style: TextStyle(color: AppColors.textoSuave, fontSize: 12.5, fontWeight: FontWeight.w500),
+                    ),
+                    const SizedBox(height: 10),
+                    LineaTiempo(pasos: pasosDe(p), error: p.cancelado),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -226,7 +230,7 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
           titulo: 'Paga con Mercado Pago',
           texto: 'Tu pedido ya está confirmado · ${formatoPrecioCompleto(p.total)}',
           accion: _pagando
-              ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: AppColors.primario))
+              ? SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: AppColors.primario))
               : _BotonAccion(icono: Icons.open_in_new_rounded, descripcion: 'Pagar con Mercado Pago', onPressed: _pagar),
         ),
       ];
@@ -238,7 +242,7 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
           titulo: 'Sube tu comprobante',
           texto: 'Lo verificamos y confirmamos tu pedido',
           accion: _subiendo
-              ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: AppColors.primario))
+              ? SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: AppColors.primario))
               : _BotonAccion(icono: Icons.add_photo_alternate_outlined, descripcion: 'Elegir foto del comprobante', onPressed: _subirComprobante),
         ),
       ];
@@ -292,10 +296,10 @@ class _Encabezado extends StatelessWidget {
       width: double.infinity,
       child: Stack(
         children: [
-          const Positioned.fill(
+          Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
-                gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0xFF7E5A8E), Color(0xFFB8708F)]),
+                gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Color(0xFF7E5A8E), AppColors.mancha1]),
               ),
             ),
           ),
@@ -317,7 +321,7 @@ class _Encabezado extends StatelessWidget {
                   width: 52,
                   height: 52,
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(colors: [AppColors.primario, AppColors.primario2]),
+                    gradient: LinearGradient(colors: [AppColors.primario, AppColors.primario2]),
                     borderRadius: BorderRadius.circular(26),
                     boxShadow: const [BoxShadow(color: Color(0x66000000), blurRadius: 18, offset: Offset(0, 8))],
                   ),
@@ -389,7 +393,7 @@ class _Tarjeta extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(titulo, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
-                if (texto.isNotEmpty) Text(texto, style: const TextStyle(color: AppColors.textoSuave, fontSize: 11)),
+                if (texto.isNotEmpty) Text(texto, style: TextStyle(color: AppColors.textoSuave, fontSize: 11)),
               ],
             ),
           ),
@@ -412,7 +416,7 @@ class _BotonAccion extends StatelessWidget {
       message: descripcion,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          gradient: const LinearGradient(colors: [AppColors.primario, AppColors.primario2]),
+          gradient: LinearGradient(colors: [AppColors.primario, AppColors.primario2]),
           borderRadius: BorderRadius.circular(14),
         ),
         child: Material(

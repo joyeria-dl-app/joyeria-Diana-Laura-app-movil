@@ -111,7 +111,7 @@ class _MisPedidosScreenState extends State<MisPedidosScreen> {
               onPressed: _cargar,
             );
     }
-    if (_pedidos == null) return const Center(child: CircularProgressIndicator(color: AppColors.primario));
+    if (_pedidos == null) return Center(child: CircularProgressIndicator(color: AppColors.primario));
     final lista = _de(_filtro);
     if (lista.isEmpty) {
       // 9b.
@@ -229,7 +229,7 @@ class _PedidoAbierto extends StatelessWidget {
           children: [
             Container(
               padding: const EdgeInsets.all(18),
-              decoration: const BoxDecoration(gradient: AppColors.degradado),
+              decoration: BoxDecoration(gradient: AppColors.degradado),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -304,7 +304,7 @@ class _PedidoCerrado extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     [if (fecha != null) fechaCorta(fecha), formatoPrecioCompleto(pedido.total), ?pedido.metodoPago].join(' · '),
-                    style: const TextStyle(color: AppColors.textoSuave, fontSize: 11),
+                    style: TextStyle(color: AppColors.textoSuave, fontSize: 11),
                   ),
                 ],
               ),
