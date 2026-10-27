@@ -75,4 +75,13 @@ jobs:
           target: google_apis
           profile: pixel_6
           disable-animations: true
-          script: flutter test integration_test/catalogo_test.dart integration_test/recorrido_cliente_test.dart --dart-define-from-file=env.json --reporter expanded
+          script: flutter test integration_test/catalogo_test.dart integration_test/recorrido_cliente_test.dart --dart-define-from-file=env.json --reporter expanded --file-reporter json:resultados/integracion.json
+
+      # Resultado de cada recorrido de integración en JSON, descargable desde la corrida (#230).
+      - name: Guardar evidencia
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: resultados-integracion
+          path: resultados/
+          if-no-files-found: ignore

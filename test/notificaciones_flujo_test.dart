@@ -235,6 +235,9 @@ void main() {
   testWidgets('Al cerrar sesión se quita el teléfono antes de borrar la sesión', (tester) async {
     final app = await _abrir(tester);
     await tester.tap(find.text('Cerrar sesión'));
+    await tester.pumpAndSettle();
+    // Desde #219 se confirma antes de cerrar la sesión.
+    await tester.tap(find.widgetWithText(TextButton, 'Cerrar sesión'));
     // Cerrar sesión espera la respuesta del backend (con límite de 5 s); se deja pasar tiempo real.
     await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 200)));
     await tester.pumpAndSettle();
