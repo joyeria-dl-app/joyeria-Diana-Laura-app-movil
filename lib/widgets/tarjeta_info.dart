@@ -35,7 +35,7 @@ class TarjetaInfo extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(titulo, style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
-                if (texto.isNotEmpty) Text(texto, style: const TextStyle(color: AppColors.textoSuave, fontSize: 11.5, height: 1.4)),
+                if (texto.isNotEmpty) Text(texto, style: TextStyle(color: AppColors.textoSuave, fontSize: 11.5, height: 1.4)),
               ],
             ),
           ),

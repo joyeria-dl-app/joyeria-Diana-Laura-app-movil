@@ -38,6 +38,13 @@ jobs:
       - name: Instalar dependencias
         run: flutter pub get
 
+      # google-services.json (Firebase Cloud Messaging, #55) no se sube al repositorio porque el
+      # repositorio es público; Gradle lo necesita para compilar y aquí se crea desde un secreto.
+      - name: Crear google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+
       # El emulador y la compilación de Android necesitan Java 17.
       - name: Instalar Java
         uses: actions/setup-java@v6
@@ -56,7 +63,18 @@ jobs:
           mb=$((tamano / 1024 / 1024))
           echo "## Rendimiento" >> $GITHUB_STEP_SUMMARY
           echo "Tamaño del APK (arm64): $mb MB" >> $GITHUB_STEP_SUMMARY
+          mkdir -p resultados
+          echo "{\"apk_mb\": $(awk "BEGIN{printf \"%.1f\", $tamano/1048576}")}" > resultados/metricas-tamano.json
           test $mb -lt 30
+
+      # El tamaño medido se guarda para compararlo con la línea base (#230).
+      - name: Guardar evidencia
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: rendimiento-tamano
+          path: resultados/
+          if-no-files-found: ignore
 
   # Trabajo 2: tiempos en el emulador; corre al mismo tiempo que el trabajo 1.
   tiempos:
@@ -79,6 +97,13 @@ jobs:
       # Librerías de pubspec.yaml.
       - name: Instalar dependencias
         run: flutter pub get
+
+      # google-services.json (Firebase Cloud Messaging, #55) no se sube al repositorio porque el
+      # repositorio es público; Gradle lo necesita para compilar y aquí se crea desde un secreto.
+      - name: Crear google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
 
       # El emulador y la compilación de Android necesitan Java 17.
       - name: Instalar Java
@@ -103,4 +128,41 @@ jobs:
           target: google_apis
           profile: pixel_6
           disable-animations: true
-          script: flutter test integration_test/rendimiento_test.dart --reporter expanded
+          script: flutter test integration_test/rendimiento_test.dart --reporter expanded --file-reporter json:resultados/rendimiento.json
+
+      # Los tiempos quedan en el reporte JSON (líneas "RENDIMIENTO clave: valor") (#230).
+      - name: Guardar evidencia
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: rendimiento-tiempos
+          path: resultados/
+          if-no-files-found: ignore
+
+  # Trabajo 3: junta lo medido por los dos trabajos y lo compara con la línea base guardada en
+  # pruebas/rendimiento/linea_base.json (#230). Corre aunque alguno falle, para conservar los datos.
+  comparar:
+    name: Comparar con la línea base
+    needs: [tamano, tiempos]
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v7
+
+      - name: Descargar las mediciones
+        uses: actions/download-artifact@v8
+        with:
+          pattern: rendimiento-*
+          path: mediciones
+
+      - name: Comparar con la línea base
+        run: python3 pruebas/rendimiento/comparar.py mediciones metricas.json
+
+      - name: Guardar evidencia
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: rendimiento-comparacion
+          path: metricas.json
+          if-no-files-found: ignore

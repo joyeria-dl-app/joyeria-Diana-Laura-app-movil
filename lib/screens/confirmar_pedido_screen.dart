@@ -212,12 +212,12 @@ class _ConfirmarPedidoScreenState extends State<ConfirmarPedidoScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.wifi_off_rounded, size: 40, color: AppColors.primario),
+              Icon(Icons.wifi_off_rounded, size: 40, color: AppColors.primario),
               const SizedBox(height: 12),
               Text(
                 _errorCarga!,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.textoSuave, fontSize: 13),
+                style: TextStyle(color: AppColors.textoSuave, fontSize: 13),
               ),
               const SizedBox(height: 12),
               TextButton(onPressed: _cargar, child: const Text('Reintentar')),
@@ -226,7 +226,7 @@ class _ConfirmarPedidoScreenState extends State<ConfirmarPedidoScreen> {
         ),
       );
     }
-    if (_opciones == null) return const Center(child: CircularProgressIndicator(color: AppColors.primario));
+    if (_opciones == null) return Center(child: CircularProgressIndicator(color: AppColors.primario));
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 130),
       children: [
@@ -282,7 +282,7 @@ class _ConfirmarPedidoScreenState extends State<ConfirmarPedidoScreen> {
         if (_direccion != null) ...[
           const SizedBox(height: 8),
           _enZona
-              ? const _Nota(icono: Icons.check_circle_outline_rounded, texto: 'Entregamos en tu zona.', color: AppColors.texto)
+              ? _Nota(icono: Icons.check_circle_outline_rounded, texto: 'Entregamos en tu zona.', color: AppColors.texto)
               : _Nota(icono: Icons.info_outline_rounded, texto: 'Por ahora solo entregamos en ${_lista(_zonas)}.', color: _aviso),
         ],
         // HU-16 (#59): la lista de zonas con los datos de la tienda.
@@ -328,7 +328,7 @@ class _ConfirmarPedidoScreenState extends State<ConfirmarPedidoScreen> {
       ),
       if (saldo > 0.009 && _planes.isNotEmpty) ...[
         const SizedBox(height: 16),
-        const Text.rich(
+        Text.rich(
           TextSpan(
             text: 'Elige cómo liquidar',
             style: TextStyle(color: AppColors.textoSuave, fontSize: 12.5, fontWeight: FontWeight.w500),
@@ -343,7 +343,7 @@ class _ConfirmarPedidoScreenState extends State<ConfirmarPedidoScreen> {
         const SizedBox(height: 10),
         for (final plan in _planes) ...[
           _Eleccion(
-            icono: const Icon(Icons.calendar_month_outlined, size: 20, color: AppColors.textoSuave),
+            icono: Icon(Icons.calendar_month_outlined, size: 20, color: AppColors.textoSuave),
             titulo: plan.nombre,
             detalle: _detallePlan(plan),
             elegida: _plan?.id == plan.id,
@@ -358,11 +358,7 @@ class _ConfirmarPedidoScreenState extends State<ConfirmarPedidoScreen> {
       const SizedBox(height: 10),
       ..._listaMetodos(),
       const SizedBox(height: 4),
-      const _Nota(
-        icono: Icons.storefront_outlined,
-        texto: 'Tus piezas quedan reservadas para ti y se recogen en tienda al liquidar.',
-        color: AppColors.textoSuave,
-      ),
+      _Nota(icono: Icons.storefront_outlined, texto: 'Tus piezas quedan reservadas para ti y se recogen en tienda al liquidar.', color: AppColors.textoSuave),
     ];
   }
 
@@ -502,7 +498,7 @@ class _OpcionEntrega extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: elegida ? const Color(0x14FF8CC6) : AppColors.superficie,
+            color: elegida ? AppColors.suave : AppColors.superficie,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: elegida ? AppColors.primario : AppColors.borde, width: elegida ? 1.5 : 1),
           ),
@@ -517,18 +513,18 @@ class _OpcionEntrega extends StatelessWidget {
                     height: 42,
                     decoration: BoxDecoration(
                       color: elegida ? null : AppColors.superficie2,
-                      gradient: elegida ? const LinearGradient(colors: [AppColors.primario, AppColors.primario2]) : null,
+                      gradient: elegida ? LinearGradient(colors: [AppColors.primario, AppColors.primario2]) : null,
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: Icon(icono, size: 20, color: elegida ? Colors.white : AppColors.texto),
                   ),
                   const Spacer(),
-                  if (elegida) const Icon(Icons.check_circle_rounded, size: 18, color: AppColors.primario),
+                  if (elegida) Icon(Icons.check_circle_rounded, size: 18, color: AppColors.primario),
                 ],
               ),
               const SizedBox(height: 14),
               Text(titulo, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-              Text(detalle, style: const TextStyle(color: AppColors.textoSuave, fontSize: 11)),
+              Text(detalle, style: TextStyle(color: AppColors.textoSuave, fontSize: 11)),
             ],
           ),
         ),
@@ -562,7 +558,7 @@ class _TarjetaDireccion extends StatelessWidget {
               width: 46,
               height: 46,
               decoration: BoxDecoration(color: AppColors.suave, borderRadius: BorderRadius.circular(16)),
-              child: const Icon(Icons.location_on_outlined, size: 22, color: AppColors.primario),
+              child: Icon(Icons.location_on_outlined, size: 22, color: AppColors.primario),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -574,7 +570,7 @@ class _TarjetaDireccion extends StatelessWidget {
                     d == null ? 'Para calcular la entrega' : '${d.colonia}, ${d.ciudad.split(' ').first} · envío ${formatoPrecio(envio)}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: AppColors.textoSuave, fontSize: 11),
+                    style: TextStyle(color: AppColors.textoSuave, fontSize: 11),
                   ),
                 ],
               ),
@@ -607,7 +603,7 @@ class _Eleccion extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
-            color: elegida ? const Color(0x14FF8CC6) : AppColors.superficie,
+            color: elegida ? AppColors.suave : AppColors.superficie,
             borderRadius: BorderRadius.circular(22),
             border: Border.all(color: elegida ? AppColors.primario : AppColors.borde, width: elegida ? 1.5 : 1),
           ),
@@ -626,7 +622,7 @@ class _Eleccion extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(titulo, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                    if (detalle.isNotEmpty) Text(detalle, style: const TextStyle(color: AppColors.textoSuave, fontSize: 11)),
+                    if (detalle.isNotEmpty) Text(detalle, style: TextStyle(color: AppColors.textoSuave, fontSize: 11)),
                   ],
                 ),
               ),
@@ -654,7 +650,7 @@ class _Radio extends StatelessWidget {
         border: Border.all(color: elegido ? AppColors.primario : AppColors.textoSuave, width: 1.8),
       ),
       child: elegido
-          ? const DecoratedBox(
+          ? DecoratedBox(
               decoration: BoxDecoration(color: AppColors.primario, shape: BoxShape.circle),
             )
           : null,
@@ -682,8 +678,8 @@ class _IconoMetodo extends StatelessWidget {
     return switch (codigo) {
       'mercadopago' => insignia('MP', const Color(0xFF00B1EA)),
       'paypal' => insignia('PP', const Color(0xFF003087)),
-      'transferencia' => const Icon(Icons.account_balance_outlined, size: 20, color: AppColors.textoSuave),
-      _ => const Icon(Icons.payments_outlined, size: 20, color: AppColors.textoSuave),
+      'transferencia' => Icon(Icons.account_balance_outlined, size: 20, color: AppColors.textoSuave),
+      _ => Icon(Icons.payments_outlined, size: 20, color: AppColors.textoSuave),
     };
   }
 }
@@ -708,7 +704,7 @@ class _Abono extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
             decoration: BoxDecoration(
               color: elegida ? null : AppColors.superficie2,
-              gradient: elegida ? const LinearGradient(colors: [AppColors.primario, AppColors.primario2]) : null,
+              gradient: elegida ? LinearGradient(colors: [AppColors.primario, AppColors.primario2]) : null,
               borderRadius: BorderRadius.circular(14),
             ),
             child: Text(
@@ -783,7 +779,7 @@ class _Anillo extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = 6
         ..strokeCap = StrokeCap.round
-        ..shader = const SweepGradient(colors: [AppColors.primario, AppColors.primario2, AppColors.primario]).createShader(rect),
+        ..shader = SweepGradient(colors: [AppColors.primario, AppColors.primario2, AppColors.primario]).createShader(rect),
     );
   }
 
@@ -798,7 +794,7 @@ class _Subtitulo extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
     texto,
-    style: const TextStyle(color: AppColors.textoSuave, fontSize: 12.5, fontWeight: FontWeight.w500),
+    style: TextStyle(color: AppColors.textoSuave, fontSize: 12.5, fontWeight: FontWeight.w500),
   );
 }
 
@@ -874,10 +870,10 @@ class BarraConfirmar extends StatelessWidget {
         margin: const EdgeInsets.fromLTRB(14, 0, 14, 16),
         padding: const EdgeInsets.fromLTRB(22, 8, 8, 8),
         decoration: BoxDecoration(
-          color: const Color(0xE6281224),
+          color: AppColors.cristal,
           borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: const Color(0x2EFFAAD7)),
-          boxShadow: const [BoxShadow(color: Color(0x80000000), blurRadius: 40, offset: Offset(0, 20), spreadRadius: -10)],
+          border: Border.all(color: AppColors.cristalBorde),
+          boxShadow: [BoxShadow(color: AppColors.sombra, blurRadius: 40, offset: Offset(0, 20), spreadRadius: -10)],
         ),
         child: Row(
           children: [
@@ -888,7 +884,7 @@ class BarraConfirmar extends StatelessWidget {
                 children: [
                   Text(
                     etiqueta,
-                    style: const TextStyle(color: AppColors.textoSuave, fontSize: 11, fontWeight: FontWeight.w500),
+                    style: TextStyle(color: AppColors.textoSuave, fontSize: 11, fontWeight: FontWeight.w500),
                   ),
                   Text(formatoPrecioCompleto(monto), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, letterSpacing: -0.5)),
                 ],
@@ -992,7 +988,7 @@ class _HojaDireccionState extends State<HojaDireccion> {
       minLines: 1,
       maxLines: 2,
       textCapitalization: TextCapitalization.words,
-      style: const TextStyle(color: AppColors.texto, fontSize: 14, fontWeight: FontWeight.w500),
+      style: TextStyle(color: AppColors.texto, fontSize: 14, fontWeight: FontWeight.w500),
       decoration: InputDecoration(hintText: hint, prefixIcon: Icon(icono, size: 20)),
     );
     return Padding(
@@ -1015,7 +1011,7 @@ class _HojaDireccionState extends State<HojaDireccion> {
                 const SizedBox(height: 18),
                 const Text('Tu dirección de entrega', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 4),
-                Text('Entregamos en ${_lista(widget.zonas)}.', style: const TextStyle(color: AppColors.textoSuave, fontSize: 12)),
+                Text('Entregamos en ${_lista(widget.zonas)}.', style: TextStyle(color: AppColors.textoSuave, fontSize: 12)),
                 const SizedBox(height: 14),
                 campo(_calle, 'Calle', Icons.signpost_outlined, validar: _requerido),
                 const SizedBox(height: 10),

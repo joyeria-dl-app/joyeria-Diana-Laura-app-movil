@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../models/producto.dart';
@@ -117,91 +118,95 @@ class _DetalleScreenState extends State<DetalleScreen> {
   Widget build(BuildContext context) {
     final altoFoto = (MediaQuery.sizeOf(context).height * 0.5).clamp(300.0, 420.0);
     final detalle = _detalle;
-    return Scaffold(
-      body: Stack(
-        children: [
-          const FondoResplandor(),
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: altoFoto,
-            child: (detalle != null && detalle.imagenes.length > 1)
-                ? GaleriaFotos(
-                    imagenes: detalle.imagenes,
-                    topMiniaturas: altoFoto * 0.48,
-                    foto: (url) => _Foto(url: url, cargando: false, apagada: detalle.producto.agotado),
-                  )
-                : _Foto(url: detalle?.imagenes.firstOrNull, cargando: detalle == null, apagada: detalle?.producto.agotado ?? false),
-          ),
-          Positioned(
-            top: altoFoto - 40,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: _Hoja(
-              child: switch ((detalle, _error)) {
-                (_, final ProductoException error) when error.noEncontrado => _Aviso(
-                  icono: Icons.search_off_rounded,
-                  titulo: 'Pieza no disponible',
-                  texto: 'Esta pieza ya no está disponible. Puede que se haya vendido o retirado del catálogo.',
-                  boton: 'Ver catálogo',
-                  iconoBoton: Icons.diamond_rounded,
-                  onPressed: () => Navigator.pop(context),
-                ),
-                (_, ProductoException _) => _Aviso(
-                  icono: Icons.wifi_off_rounded,
-                  titulo: 'Sin conexión',
-                  texto: 'No se pudo cargar la pieza. Revisa tu conexión e intenta de nuevo.',
-                  boton: 'Reintentar',
-                  iconoBoton: Icons.refresh_rounded,
-                  onPressed: _cargar,
-                ),
-                (final DetalleProducto d, _) => _Contenido(
-                  detalle: d,
-                  resenas: _resenas,
-                  onPronto: _pronto,
-                  onAgregar: () => _agregar(d),
-                  onPersonalizar: () => _personalizar(d),
-                ),
-                _ => const _Cargando(),
-              },
+    // Foto o degradado detrás de la barra de estado: íconos blancos en los dos temas.
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: Scaffold(
+        body: Stack(
+          children: [
+            const FondoResplandor(),
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: altoFoto,
+              child: (detalle != null && detalle.imagenes.length > 1)
+                  ? GaleriaFotos(
+                      imagenes: detalle.imagenes,
+                      topMiniaturas: altoFoto * 0.48,
+                      foto: (url) => _Foto(url: url, cargando: false, apagada: detalle.producto.agotado),
+                    )
+                  : _Foto(url: detalle?.imagenes.firstOrNull, cargando: detalle == null, apagada: detalle?.producto.agotado ?? false),
             ),
-          ),
-          Positioned(
-            top: 0,
-            left: 20,
-            right: 20,
-            child: SafeArea(
-              bottom: false,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Row(
-                  children: [
-                    _BotonFoto(icono: Icons.arrow_back_rounded, descripcion: 'Regresar', onTap: () => Navigator.pop(context)),
-                    const Spacer(),
-                    _BotonFoto(icono: Icons.ios_share_rounded, descripcion: 'Compartir', onTap: _pronto),
-                    const SizedBox(width: 8),
-                    // Bocetos 7f y 7g: vidrio con contorno, o blanco con corazón rosa si es favorita.
-                    Builder(
-                      builder: (context) {
-                        final favorita = context.watch<FavoritosProvider?>()?.esFavorita(widget.productoId) ?? false;
-                        return _BotonFoto(
-                          icono: favorita ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                          descripcion: favorita ? 'Quitar de favoritos' : 'Guardar en favoritos',
-                          blanco: favorita,
-                          onTap: () {
-                            if (detalle != null) alternarFavorito(context, detalle.producto);
-                          },
-                        );
-                      },
-                    ),
-                  ],
+            Positioned(
+              top: altoFoto - 40,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: _Hoja(
+                child: switch ((detalle, _error)) {
+                  (_, final ProductoException error) when error.noEncontrado => _Aviso(
+                    icono: Icons.search_off_rounded,
+                    titulo: 'Pieza no disponible',
+                    texto: 'Esta pieza ya no está disponible. Puede que se haya vendido o retirado del catálogo.',
+                    boton: 'Ver catálogo',
+                    iconoBoton: Icons.diamond_rounded,
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  (_, ProductoException _) => _Aviso(
+                    icono: Icons.wifi_off_rounded,
+                    titulo: 'Sin conexión',
+                    texto: 'No se pudo cargar la pieza. Revisa tu conexión e intenta de nuevo.',
+                    boton: 'Reintentar',
+                    iconoBoton: Icons.refresh_rounded,
+                    onPressed: _cargar,
+                  ),
+                  (final DetalleProducto d, _) => _Contenido(
+                    detalle: d,
+                    resenas: _resenas,
+                    onPronto: _pronto,
+                    onAgregar: () => _agregar(d),
+                    onPersonalizar: () => _personalizar(d),
+                  ),
+                  _ => const _Cargando(),
+                },
+              ),
+            ),
+            Positioned(
+              top: 0,
+              left: 20,
+              right: 20,
+              child: SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Row(
+                    children: [
+                      _BotonFoto(icono: Icons.arrow_back_rounded, descripcion: 'Regresar', onTap: () => Navigator.pop(context)),
+                      const Spacer(),
+                      _BotonFoto(icono: Icons.ios_share_rounded, descripcion: 'Compartir', onTap: _pronto),
+                      const SizedBox(width: 8),
+                      // Bocetos 7f y 7g: vidrio con contorno, o blanco con corazón rosa si es favorita.
+                      Builder(
+                        builder: (context) {
+                          final favorita = context.watch<FavoritosProvider?>()?.esFavorita(widget.productoId) ?? false;
+                          return _BotonFoto(
+                            icono: favorita ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                            descripcion: favorita ? 'Quitar de favoritos' : 'Guardar en favoritos',
+                            blanco: favorita,
+                            onTap: () {
+                              if (detalle != null) alternarFavorito(context, detalle.producto);
+                            },
+                          );
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -225,7 +230,7 @@ class _Foto extends StatelessWidget {
     // Boceto 5c: sin foto se ve un diamante al centro.
     final sinFoto = ColoredBox(
       color: AppColors.superficie2,
-      child: cargando ? null : const Center(child: Icon(Icons.diamond_outlined, size: 64, color: AppColors.primario)),
+      child: cargando ? null : Center(child: Icon(Icons.diamond_outlined, size: 64, color: AppColors.primario)),
     );
     final Widget foto = (url == null) ? sinFoto : Image.network(url!, fit: BoxFit.cover, errorBuilder: (_, _, _) => sinFoto);
     return Stack(
@@ -288,7 +293,7 @@ class _Hoja extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.fondo,
         borderRadius: BorderRadius.vertical(top: Radius.circular(36)),
         boxShadow: [BoxShadow(color: Color(0x40000000), blurRadius: 40, offset: Offset(0, -20))],
@@ -337,7 +342,7 @@ class _Contenido extends StatelessWidget {
                 children: [
                   if (p.agotado) const _Etiqueta(texto: 'Agotado', fondo: Color(0x8C000000), color: Colors.white),
                   if (p.personalizable && !p.agotado)
-                    const _Etiqueta(texto: 'Personalizable', icono: Icons.brush_rounded, fondo: AppColors.suave, color: AppColors.primario),
+                    _Etiqueta(texto: 'Personalizable', icono: Icons.brush_rounded, fondo: AppColors.suave, color: AppColors.primario),
                   if (!p.agotado && p.stock <= 5)
                     _Etiqueta(texto: 'Quedan ${p.stock}', icono: Icons.local_fire_department_rounded, fondo: const Color(0x26F6A723), color: _aviso),
                 ],
@@ -345,7 +350,7 @@ class _Contenido extends StatelessWidget {
               const SizedBox(height: 10),
               Text(
                 p.nombre,
-                style: const TextStyle(color: AppColors.texto, fontSize: 24, fontWeight: FontWeight.w700, letterSpacing: -0.8, height: 1.1),
+                style: TextStyle(color: AppColors.texto, fontSize: 24, fontWeight: FontWeight.w700, letterSpacing: -0.8, height: 1.1),
               ),
               // Boceto P7: ★ 4.9 · 38 reseñas.
               const SizedBox(height: 4),
@@ -355,19 +360,19 @@ class _Contenido extends StatelessWidget {
                   const SizedBox(width: 4),
                   Text(
                     formatoCalificacion(resenas.promedio),
-                    style: const TextStyle(color: AppColors.texto, fontSize: 12, fontWeight: FontWeight.w700),
+                    style: TextStyle(color: AppColors.texto, fontSize: 12, fontWeight: FontWeight.w700),
                   ),
-                  Text(' · ${resenas.total} ${resenas.total == 1 ? 'reseña' : 'reseñas'}', style: const TextStyle(color: AppColors.textoSuave, fontSize: 12)),
+                  Text(' · ${resenas.total} ${resenas.total == 1 ? 'reseña' : 'reseñas'}', style: TextStyle(color: AppColors.textoSuave, fontSize: 12)),
                 ],
               ),
               if (datos.isNotEmpty) ...[
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    const Icon(Icons.diamond_rounded, size: 13, color: AppColors.primario),
+                    Icon(Icons.diamond_rounded, size: 13, color: AppColors.primario),
                     const SizedBox(width: 4),
                     Flexible(
-                      child: Text(datos.join(' · '), style: const TextStyle(color: AppColors.textoSuave, fontSize: 12)),
+                      child: Text(datos.join(' · '), style: TextStyle(color: AppColors.textoSuave, fontSize: 12)),
                     ),
                   ],
                 ),
@@ -379,21 +384,21 @@ class _Contenido extends StatelessWidget {
                     : (detalle.descripcion?.trim().isNotEmpty ?? false)
                     ? detalle.descripcion!.trim()
                     : 'Pieza de la colección Diana Laura.',
-                style: const TextStyle(color: AppColors.textoSuave, fontSize: 12.5, height: 1.55),
+                style: TextStyle(color: AppColors.textoSuave, fontSize: 12.5, height: 1.55),
               ),
               // La talla solo aparece si la pieza la tiene registrada.
               if (detalle.medidas case final medida?) ...[
                 const SizedBox(height: 14),
                 Row(
                   children: [
-                    const Text(
+                    Text(
                       'Talla',
                       style: TextStyle(color: AppColors.texto, fontSize: 12, fontWeight: FontWeight.w600),
                     ),
                     const Spacer(),
                     GestureDetector(
                       onTap: onPronto,
-                      child: const Text(
+                      child: Text(
                         'Guía de tallas',
                         style: TextStyle(color: AppColors.primario, fontSize: 11.5, fontWeight: FontWeight.w600),
                       ),
@@ -465,22 +470,22 @@ class _Personalizar extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       '¿La quieres a tu gusto?',
                       style: TextStyle(color: AppColors.texto, fontSize: 13, fontWeight: FontWeight.w600),
                     ),
                     Text(
                       precio > 0 ? 'Pide un grabado o un cambio · +${formatoPrecio(precio)}' : 'Pide un grabado o un cambio de diseño',
-                      style: const TextStyle(color: AppColors.textoSuave, fontSize: 11.5),
+                      style: TextStyle(color: AppColors.textoSuave, fontSize: 11.5),
                     ),
                   ],
                 ),
               ),
-              const Text(
+              Text(
                 'Personalizar',
                 style: TextStyle(color: AppColors.primario, fontSize: 12.5, fontWeight: FontWeight.w600),
               ),
-              const Icon(Icons.chevron_right_rounded, color: AppColors.primario, size: 20),
+              Icon(Icons.chevron_right_rounded, color: AppColors.primario, size: 20),
             ],
           ),
         ),
@@ -529,10 +534,10 @@ class _BarraPrecio extends StatelessWidget {
         margin: const EdgeInsets.fromLTRB(14, 0, 14, 16),
         padding: const EdgeInsets.fromLTRB(20, 10, 10, 10),
         decoration: BoxDecoration(
-          color: const Color(0x8C281224),
+          color: AppColors.cristal,
           borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: const Color(0x2EFFAAD7)),
-          boxShadow: const [BoxShadow(color: Color(0x80000000), blurRadius: 40, offset: Offset(0, 20), spreadRadius: -10)],
+          border: Border.all(color: AppColors.cristalBorde),
+          boxShadow: [BoxShadow(color: AppColors.sombra, blurRadius: 40, offset: Offset(0, 20), spreadRadius: -10)],
         ),
         child: Row(
           children: [
@@ -541,15 +546,15 @@ class _BarraPrecio extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('Precio', style: TextStyle(color: AppColors.textoSuave, fontSize: 11)),
+                  Text('Precio', style: TextStyle(color: AppColors.textoSuave, fontSize: 11)),
                   Text.rich(
                     TextSpan(
                       children: [
                         TextSpan(
                           text: formatoPrecio(producto.precioFinal),
-                          style: const TextStyle(color: AppColors.texto, fontSize: 22, fontWeight: FontWeight.w700, letterSpacing: -0.5),
+                          style: TextStyle(color: AppColors.texto, fontSize: 22, fontWeight: FontWeight.w700, letterSpacing: -0.5),
                         ),
-                        const TextSpan(
+                        TextSpan(
                           text: ' MXN',
                           style: TextStyle(color: AppColors.textoSuave, fontSize: 11, fontWeight: FontWeight.w500),
                         ),
@@ -559,7 +564,7 @@ class _BarraPrecio extends StatelessWidget {
                   if (producto.tieneDescuento)
                     Text(
                       formatoPrecio(producto.precioVenta),
-                      style: const TextStyle(color: AppColors.textoSuave, fontSize: 11, decoration: TextDecoration.lineThrough),
+                      style: TextStyle(color: AppColors.textoSuave, fontSize: 11, decoration: TextDecoration.lineThrough),
                     ),
                 ],
               ),
@@ -569,7 +574,7 @@ class _BarraPrecio extends StatelessWidget {
                     height: 54,
                     padding: const EdgeInsets.symmetric(horizontal: 22),
                     decoration: BoxDecoration(color: AppColors.superficie2, borderRadius: BorderRadius.circular(20)),
-                    child: const Row(
+                    child: Row(
                       children: [
                         Icon(Icons.block_rounded, size: 18, color: AppColors.textoSuave),
                         SizedBox(width: 8),
@@ -691,7 +696,7 @@ class _Aviso extends StatelessWidget {
           const SizedBox(height: 18),
           Text(
             titulo,
-            style: const TextStyle(color: AppColors.texto, fontSize: 20, fontWeight: FontWeight.w700),
+            style: TextStyle(color: AppColors.texto, fontSize: 20, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 6),
           ConstrainedBox(
@@ -699,7 +704,7 @@ class _Aviso extends StatelessWidget {
             child: Text(
               texto,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textoSuave, fontSize: 13),
+              style: TextStyle(color: AppColors.textoSuave, fontSize: 13),
             ),
           ),
           const SizedBox(height: 22),

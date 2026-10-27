@@ -369,7 +369,7 @@ class _SinFoto extends StatelessWidget {
   const _SinFoto();
 
   @override
-  Widget build(BuildContext context) => const ColoredBox(
+  Widget build(BuildContext context) => ColoredBox(
     color: AppColors.superficie2,
     child: Center(child: Icon(Icons.diamond_outlined, color: AppColors.textoSuave)),
   );
@@ -448,7 +448,7 @@ class _Aviso extends StatelessWidget {
           Text(
             titulo,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.texto, fontSize: 20, fontWeight: FontWeight.w700),
+            style: TextStyle(color: AppColors.texto, fontSize: 20, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 6),
           ConstrainedBox(
@@ -456,7 +456,7 @@ class _Aviso extends StatelessWidget {
             child: Text(
               texto,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textoSuave, fontSize: 13),
+              style: TextStyle(color: AppColors.textoSuave, fontSize: 13),
             ),
           ),
           const SizedBox(height: 22),
@@ -537,7 +537,7 @@ class _ConfirmarVaciar extends StatelessWidget {
             Text(
               'Se quitarán ${piezas == 1 ? 'la pieza' : 'las $piezas piezas'}. También se vacía en el sitio web.',
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textoSuave, fontSize: 13),
+              style: TextStyle(color: AppColors.textoSuave, fontSize: 13),
             ),
             const SizedBox(height: 20),
             FilledButton.icon(

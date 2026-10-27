@@ -63,7 +63,7 @@ class _ZonasEntregaScreenState extends State<ZonasEntregaScreen> {
                     ),
                     Expanded(
                       child: cargando
-                          ? const Center(child: CircularProgressIndicator(color: AppColors.primario))
+                          ? Center(child: CircularProgressIndicator(color: AppColors.primario))
                           : info == null
                           // 16c.
                           ? AvisoVacio(
@@ -116,7 +116,7 @@ class _Contenido extends StatelessWidget {
         const SizedBox(height: 2),
         const TituloDegradado('Zonas de entrega', tamano: 28),
         const SizedBox(height: 6),
-        const Text(
+        Text(
           'Llevamos tus piezas a estas zonas. Si la tuya no aparece, pregúntanos.',
           style: TextStyle(color: AppColors.textoSuave, fontSize: 12.5, height: 1.5),
         ),
@@ -139,7 +139,7 @@ class _Contenido extends StatelessWidget {
         ),
         // 16b.
         if (direccion != null || horario != null) ...[
-          const Padding(
+          Padding(
             padding: EdgeInsets.fromLTRB(4, 18, 0, 8),
             child: Text(
               'También puedes recoger en tienda',
@@ -181,7 +181,7 @@ class _ListaZonas extends StatelessWidget {
       child: Column(
         children: [
           for (var i = 0; i < zonas.length; i++) ...[
-            if (i > 0) const Divider(height: 1, thickness: 1, color: AppColors.borde),
+            if (i > 0) Divider(height: 1, thickness: 1, color: AppColors.borde),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
@@ -190,7 +190,7 @@ class _ListaZonas extends StatelessWidget {
                     width: 42,
                     height: 42,
                     decoration: BoxDecoration(color: AppColors.suave, borderRadius: BorderRadius.circular(15)),
-                    child: const Icon(Icons.location_on_rounded, size: 20, color: AppColors.primario),
+                    child: Icon(Icons.location_on_rounded, size: 20, color: AppColors.primario),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -220,7 +220,7 @@ class _Chip extends StatelessWidget {
       color: AppColors.superficie,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(30),
-        side: const BorderSide(color: AppColors.borde),
+        side: BorderSide(color: AppColors.borde),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(30),
