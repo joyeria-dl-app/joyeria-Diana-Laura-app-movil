@@ -65,7 +65,7 @@ jobs:
 
       # Todas las pruebas unitarias y de widgets del código actual.
       - name: Ejecutar todas las pruebas unitarias
-        run: flutter test --reporter expanded
+        run: flutter test --reporter expanded --file-reporter json:resultados/regresion-unitarias.json
 
       # Las pruebas de la versión anterior se corren contra el código actual: ninguna prueba que
       # pasaba antes debe fallar. La versión anterior es la etiqueta v* más alta del repositorio,
@@ -82,7 +82,16 @@ jobs:
           echo "Versión anterior: $anterior"
           mkdir -p .regresion_anterior
           for f in $(git ls-tree --name-only -r "$anterior" -- test); do git show "$anterior:$f" > ".regresion_anterior/$(basename "$f")"; done
-          flutter test .regresion_anterior --reporter expanded
+          flutter test .regresion_anterior --reporter expanded --file-reporter json:resultados/regresion-version-anterior.json
+
+      # Resultados de la suite actual y de la versión anterior, descargables desde la corrida (#230).
+      - name: Guardar evidencia
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: regresion-unitarias
+          path: resultados/
+          if-no-files-found: ignore
 
   integracion:
     name: Regresión - pruebas de integración
@@ -140,4 +149,13 @@ jobs:
           target: google_apis
           profile: pixel_6
           disable-animations: true
-          script: flutter test integration_test/catalogo_test.dart integration_test/recorrido_cliente_test.dart integration_test/aceptacion_test.dart integration_test/aceptacion_pedidos_test.dart --dart-define-from-file=env.json --reporter expanded
+          script: flutter test integration_test/catalogo_test.dart integration_test/recorrido_cliente_test.dart integration_test/aceptacion_test.dart integration_test/aceptacion_pedidos_test.dart --dart-define-from-file=env.json --reporter expanded --file-reporter json:resultados/regresion-integracion.json
+
+      # Resultados de la regresión en el emulador, descargables desde la corrida (#230).
+      - name: Guardar evidencia
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: regresion-integracion
+          path: resultados/
+          if-no-files-found: ignore

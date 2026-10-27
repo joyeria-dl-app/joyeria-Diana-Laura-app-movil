@@ -19,6 +19,8 @@ on:
     branches: [develop]
   # Desde Actions → Run workflow.
   workflow_dispatch:
+  # Lo llaman Pruebas de aceptación (antes de usar el emulador) y otros workflows (#230).
+  workflow_call:
 
 jobs:
   unitarias:
@@ -40,7 +42,8 @@ jobs:
 
       # --coverage genera coverage/lcov.info con las líneas que tocaron las pruebas.
       - name: Ejecutar pruebas con cobertura
-        run: flutter test --coverage --reporter expanded
+        # --file-reporter guarda el resultado de cada prueba en JSON para la evidencia (#230).
+        run: flutter test --coverage --reporter expanded --file-reporter json:resultados/unitarias.json
 
       # Porcentaje de líneas cubiertas, visible en el resumen de la corrida.
       - name: Calcular cobertura
@@ -57,4 +60,6 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: cobertura-pruebas-unitarias
-          path: coverage/lcov.info
+          path: |
+            coverage/lcov.info
+            resultados/unitarias.json

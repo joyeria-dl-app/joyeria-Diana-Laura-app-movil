@@ -20,3 +20,6 @@ int diasHasta(DateTime f, {DateTime? hoy}) {
   final d = b.difference(a).inDays;
   return d < 0 ? 0 : d;
 }
+
+// "oct 2026", para "Clienta desde".
+String mesAnio(DateTime f) => '${_mesesCortos[f.month - 1]} ${f.year}';

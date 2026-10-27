@@ -63,12 +63,12 @@ class _SolicitarPersonalizacionScreenState extends State<SolicitarPersonalizacio
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.photo_library_outlined, color: AppColors.primario),
+                leading: Icon(Icons.photo_library_outlined, color: AppColors.primario),
                 title: const Text('Elegir de la galería'),
                 onTap: () => Navigator.pop(context, ImageSource.gallery),
               ),
               ListTile(
-                leading: const Icon(Icons.photo_camera_outlined, color: AppColors.primario),
+                leading: Icon(Icons.photo_camera_outlined, color: AppColors.primario),
                 title: const Text('Tomar foto'),
                 onTap: () => Navigator.pop(context, ImageSource.camera),
               ),
@@ -186,7 +186,7 @@ class _SolicitarPersonalizacionScreenState extends State<SolicitarPersonalizacio
                       widget.precioPersonalizacion > 0
                           ? '${formatoPrecioCompleto(p.precioFinal)} · personalizar +${formatoPrecioCompleto(widget.precioPersonalizacion)}'
                           : formatoPrecioCompleto(p.precioFinal),
-                      style: const TextStyle(color: AppColors.textoSuave, fontSize: 12),
+                      style: TextStyle(color: AppColors.textoSuave, fontSize: 12),
                     ),
                   ],
                 ),
@@ -211,7 +211,7 @@ class _SolicitarPersonalizacionScreenState extends State<SolicitarPersonalizacio
           _caracteres < PersonalizacionService.minimoDetalle
               ? 'Escribe al menos ${PersonalizacionService.minimoDetalle} caracteres ($_caracteres/${PersonalizacionService.minimoDetalle}).'
               : '$_caracteres/${PersonalizacionService.maximoDetalle}',
-          style: const TextStyle(color: AppColors.textoSuave, fontSize: 11.5),
+          style: TextStyle(color: AppColors.textoSuave, fontSize: 11.5),
         ),
         const SizedBox(height: 20),
         const Antetitulo('Foto de referencia (opcional)'),
@@ -231,7 +231,7 @@ class _SolicitarPersonalizacionScreenState extends State<SolicitarPersonalizacio
                   borderRadius: BorderRadius.circular(22),
                   border: Border.all(color: AppColors.borde, width: 1.5),
                 ),
-                child: const Column(
+                child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(Icons.add_photo_alternate_outlined, color: AppColors.primario, size: 28),
@@ -260,7 +260,7 @@ class _SolicitarPersonalizacionScreenState extends State<SolicitarPersonalizacio
         Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(color: AppColors.suave, borderRadius: BorderRadius.circular(18)),
-          child: const Row(
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Icon(Icons.info_outline_rounded, size: 18, color: AppColors.primario),
