@@ -1,12 +1,17 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../models/usuario.dart';
 import '../services/auth_service.dart';
+import '../services/notificaciones_service.dart';
 
 class AuthProvider extends ChangeNotifier {
-  AuthProvider(this._service);
+  AuthProvider(this._service, {this._notificaciones});
 
   final AuthService _service;
+  // Notificaciones push del pedido (#55). Las pruebas que no las usan no la pasan.
+  final NotificacionesService? _notificaciones;
 
   Usuario? _usuario;
   bool _cargando = false;
@@ -20,6 +25,7 @@ class AuthProvider extends ChangeNotifier {
   Future<void> restaurarSesion() async {
     _usuario = await _service.sesionGuardada();
     notifyListeners();
+    if (_usuario != null) unawaited(_notificaciones?.activar());
   }
 
   Future<bool> iniciarSesion(String email, String password, {bool recordar = true}) async {
@@ -28,6 +34,7 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
     try {
       _usuario = await _service.iniciarSesion(email, password, recordar: recordar);
+      unawaited(_notificaciones?.activar());
       return true;
     } on AuthException catch (e) {
       _error = e.mensaje;
@@ -78,6 +85,8 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> cerrarSesion() async {
+    // Primero se quita el teléfono de las notificaciones: el backend lo pide con la sesión activa.
+    await _notificaciones?.desactivar();
     await _service.cerrarSesion();
     _usuario = null;
     notifyListeners();

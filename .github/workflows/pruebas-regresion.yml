@@ -31,6 +31,8 @@ on:
         required: true
       PRUEBAS_CONTRASENA:
         required: true
+      GOOGLE_SERVICES_JSON:
+        required: true
 
 jobs:
   unitarias:
@@ -53,6 +55,13 @@ jobs:
 
       - name: Instalar dependencias
         run: flutter pub get
+
+      # google-services.json (Firebase Cloud Messaging, #55) no se sube al repositorio porque el
+      # repositorio es público; Gradle lo necesita para compilar y aquí se crea desde un secreto.
+      - name: Crear google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
 
       # Todas las pruebas unitarias y de widgets del código actual.
       - name: Ejecutar todas las pruebas unitarias
@@ -103,6 +112,13 @@ jobs:
 
       - name: Instalar dependencias
         run: flutter pub get
+
+      # google-services.json (Firebase Cloud Messaging, #55) no se sube al repositorio porque el
+      # repositorio es público; Gradle lo necesita para compilar y aquí se crea desde un secreto.
+      - name: Crear google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
 
       # El emulador de Android necesita Java 17 para compilar la app.
       - name: Instalar Java
