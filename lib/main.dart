@@ -10,6 +10,7 @@ import 'services/auth_service.dart';
 import 'services/carrito_service.dart';
 import 'services/favorito_service.dart';
 import 'services/pedido_service.dart';
+import 'services/perfil_service.dart';
 import 'services/personalizacion_service.dart';
 import 'services/producto_service.dart';
 import 'services/service_factory.dart';
@@ -30,6 +31,7 @@ class JoyeriaApp extends StatelessWidget {
     this.favoritoService,
     this.pedidoService,
     this.personalizacionService,
+    this.perfilService,
   });
 
   final SessionStorage storage;
@@ -39,6 +41,7 @@ class JoyeriaApp extends StatelessWidget {
   final FavoritoService? favoritoService;
   final PedidoService? pedidoService;
   final PersonalizacionService? personalizacionService;
+  final PerfilService? perfilService;
 
   @override
   Widget build(BuildContext context) {
@@ -46,14 +49,18 @@ class JoyeriaApp extends StatelessWidget {
     final fabrica = ServiceFactory(api);
     final carrito = carritoService ?? fabrica.crearCarritoService();
     final favoritos = favoritoService ?? fabrica.crearFavoritoService();
+    final pedidos = pedidoService ?? fabrica.crearPedidoService();
     return MultiProvider(
       providers: [
         Provider<ApiClient>.value(value: api),
         Provider<ProductoService>.value(value: productoService ?? fabrica.crearProductoService()),
         Provider<CarritoService>.value(value: carrito),
         Provider<FavoritoService>.value(value: favoritos),
-        Provider<PedidoService>.value(value: pedidoService ?? fabrica.crearPedidoService()),
+        Provider<PedidoService>.value(value: pedidos),
         Provider<PersonalizacionService>.value(value: personalizacionService ?? fabrica.crearPersonalizacionService()),
+        Provider<PerfilService>.value(
+          value: perfilService ?? fabrica.crearPerfilService(pedidos: pedidos, favoritos: favoritos),
+        ),
         ChangeNotifierProvider<FavoritosProvider>(create: (_) => FavoritosProvider(favoritos)),
         ChangeNotifierProvider<CarritoProvider>(create: (_) => CarritoProvider(carrito)),
         ChangeNotifierProvider<AuthProvider>(create: (_) => AuthProvider(authService ?? fabrica.crearAuthService(storage))..restaurarSesion()),
