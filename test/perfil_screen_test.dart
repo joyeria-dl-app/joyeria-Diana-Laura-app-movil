@@ -69,6 +69,7 @@ Future<void> _abrir(WidgetTester tester, PerfilService servicio, {TemaProvider? 
           '/mis-pedidos': (_) => const Scaffold(body: Text('Pantalla de mis pedidos')),
           '/mis-apartados': (_) => const Scaffold(body: Text('Pantalla de mis apartados')),
           '/mis-personalizaciones': (_) => const Scaffold(body: Text('Pantalla de mis personalizaciones')),
+          '/zonas-entrega': (_) => const Scaffold(body: Text('Pantalla de zonas de entrega')),
         },
       ),
     ),
@@ -104,12 +105,13 @@ void main() {
     expect(find.text('0'), findsOneWidget);
   });
 
-  testWidgets('Los accesos abren Mis pedidos, Mis apartados y Mis personalizaciones', (tester) async {
+  testWidgets('Los accesos abren Mis pedidos, Mis apartados, Mis personalizaciones y Zonas de entrega', (tester) async {
     await _abrir(tester, _PerfilFalso(cuenta: _ana));
     for (final (opcion, pantalla) in [
       ('Mis pedidos', 'Pantalla de mis pedidos'),
       ('Mis apartados', 'Pantalla de mis apartados'),
       ('Mis personalizaciones', 'Pantalla de mis personalizaciones'),
+      ('Zonas de entrega', 'Pantalla de zonas de entrega'),
     ]) {
       await tester.tap(find.text(opcion));
       await tester.pumpAndSettle();

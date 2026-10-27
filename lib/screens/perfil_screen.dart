@@ -461,6 +461,11 @@ class _Opciones extends StatelessWidget {
             onTap: () => Navigator.pushNamed(context, AppRoutes.misPersonalizaciones),
           ),
           _Renglon(
+            icono: Icons.local_shipping_rounded,
+            texto: 'Zonas de entrega',
+            onTap: () => Navigator.pushNamed(context, AppRoutes.zonasEntrega),
+          ),
+          _Renglon(
             icono: tema.oscuro ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
             texto: 'Tema oscuro',
             final_: Switch(
