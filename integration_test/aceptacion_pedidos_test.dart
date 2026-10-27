@@ -51,8 +51,8 @@ void main() {
   setUpAll(despertarServidor);
 
   testWidgets('Aceptación HU-11: comprar o apartar y ver el estado del pedido', (tester) async {
-    expect(CuentaPrueba.correo, isNotEmpty, reason: 'Falta PRUEBAS_CORREO');
-    expect(CuentaPrueba.contrasena, isNotEmpty, reason: 'Falta PRUEBAS_CONTRASENA');
+    expect(CuentaPrueba.correo, isNotEmpty, reason: 'Falta el correo de la cuenta de prueba (env.json)');
+    expect(CuentaPrueba.contrasena, isNotEmpty, reason: 'Falta la contraseña de la cuenta de prueba (env.json)');
 
     await tester.pumpWidget(JoyeriaApp(storage: SecureSessionStorage()));
     await iniciarSesion(tester, CuentaPrueba.correo, CuentaPrueba.contrasena);

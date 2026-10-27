@@ -41,6 +41,13 @@ jobs:
       - name: Instalar dependencias
         run: flutter pub get
 
+      # google-services.json (Firebase Cloud Messaging, #55) no se sube al repositorio porque el
+      # repositorio es público; Gradle lo necesita para compilar y aquí se crea desde un secreto.
+      - name: Crear google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+
       # El emulador y la compilación de Android necesitan Java 17.
       - name: Instalar Java
         uses: actions/setup-java@v6
@@ -68,4 +75,13 @@ jobs:
           target: google_apis
           profile: pixel_6
           disable-animations: true
-          script: flutter test integration_test/catalogo_test.dart integration_test/recorrido_cliente_test.dart --dart-define-from-file=env.json --reporter expanded
+          script: flutter test integration_test/catalogo_test.dart integration_test/recorrido_cliente_test.dart --dart-define-from-file=env.json --reporter expanded --file-reporter json:resultados/integracion.json
+
+      # Resultado de cada recorrido de integración en JSON, descargable desde la corrida (#230).
+      - name: Guardar evidencia
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: resultados-integracion
+          path: resultados/
+          if-no-files-found: ignore

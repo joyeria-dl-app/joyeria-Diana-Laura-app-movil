@@ -51,7 +51,7 @@ class _CampoTextoState extends State<CampoTexto> {
             duration: const Duration(milliseconds: 150),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
-              boxShadow: _enfocado ? const [BoxShadow(color: AppColors.suave, spreadRadius: 5)] : const [],
+              boxShadow: _enfocado ? [BoxShadow(color: AppColors.suave, spreadRadius: 5)] : const [],
             ),
           ),
         ),
@@ -79,7 +79,7 @@ class _CampoTextoState extends State<CampoTexto> {
               ),
             ),
             // Peso 500: en Android, Poppins 400 se ve más delgada que en el navegador del boceto.
-            style: const TextStyle(color: AppColors.texto, fontSize: 14, fontWeight: FontWeight.w500),
+            style: TextStyle(color: AppColors.texto, fontSize: 14, fontWeight: FontWeight.w500),
             decoration: InputDecoration(
               constraints: const BoxConstraints(minHeight: CampoTexto.alto),
               hintText: widget.hint,
