@@ -15,6 +15,9 @@ import '../widgets/estado_pedido.dart';
 import 'mis_pedidos_screen.dart';
 import 'resultado_pago_screen.dart';
 
+// Abre el recibo en el navegador; las pruebas lo reemplazan para no abrirlo de verdad.
+Future<bool> Function(Uri) abrirRecibo = (uri) => launchUrl(uri, mode: LaunchMode.externalApplication);
+
 // Abre WhatsApp con la tienda y un mensaje ya escrito.
 Future<void> abrirWhatsApp(BuildContext context, String mensaje) async {
   final mensajero = ScaffoldMessenger.of(context);
@@ -207,7 +210,17 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
     );
   }
 
-  // Lo que guarda el pedido según su momento: guía (9c), código de entrega (9d) o comprobante (9e).
+  // HU-14: recibo del pedido entregado, el mismo que descarga el sitio web.
+  Future<void> _verRecibo() async {
+    try {
+      final enlace = await context.read<PedidoService>().enlaceRecibo(_pedido.id);
+      if (!await abrirRecibo(enlace)) throw const PedidoException('No se pudo abrir el recibo.');
+    } on PedidoException catch (e) {
+      _avisar(e.mensaje);
+    }
+  }
+
+  // Lo que guarda el pedido según su momento: guía (9c), código de entrega (9d), comprobante (9e) o recibo.
   List<Widget> _tarjeta(Pedido p) {
     // HU-12: pedido confirmado con Mercado Pago y todavía sin pagar.
     if (p.puedePagarEnLinea) {
@@ -236,6 +249,16 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
     }
     if (p.metodoPagoCodigo == 'transferencia' && p.comprobanteUrl != null && p.estado == 'pendiente') {
       return [const _Tarjeta(icono: Icons.task_alt_rounded, titulo: 'Comprobante enviado', texto: 'Lo estamos verificando')];
+    }
+    if (p.entregado) {
+      return [
+        _Tarjeta(
+          icono: Icons.receipt_long_rounded,
+          titulo: 'Recibo de tu compra',
+          texto: 'Pedido ${p.folio} · ${formatoPrecioCompleto(p.total)}',
+          accion: _BotonAccion(icono: Icons.download_rounded, descripcion: 'Ver o descargar recibo', onPressed: _verRecibo),
+        ),
+      ];
     }
     if (p.numeroGuia != null && p.numeroGuia!.isNotEmpty) {
       return [

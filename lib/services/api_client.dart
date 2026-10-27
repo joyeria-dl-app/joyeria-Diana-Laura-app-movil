@@ -7,7 +7,8 @@ final String apiBaseUrl = AppConfig.instance.apiBaseUrl;
 
 class ApiClient {
   ApiClient({Dio? dio, SessionStorage? storage})
-    : dio =
+    : _storage = storage,
+      dio =
           dio ??
           Dio(
             BaseOptions(
@@ -32,4 +33,8 @@ class ApiClient {
   }
 
   final Dio dio;
+  final SessionStorage? _storage;
+
+  // Token de la sesión, para las páginas del backend que se abren en el navegador (recibo).
+  Future<String?> token() async => _storage?.leerToken();
 }
