@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
 import '../routes/app_routes.dart';
+import '../utils/cerrar_sesion.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -46,7 +47,7 @@ class HomeScreen extends StatelessWidget {
                     const SizedBox(height: 12),
                     OutlinedButton(onPressed: () => Navigator.pushNamed(context, AppRoutes.misPersonalizaciones), child: const Text('Mis personalizaciones')),
                     const SizedBox(height: 12),
-                    OutlinedButton(onPressed: auth.cerrarSesion, child: const Text('Cerrar sesión')),
+                    OutlinedButton(onPressed: () => cerrarSesionConConfirmacion(context), child: const Text('Cerrar sesión')),
                   ],
           ),
         ),

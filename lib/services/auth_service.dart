@@ -69,7 +69,16 @@ class AuthService {
     return _storage.leerUsuario();
   }
 
-  Future<void> cerrarSesion() => _storage.borrar();
+  // HU-14: avisa al backend (igual que el sitio web, POST /auth/logout) y borra la sesión del
+  // teléfono. Si no hay conexión, la sesión se borra de todos modos.
+  Future<void> cerrarSesion() async {
+    try {
+      await _api.dio.post('/auth/logout').timeout(const Duration(seconds: 5));
+    } on Object {
+      // Sin conexión o servidor dormido: lo importante es que el teléfono ya no guarde la sesión.
+    }
+    await _storage.borrar();
+  }
 
   Future<List<String>> preguntasSecretas() async {
     try {
