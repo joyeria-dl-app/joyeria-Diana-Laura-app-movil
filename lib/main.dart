@@ -20,6 +20,7 @@ import 'services/personalizacion_service.dart';
 import 'services/producto_service.dart';
 import 'services/service_factory.dart';
 import 'services/session_storage.dart';
+import 'services/zonas_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -79,6 +80,7 @@ class JoyeriaApp extends StatelessWidget {
     this.preferenciaTema,
     this.temaOscuro = true,
     this.apiClient,
+    this.zonasService,
   });
 
   final SessionStorage storage;
@@ -96,6 +98,7 @@ class JoyeriaApp extends StatelessWidget {
   final bool temaOscuro;
   // Cliente del backend; las pruebas pasan uno con el backend simulado.
   final ApiClient? apiClient;
+  final ZonasService? zonasService;
 
   @override
   Widget build(BuildContext context) {
@@ -124,6 +127,9 @@ class JoyeriaApp extends StatelessWidget {
                 pedidos: pedidos,
                 favoritos: favoritos,
               ),
+        ),
+        Provider<ZonasService>.value(
+          value: zonasService ?? fabrica.crearZonasService(),
         ),
         ChangeNotifierProvider<FavoritosProvider>(
           create: (_) => FavoritosProvider(favoritos),

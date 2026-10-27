@@ -7,6 +7,7 @@ import 'perfil_service.dart';
 import 'personalizacion_service.dart';
 import 'producto_service.dart';
 import 'session_storage.dart';
+import 'zonas_service.dart';
 
 // Patrón Factory: un solo lugar decide cómo se crean los servicios que usan el ApiClient.
 class ServiceFactory {
@@ -22,4 +23,5 @@ class ServiceFactory {
   PersonalizacionService crearPersonalizacionService() => PersonalizacionService(api: _api);
   PerfilService crearPerfilService({required PedidoService pedidos, required FavoritoService favoritos}) =>
       PerfilService(api: _api, pedidos: pedidos, favoritos: favoritos);
+  ZonasService crearZonasService() => ZonasService(api: _api);
 }
