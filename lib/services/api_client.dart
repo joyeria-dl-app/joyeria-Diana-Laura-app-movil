@@ -1,9 +1,9 @@
 import 'package:dio/dio.dart';
 
+import 'app_config.dart';
 import 'session_storage.dart';
 
-// Se puede cambiar al compilar: flutter run --dart-define=API_URL=http://10.0.2.2:5000/api
-const String apiBaseUrl = String.fromEnvironment('API_URL', defaultValue: 'https://joyeria-diana-laura-nqnq.onrender.com/api');
+final String apiBaseUrl = AppConfig.instance.apiBaseUrl;
 
 class ApiClient {
   ApiClient({Dio? dio, SessionStorage? storage})
