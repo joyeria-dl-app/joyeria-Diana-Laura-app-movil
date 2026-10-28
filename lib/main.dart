@@ -34,22 +34,12 @@ Future<void> main() async {
   }
   final preferencia = SecurePreferenciaTema();
   final oscuro = await TemaProvider.leerInicial(preferencia);
-  runApp(
-    JoyeriaApp(
-      storage: SecureSessionStorage(),
-      mensajeria: conFirebase ? FirebaseMensajeria() : null,
-      preferenciaTema: preferencia,
-      temaOscuro: oscuro,
-    ),
-  );
+  runApp(JoyeriaApp(storage: SecureSessionStorage(), mensajeria: conFirebase ? FirebaseMensajeria() : null, preferenciaTema: preferencia, temaOscuro: oscuro));
   if (conFirebase) {
     // Avisos del pedido (#56). Se inicia después del primer cuadro para que ya exista el navegador
     // si la app se abrió desde un aviso.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      AvisosPedido(
-        fuente: FirebaseFuenteAvisos(),
-        abrirPedido: abrirPedidoDesdeAviso,
-      ).iniciar();
+      AvisosPedido(fuente: FirebaseFuenteAvisos(), abrirPedido: abrirPedidoDesdeAviso).iniciar();
     });
   }
 }
@@ -58,11 +48,7 @@ Future<void> main() async {
 final navegadorApp = GlobalKey<NavigatorState>();
 
 void abrirPedidoDesdeAviso(int pedidoId) {
-  navegadorApp.currentState?.push(
-    MaterialPageRoute<void>(
-      builder: (_) => AbrirPedidoScreen(pedidoId: pedidoId),
-    ),
-  );
+  navegadorApp.currentState?.push(MaterialPageRoute<void>(builder: (_) => AbrirPedidoScreen(pedidoId: pedidoId)));
 }
 
 class JoyeriaApp extends StatelessWidget {
@@ -110,45 +96,22 @@ class JoyeriaApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         Provider<ApiClient>.value(value: api),
-        Provider<ProductoService>.value(
-          value: productoService ?? fabrica.crearProductoService(),
-        ),
+        Provider<ProductoService>.value(value: productoService ?? fabrica.crearProductoService()),
         Provider<CarritoService>.value(value: carrito),
         Provider<FavoritoService>.value(value: favoritos),
         Provider<PedidoService>.value(value: pedidos),
-        Provider<PersonalizacionService>.value(
-          value:
-              personalizacionService ?? fabrica.crearPersonalizacionService(),
-        ),
+        Provider<PersonalizacionService>.value(value: personalizacionService ?? fabrica.crearPersonalizacionService()),
         Provider<PerfilService>.value(
-          value:
-              perfilService ??
-              fabrica.crearPerfilService(
-                pedidos: pedidos,
-                favoritos: favoritos,
-              ),
+          value: perfilService ?? fabrica.crearPerfilService(pedidos: pedidos, favoritos: favoritos),
         ),
-        Provider<ZonasService>.value(
-          value: zonasService ?? fabrica.crearZonasService(),
-        ),
-        ChangeNotifierProvider<FavoritosProvider>(
-          create: (_) => FavoritosProvider(favoritos),
-        ),
-        ChangeNotifierProvider<CarritoProvider>(
-          create: (_) => CarritoProvider(carrito),
-        ),
-        ChangeNotifierProvider<TemaProvider>(
-          create: (_) => TemaProvider(
-            preferenciaTema ?? MemoriaPreferenciaTema(),
-            oscuro: temaOscuro,
-          ),
-        ),
+        Provider<ZonasService>.value(value: zonasService ?? fabrica.crearZonasService()),
+        ChangeNotifierProvider<FavoritosProvider>(create: (_) => FavoritosProvider(favoritos)),
+        ChangeNotifierProvider<CarritoProvider>(create: (_) => CarritoProvider(carrito)),
+        ChangeNotifierProvider<TemaProvider>(create: (_) => TemaProvider(preferenciaTema ?? MemoriaPreferenciaTema(), oscuro: temaOscuro)),
         ChangeNotifierProvider<AuthProvider>(
           create: (_) => AuthProvider(
             authService ?? fabrica.crearAuthService(storage),
-            notificaciones: mensajeria == null
-                ? null
-                : NotificacionesService(api: api, mensajeria: mensajeria!),
+            notificaciones: mensajeria == null ? null : NotificacionesService(api: api, mensajeria: mensajeria!),
           )..restaurarSesion(),
         ),
       ],
@@ -160,8 +123,7 @@ class JoyeriaApp extends StatelessWidget {
           theme: tema.tema,
           // Sin animación entre temas: los colores fijos y los del tema cambian a la vez.
           themeAnimationDuration: Duration.zero,
-          builder: (context, child) =>
-              ReconstruirConTema(oscuro: tema.oscuro, child: child!),
+          builder: (context, child) => ReconstruirConTema(oscuro: tema.oscuro, child: child!),
           initialRoute: AppRoutes.home,
           routes: AppRoutes.routes,
         ),

@@ -2,6 +2,8 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
+import 'foto_red.dart';
+
 // Galería del detalle (boceto P7): se desliza de lado y a la derecha muestra
 // miniaturas; con más de 3 fotos se ven 2 y un cuadro "+N".
 class GaleriaFotos extends StatefulWidget {
@@ -95,11 +97,7 @@ class _Miniatura extends StatelessWidget {
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: Image.network(
-                url,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => const ColoredBox(color: Color(0x73000000)),
-              ),
+              child: FotoRed(url, error: const ColoredBox(color: Color(0x73000000))),
             ),
           ),
         ),
