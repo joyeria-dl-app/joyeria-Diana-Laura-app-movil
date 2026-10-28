@@ -183,6 +183,9 @@ void main() {
     // Cerrar sesión para que las demás pruebas inicien sin cuenta.
     await esperar(tester, find.text('Cerrar sesión'));
     await tester.tap(find.text('Cerrar sesión'));
+    // Desde #219 la app pide confirmar antes de cerrar la sesión.
+    await esperar(tester, find.widgetWithText(TextButton, 'Cerrar sesión'));
+    await tester.tap(find.widgetWithText(TextButton, 'Cerrar sesión'));
     await esperar(tester, find.text('Explorar sin cuenta'));
   });
 }
