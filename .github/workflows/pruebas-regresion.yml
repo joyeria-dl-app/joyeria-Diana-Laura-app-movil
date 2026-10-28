@@ -95,6 +95,11 @@ jobs:
 
   integracion:
     name: Regresión - pruebas de integración
+    # Una sola corrida a la vez por cuenta de prueba (PRUEBAS_CORREO), en todo el repositorio (#238): si otra
+    # corrida ya la usa, esta espera a que termine en lugar de cambiarle el carrito a la mitad.
+    concurrency:
+      group: cuenta-pruebas
+      cancel-in-progress: false
     # Solo corre si las unitarias pasaron.
     needs: unitarias
     runs-on: ubuntu-24.04
