@@ -22,6 +22,11 @@ on:
 jobs:
   integracion:
     name: Integración en emulador Android
+    # Una sola corrida a la vez por cuenta de prueba (PRUEBAS_CORREO), en todo el repositorio (#238): si otra
+    # corrida ya la usa, esta espera a que termine en lugar de cambiarle el carrito a la mitad.
+    concurrency:
+      group: cuenta-pruebas
+      cancel-in-progress: false
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
