@@ -94,7 +94,7 @@ void main() {
     }
 
     // Catálogo filtrado por Anillos hasta la tarjeta de la pieza.
-    await tester.tap(find.text('Ver catálogo'));
+    await abrirPestana(tester, 'catalogo');
     await esperar(tester, find.byType(TarjetaProducto));
     await tester.tap(find.text(anillos.nombre).first);
     await esperar(tester, find.text(anillos.nombre).at(1));
@@ -200,11 +200,6 @@ void main() {
 
     // Cerrar sesión para que las demás pruebas inicien sin cuenta.
     _navegador(tester).popUntil((ruta) => ruta.isFirst);
-    await esperar(tester, find.text('Cerrar sesión'));
-    await tester.tap(find.text('Cerrar sesión'));
-    // Desde #219 la app pide confirmar antes de cerrar la sesión.
-    await esperar(tester, find.widgetWithText(TextButton, 'Cerrar sesión'));
-    await tester.tap(find.widgetWithText(TextButton, 'Cerrar sesión'));
-    await esperar(tester, find.text('Explorar sin cuenta'));
+    await cerrarSesionDesdePerfil(tester);
   });
 }

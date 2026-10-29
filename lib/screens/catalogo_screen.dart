@@ -7,14 +7,28 @@ import '../services/producto_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/accion_favorito.dart';
 import '../widgets/barra_navegacion.dart';
+import '../widgets/campo_busqueda.dart';
 import '../widgets/decoracion.dart';
 import '../widgets/tarjeta_producto.dart';
 import 'detalle_screen.dart';
 import '../widgets/foto_red.dart';
 
 // Catálogo de piezas (boceto P6). Carga 20 productos y pide más al llegar al final.
+// Desde el Inicio (#244) el catálogo se abre ya filtrado por una categoría o con el buscador listo.
 class CatalogoScreen extends StatefulWidget {
-  const CatalogoScreen({super.key});
+  const CatalogoScreen({super.key, this.categoria, this.buscar = false});
+
+  // Lee lo que le pasa el Inicio al abrir la ruta.
+  factory CatalogoScreen.desdeRuta(BuildContext context) {
+    final args = ModalRoute.of(context)?.settings.arguments;
+    return CatalogoScreen(categoria: args is Categoria ? args : null, buscar: args == CatalogoScreen.conBuscador);
+  }
+
+  // Argumento de la ruta para abrir el catálogo con el buscador.
+  static const conBuscador = 'buscar';
+
+  final Categoria? categoria;
+  final bool buscar;
 
   @override
   State<CatalogoScreen> createState() => _CatalogoScreenState();
@@ -29,12 +43,15 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
   String? _error;
   List<Categoria> _categorias = [];
   Categoria? _categoria;
+  final _busqueda = TextEditingController();
+  late bool _buscando = widget.buscar;
   // Cambia al elegir otra categoría; así se descartan respuestas de la anterior.
   int _consulta = 0;
 
   @override
   void initState() {
     super.initState();
+    _categoria = widget.categoria;
     _scroll.addListener(() {
       if (_scroll.position.extentAfter < 400) _cargarMas();
     });
@@ -60,6 +77,7 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
   @override
   void dispose() {
     _scroll.dispose();
+    _busqueda.dispose();
     super.dispose();
   }
 
@@ -71,7 +89,7 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
       _error = null;
     });
     try {
-      final nuevos = await context.read<ProductoService>().productos(categoriaId: _categoria?.id, pagina: _pagina);
+      final nuevos = await context.read<ProductoService>().productos(categoriaId: _categoria?.id, busqueda: _busqueda.text, pagina: _pagina);
       if (!mounted || consulta != _consulta) return;
       setState(() {
         _productos.addAll(nuevos);
@@ -110,6 +128,15 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
     _recargar();
   }
 
+  // Al cerrar el buscador se vuelve a mostrar todo el catálogo.
+  void _alternarBuscador() {
+    setState(() => _buscando = !_buscando);
+    if (!_buscando && _busqueda.text.isNotEmpty) {
+      _busqueda.clear();
+      _recargar();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -134,6 +161,13 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
                       categorias: _categorias,
                       activa: _categoria,
                       onElegir: _elegir,
+                      buscando: _buscando,
+                      busqueda: _busqueda,
+                      onBuscador: _alternarBuscador,
+                      onBuscar: (_) {
+                        if (_scroll.hasClients) _scroll.jumpTo(0);
+                        _recargar();
+                      },
                     ),
                   ),
                   ..._contenido(),
@@ -169,6 +203,18 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
       ];
     }
     // Boceto 4c.
+    if (_productos.isEmpty && _busqueda.text.trim().isNotEmpty) {
+      return [
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: _Aviso(
+            icono: Icons.search_off_rounded,
+            titulo: 'Sin resultados',
+            texto: 'No encontramos piezas con "${_busqueda.text.trim()}". Prueba con otra palabra.',
+          ),
+        ),
+      ];
+    }
     if (_productos.isEmpty) {
       return const [
         SliverFillRemaining(
@@ -271,6 +317,10 @@ class _Encabezado extends StatelessWidget {
     required this.categorias,
     required this.activa,
     required this.onElegir,
+    required this.buscando,
+    required this.busqueda,
+    required this.onBuscador,
+    required this.onBuscar,
   });
   final String titulo;
   final int total;
@@ -278,6 +328,10 @@ class _Encabezado extends StatelessWidget {
   final List<Categoria> categorias;
   final Categoria? activa;
   final ValueChanged<Categoria> onElegir;
+  final bool buscando;
+  final TextEditingController busqueda;
+  final VoidCallback onBuscador;
+  final ValueChanged<String> onBuscar;
 
   @override
   Widget build(BuildContext context) {
@@ -288,11 +342,29 @@ class _Encabezado extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [const Antetitulo('Catálogo'), const SizedBox(height: 2), TituloDegradado(titulo, tamano: 28)],
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [const Antetitulo('Catálogo'), const SizedBox(height: 2), TituloDegradado(titulo, tamano: 28)],
+                  ),
+                ),
+                // Boceto P6: botón de búsqueda a la derecha del título.
+                BotonCristal(
+                  icono: buscando ? Icons.close_rounded : Icons.search_rounded,
+                  descripcion: buscando ? 'Cerrar búsqueda' : 'Buscar',
+                  onPressed: onBuscador,
+                ),
+              ],
             ),
           ),
+          if (buscando)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
+              child: CampoBusqueda(controlador: busqueda, autofocus: true, onBuscar: onBuscar),
+            ),
           if (categorias.isNotEmpty) ...[
             const SizedBox(height: 14),
             SizedBox(

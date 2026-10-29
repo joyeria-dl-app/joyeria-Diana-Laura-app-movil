@@ -31,7 +31,7 @@ class AppRoutes {
     home: (_) => const HomeScreen(),
     login: (_) => const LoginScreen(),
     register: (_) => const RegisterScreen(),
-    catalogo: (_) => const CatalogoScreen(),
+    catalogo: CatalogoScreen.desdeRuta,
     carrito: (_) => const CarritoScreen(),
     favoritos: (_) => const FavoritosScreen(),
     confirmarPedido: (_) => const ConfirmarPedidoScreen(),
