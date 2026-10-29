@@ -10,6 +10,7 @@ import '../widgets/barra_navegacion.dart';
 import '../widgets/decoracion.dart';
 import '../widgets/tarjeta_producto.dart';
 import 'detalle_screen.dart';
+import '../widgets/foto_red.dart';
 
 // Catálogo de piezas (boceto P6). Carga 20 productos y pide más al llegar al final.
 class CatalogoScreen extends StatefulWidget {
@@ -354,7 +355,7 @@ class _CirculoCategoria extends StatelessWidget {
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(20),
-                  child: (url == null || url.isEmpty) ? sinFoto : Image.network(url, fit: BoxFit.cover, errorBuilder: (_, _, _) => sinFoto),
+                  child: (url == null || url.isEmpty) ? sinFoto : FotoRed(url, error: sinFoto),
                 ),
               ),
               const SizedBox(height: 6),

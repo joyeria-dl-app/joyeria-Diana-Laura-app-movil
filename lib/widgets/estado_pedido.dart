@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/pedido.dart';
 import '../theme/app_theme.dart';
 import '../utils/fechas.dart';
+import 'foto_red.dart';
 
 // Color de "Pendiente" en los bocetos (--warn).
 const colorAviso = Color(0xFFF6A723);
@@ -341,7 +342,7 @@ class FotoPieza extends StatelessWidget {
       child: SizedBox(
         width: tamano,
         height: tamano,
-        child: url == null ? sinFoto : Image.network(url!, fit: BoxFit.cover, errorBuilder: (_, _, _) => sinFoto),
+        child: url == null ? sinFoto : FotoRed(url!, error: sinFoto),
       ),
     );
   }

@@ -16,6 +16,8 @@ import '../utils/formato.dart';
 import '../widgets/accion_favorito.dart';
 import '../widgets/decoracion.dart';
 import '../widgets/galeria_fotos.dart';
+import '../widgets/foto_red.dart';
+import '../utils/fotos.dart';
 
 // Color de "Quedan N" en los bocetos (--warn).
 const _aviso = Color(0xFFF6A723);
@@ -232,7 +234,7 @@ class _Foto extends StatelessWidget {
       color: AppColors.superficie2,
       child: cargando ? null : Center(child: Icon(Icons.diamond_outlined, size: 64, color: AppColors.primario)),
     );
-    final Widget foto = (url == null) ? sinFoto : Image.network(url!, fit: BoxFit.cover, errorBuilder: (_, _, _) => sinFoto);
+    final Widget foto = (url == null) ? sinFoto : FotoRed(url!, ancho: anchoFotoGrande, error: sinFoto);
     return Stack(
       fit: StackFit.expand,
       children: [

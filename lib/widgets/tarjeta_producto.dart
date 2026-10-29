@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/producto.dart';
 import '../theme/app_theme.dart';
 import '../utils/formato.dart';
+import 'foto_red.dart';
 
 // Tarjeta del catálogo y de favoritos (bocetos P6 y 4b): foto de 168 px con
 // el corazón arriba a la derecha y debajo nombre, precio y estrellas.
@@ -120,11 +121,10 @@ class _Foto extends StatelessWidget {
     );
     final Widget foto = (url == null || url!.isEmpty)
         ? sinFoto
-        : Image.network(
+        : FotoRed(
             url!,
-            fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => sinFoto,
-            loadingBuilder: (_, hijo, progreso) => progreso == null ? hijo : ColoredBox(color: AppColors.superficie2),
+            error: sinFoto,
+            cargando: ColoredBox(color: AppColors.superficie2),
           );
     return apagada ? ColorFiltered(colorFilter: _gris, child: foto) : foto;
   }

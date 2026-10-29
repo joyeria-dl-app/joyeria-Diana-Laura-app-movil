@@ -9,6 +9,7 @@ import '../utils/formato.dart';
 import '../widgets/barra_navegacion.dart';
 import '../widgets/decoracion.dart';
 import '../widgets/resumen_carrito.dart';
+import '../widgets/foto_red.dart';
 
 // Color de "Solo quedan N" en los bocetos (--warn).
 const _aviso = Color(0xFFF6A723);
@@ -245,11 +246,7 @@ class _Pieza extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(20),
-            child: SizedBox(
-              width: 90,
-              height: 90,
-              child: item.imagen == null ? const _SinFoto() : Image.network(item.imagen!, fit: BoxFit.cover, errorBuilder: (_, _, _) => const _SinFoto()),
-            ),
+            child: SizedBox(width: 90, height: 90, child: item.imagen == null ? const _SinFoto() : FotoRed(item.imagen!, error: const _SinFoto())),
           ),
           const SizedBox(width: 14),
           Expanded(
