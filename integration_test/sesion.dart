@@ -11,11 +11,12 @@ import 'catalogo_test.dart' show esperar;
 // Inicio de sesión compartido por las pruebas del emulador (#189).
 // Antes cada prueba tocaba "Iniciar sesión" en cuanto aparecía el formulario; si la
 // pantalla seguía en animación o el teclado tapaba el botón, el toque no entraba y la
-// prueba se quedaba esperando "Ver catálogo". Aquí se espera la animación, se cierra el
+// prueba se quedaba esperando el Inicio con sesión. Aquí se espera la animación, se cierra el
 // teclado, se hace visible el botón y se reintenta si el toque no entró.
 Future<void> iniciarSesion(WidgetTester tester, String correo, String contrasena) async {
-  await esperar(tester, find.byType(FilledButton));
-  if (find.text('Ver catálogo').evaluate().isNotEmpty) return;
+  // Sin sesión el Inicio invita a entrar; con sesión saluda (#244).
+  await esperar(tester, find.byWidgetPredicate((w) => w.key == inicioConSesion || (w is Text && w.data == 'Iniciar sesión')));
+  if (find.byKey(inicioConSesion).evaluate().isNotEmpty) return;
 
   await tester.tap(find.text('Iniciar sesión').first);
   await esperar(tester, find.byKey(const Key('login_email')));
@@ -33,10 +34,38 @@ Future<void> iniciarSesion(WidgetTester tester, String correo, String contrasena
       await _calmar(tester);
       await tester.tap(boton, warnIfMissed: false);
     }
-    if (await _aparece(tester, find.text('Ver catálogo'), const Duration(seconds: 45))) return;
+    if (await _aparece(tester, find.byKey(inicioConSesion), const Duration(seconds: 45))) return;
     debugPrint('SESION intento $intento sin entrar; se reintenta');
   }
-  await esperar(tester, find.text('Ver catálogo'));
+  await esperar(tester, find.byKey(inicioConSesion));
+}
+
+// Saludo del Inicio cuando hay sesión.
+const inicioConSesion = Key('inicio_saludo');
+
+// Abre una pestaña de la barra inferior: inicio, catalogo, carrito, favoritos o perfil.
+Future<void> abrirPestana(WidgetTester tester, String pestana) async {
+  // Cada pantalla abierta tiene su barra; se toca la de la pantalla de arriba (la última).
+  await esperar(tester, find.byKey(Key('nav_$pestana')));
+  await tester.tap(find.byKey(Key('nav_$pestana')).last);
+}
+
+// Desde #244 Cerrar sesión está en Mi perfil: se abre la pestaña, se confirma y se vuelve a la bienvenida.
+Future<void> cerrarSesionDesdePerfil(WidgetTester tester) async {
+  await abrirPestana(tester, 'perfil');
+  // Mi perfil es una lista que construye sus renglones al desplazarse: se baja hasta Cerrar sesión.
+  await esperar(tester, find.text('Mis pedidos'));
+  await tester.scrollUntilVisible(
+    find.text('Cerrar sesión'),
+    300,
+    scrollable: find.ancestor(of: find.text('Mis pedidos'), matching: find.byType(Scrollable)).first,
+  );
+  await tester.pump(const Duration(milliseconds: 300));
+  await tester.tap(find.text('Cerrar sesión'));
+  // Desde #219 la app pide confirmar antes de cerrar la sesión.
+  await esperar(tester, find.widgetWithText(TextButton, 'Cerrar sesión'));
+  await tester.tap(find.widgetWithText(TextButton, 'Cerrar sesión'));
+  await esperar(tester, find.text('Explorar sin cuenta'));
 }
 
 // Deja pasar animaciones y el cierre del teclado sin pumpAndSettle (los destellos del fondo no terminan nunca).

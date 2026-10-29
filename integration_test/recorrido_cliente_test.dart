@@ -16,7 +16,7 @@ import 'package:joyeria_diana_laura/screens/favoritos_screen.dart';
 import 'package:joyeria_diana_laura/services/session_storage.dart';
 import 'package:joyeria_diana_laura/widgets/tarjeta_producto.dart';
 
-import 'catalogo_test.dart' show despertarServidor, esperar;
+import 'catalogo_test.dart' show contadorPiezas, despertarServidor, esperar;
 import 'sesion.dart';
 import 'datos_prueba.dart';
 
@@ -54,8 +54,8 @@ void main() {
     await iniciarSesion(tester, CuentaPrueba.correo, CuentaPrueba.contrasena);
 
     // Catálogo y filtro por categoría.
-    await tester.tap(find.text('Ver catálogo'));
-    await esperar(tester, find.textContaining('piezas'));
+    await abrirPestana(tester, 'catalogo');
+    await esperar(tester, find.textContaining(contadorPiezas));
     await esperar(tester, find.text(PiezasPrueba.categoriaCompra));
     await tester.tap(find.text(PiezasPrueba.categoriaCompra).first);
     await esperar(tester, find.text(PiezasPrueba.categoriaCompra).at(1));
@@ -108,11 +108,6 @@ void main() {
 
     // Cerrar sesión para que las demás pruebas inicien sin cuenta.
     tester.state<NavigatorState>(find.byType(Navigator).first).popUntil((ruta) => ruta.isFirst);
-    await esperar(tester, find.text('Cerrar sesión'));
-    await tester.tap(find.text('Cerrar sesión'));
-    // Desde #219 la app pide confirmar antes de cerrar la sesión.
-    await esperar(tester, find.widgetWithText(TextButton, 'Cerrar sesión'));
-    await tester.tap(find.widgetWithText(TextButton, 'Cerrar sesión'));
-    await esperar(tester, find.text('Explorar sin cuenta'));
+    await cerrarSesionDesdePerfil(tester);
   });
 }

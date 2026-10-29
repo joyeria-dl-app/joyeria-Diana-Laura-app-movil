@@ -150,7 +150,8 @@ void main() {
 
     // CA-14: Mis pedidos de la app coincide con el servidor (lo que ve el sitio web).
     final pedidos = (await tester.runAsync(pedidosServidor.misPedidos))!;
-    await tester.tap(find.text('Mis pedidos'));
+    // La campana del Inicio abre Mis pedidos (#244).
+    await tester.tap(find.byKey(const Key('inicio_notificaciones')));
     await esperar(tester, find.byType(MisPedidosScreen));
     final enCurso = pedidos.where((p) => p.enCurso).toList();
     await esperar(tester, find.text('En curso · ${enCurso.length}'));
@@ -163,6 +164,9 @@ void main() {
     // CA-15: Mis apartados de la app coincide con el servidor.
     final apartados = (await tester.runAsync(pedidosServidor.misApartados))!;
     final activos = apartados.where((a) => a.activo).toList();
+    // Desde #244 Mis apartados está en Mi perfil.
+    await abrirPestana(tester, 'perfil');
+    await esperar(tester, find.text('Mis apartados'));
     await tester.tap(find.text('Mis apartados'));
     await esperar(tester, find.byType(MisApartadosScreen));
     if (apartados.isEmpty) {
@@ -181,11 +185,6 @@ void main() {
     await tester.pumpAndSettle();
 
     // Cerrar sesión para que las demás pruebas inicien sin cuenta.
-    await esperar(tester, find.text('Cerrar sesión'));
-    await tester.tap(find.text('Cerrar sesión'));
-    // Desde #219 la app pide confirmar antes de cerrar la sesión.
-    await esperar(tester, find.widgetWithText(TextButton, 'Cerrar sesión'));
-    await tester.tap(find.widgetWithText(TextButton, 'Cerrar sesión'));
-    await esperar(tester, find.text('Explorar sin cuenta'));
+    await cerrarSesionDesdePerfil(tester);
   });
 }

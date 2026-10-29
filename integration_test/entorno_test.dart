@@ -18,7 +18,7 @@ import 'package:joyeria_diana_laura/services/carrito_service.dart';
 import 'package:joyeria_diana_laura/services/producto_service.dart';
 import 'package:joyeria_diana_laura/services/session_storage.dart';
 
-import 'catalogo_test.dart' show despertarServidor, esperar;
+import 'catalogo_test.dart' show contadorPiezas, despertarServidor, esperar;
 import 'sesion.dart';
 import 'datos_prueba.dart';
 
@@ -112,8 +112,8 @@ void main() {
     expect(find.text(pieza.nombre), findsOneWidget);
     _navegador(tester).pop();
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Ver catálogo'));
-    await esperar(tester, find.textContaining('piezas'));
+    await abrirPestana(tester, 'catalogo');
+    await esperar(tester, find.textContaining(contadorPiezas));
     _navegador(tester).popUntil((ruta) => ruta.isFirst);
     _navegador(tester).pushNamed(AppRoutes.carrito);
     await esperar(tester, find.text('Ir a pagar'));
@@ -149,7 +149,8 @@ void main() {
     await tester.pumpAndSettle();
     _paso('sin_senal');
     await _esperarSinRed(tester);
-    await tester.tap(find.text('Mis pedidos'));
+    // La campana del Inicio abre Mis pedidos (#244).
+    await tester.tap(find.byKey(const Key('inicio_notificaciones')));
     await tester.pump();
     final fin = DateTime.now().add(const Duration(seconds: 60));
     while (find.text('Sin conexión').evaluate().isEmpty && DateTime.now().isBefore(fin)) {
@@ -174,11 +175,8 @@ void main() {
       await carritoServidor.vaciar();
       await carrito.cargar();
     });
-    await tester.tap(find.text('Cerrar sesión'));
-    // Desde #219 la app pide confirmar antes de cerrar la sesión.
-    await esperar(tester, find.widgetWithText(TextButton, 'Cerrar sesión'));
-    await tester.tap(find.widgetWithText(TextButton, 'Cerrar sesión'));
-    await esperar(tester, find.text('Explorar sin cuenta'));
+    _navegador(tester).popUntil((ruta) => ruta.isFirst);
+    await cerrarSesionDesdePerfil(tester);
     _paso('fin');
   });
 }

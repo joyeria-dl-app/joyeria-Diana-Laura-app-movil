@@ -220,7 +220,7 @@ Future<void> _tocar(WidgetTester tester, Finder boton) async {
 }
 
 Future<void> _irAlPerfil(WidgetTester tester) async {
-  await _tocar(tester, find.widgetWithText(OutlinedButton, 'Mi perfil'));
+  await _tocar(tester, find.byKey(const Key('nav_perfil')));
   expect(find.text('Mi perfil'), findsOneWidget);
 }
 
@@ -334,7 +334,7 @@ void main() {
   testWidgets('Si la sesión venció, Mi perfil invita a iniciarla de nuevo', (tester) async {
     final app = await _abrir(tester);
     app.servidor.sesionVencida = true;
-    await _tocar(tester, find.widgetWithText(OutlinedButton, 'Mi perfil'));
+    await _tocar(tester, find.byKey(const Key('nav_perfil')));
 
     expect(find.text('Inicia sesión para ver tu perfil'), findsOneWidget);
     // El login se revisa con la vista de prueba por defecto, como en login_screen_test.dart: la fuente

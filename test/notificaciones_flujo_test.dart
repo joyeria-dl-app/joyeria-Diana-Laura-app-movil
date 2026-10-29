@@ -85,6 +85,14 @@ class _Servidor implements HttpClientAdapter {
         });
       case 'GET /favoritos':
         return _json(200, {'success': true, 'data': <Object>[]});
+      // Mi perfil (desde #244 ahí está Cerrar sesión).
+      case 'GET /auth/profile':
+        return _json(200, {
+          'success': true,
+          'data': {'nombre': 'Ana Martínez', 'email': 'ana.martinez@correo.com'},
+        });
+      case 'GET /apartados/mis-apartados':
+        return _json(200, {'success': true, 'data': <Object>[]});
       case 'POST /auth/logout':
         return _json(200, {'success': true});
     }
@@ -190,7 +198,7 @@ void main() {
   testWidgets('Sin permiso de notificaciones no se registra y la app funciona igual', (tester) async {
     final app = await _abrir(tester, permiso: false);
     expect(app.servidor.telefonos, isEmpty);
-    expect(find.text('Ver catálogo'), findsOneWidget);
+    expect(find.byKey(const Key('inicio_saludo')), findsOneWidget);
   });
 
   testWidgets('El aviso que llega con la app abierta se muestra', (tester) async {
@@ -234,6 +242,11 @@ void main() {
 
   testWidgets('Al cerrar sesión se quita el teléfono antes de borrar la sesión', (tester) async {
     final app = await _abrir(tester);
+    // Desde #244 Cerrar sesión está en Mi perfil.
+    await tester.tap(find.byKey(const Key('nav_perfil')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Cerrar sesión'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Cerrar sesión'));
     await tester.pumpAndSettle();
     // Desde #219 se confirma antes de cerrar la sesión.
