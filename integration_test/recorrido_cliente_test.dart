@@ -16,7 +16,7 @@ import 'package:joyeria_diana_laura/screens/favoritos_screen.dart';
 import 'package:joyeria_diana_laura/services/session_storage.dart';
 import 'package:joyeria_diana_laura/widgets/tarjeta_producto.dart';
 
-import 'catalogo_test.dart' show despertarServidor, esperar;
+import 'catalogo_test.dart' show contadorPiezas, despertarServidor, esperar;
 import 'sesion.dart';
 import 'datos_prueba.dart';
 
@@ -55,7 +55,7 @@ void main() {
 
     // Catálogo y filtro por categoría.
     await abrirPestana(tester, 'catalogo');
-    await esperar(tester, find.textContaining('piezas'));
+    await esperar(tester, find.textContaining(contadorPiezas));
     await esperar(tester, find.text(PiezasPrueba.categoriaCompra));
     await tester.tap(find.text(PiezasPrueba.categoriaCompra).first);
     await esperar(tester, find.text(PiezasPrueba.categoriaCompra).at(1));

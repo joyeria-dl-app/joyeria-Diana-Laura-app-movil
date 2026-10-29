@@ -45,8 +45,9 @@ const inicioConSesion = Key('inicio_saludo');
 
 // Abre una pestaña de la barra inferior: inicio, catalogo, carrito, favoritos o perfil.
 Future<void> abrirPestana(WidgetTester tester, String pestana) async {
+  // Cada pantalla abierta tiene su barra; se toca la de la pantalla de arriba (la última).
   await esperar(tester, find.byKey(Key('nav_$pestana')));
-  await tester.tap(find.byKey(Key('nav_$pestana')));
+  await tester.tap(find.byKey(Key('nav_$pestana')).last);
 }
 
 // Desde #244 Cerrar sesión está en Mi perfil: se abre la pestaña, se confirma y se vuelve a la bienvenida.

@@ -18,7 +18,7 @@ import 'package:joyeria_diana_laura/services/carrito_service.dart';
 import 'package:joyeria_diana_laura/services/producto_service.dart';
 import 'package:joyeria_diana_laura/services/session_storage.dart';
 
-import 'catalogo_test.dart' show despertarServidor, esperar;
+import 'catalogo_test.dart' show contadorPiezas, despertarServidor, esperar;
 import 'sesion.dart';
 import 'datos_prueba.dart';
 
@@ -113,7 +113,7 @@ void main() {
     _navegador(tester).pop();
     await tester.pumpAndSettle();
     await abrirPestana(tester, 'catalogo');
-    await esperar(tester, find.textContaining('piezas'));
+    await esperar(tester, find.textContaining(contadorPiezas));
     _navegador(tester).popUntil((ruta) => ruta.isFirst);
     _navegador(tester).pushNamed(AppRoutes.carrito);
     await esperar(tester, find.text('Ir a pagar'));
