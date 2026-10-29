@@ -53,8 +53,13 @@ Future<void> abrirPestana(WidgetTester tester, String pestana) async {
 // Desde #244 Cerrar sesión está en Mi perfil: se abre la pestaña, se confirma y se vuelve a la bienvenida.
 Future<void> cerrarSesionDesdePerfil(WidgetTester tester) async {
   await abrirPestana(tester, 'perfil');
-  await esperar(tester, find.text('Cerrar sesión'));
-  await tester.ensureVisible(find.text('Cerrar sesión'));
+  // Mi perfil es una lista que construye sus renglones al desplazarse: se baja hasta Cerrar sesión.
+  await esperar(tester, find.text('Mis pedidos'));
+  await tester.scrollUntilVisible(
+    find.text('Cerrar sesión'),
+    300,
+    scrollable: find.ancestor(of: find.text('Mis pedidos'), matching: find.byType(Scrollable)).first,
+  );
   await tester.pump(const Duration(milliseconds: 300));
   await tester.tap(find.text('Cerrar sesión'));
   // Desde #219 la app pide confirmar antes de cerrar la sesión.
