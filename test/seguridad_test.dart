@@ -1,5 +1,5 @@
 // TIPO: seguridad (unitaria)
-// ALCANCE: HU-19 · sesión cifrada, sin claves en el código, env.json ignorado y solo HTTPS (#97)
+// ALCANCE: HU-19 · sesión cifrada, sin claves en el código, env.json ignorado y solo HTTPS (#97); permisos, firma y Crashlytics del build final (#99)
 // EJECUCIÓN: pipelines Pruebas unitarias y Flutter CI en cada PR; los archivos de test/ corren EN PARALELO entre sí y los casos de este archivo EN SECUENCIA. flutter test test/seguridad_test.dart
 // DATOS: los archivos del propio repositorio
 
@@ -96,6 +96,55 @@ void main() {
       expect(manifiesto, isNot(contains('usesCleartextTraffic="true"')));
       final api = File('lib/services/app_config.dart').readAsStringSync();
       expect(api, contains("defaultValue: 'https://"));
+    });
+  });
+
+  // #99: el APK final solo pide los permisos que usa y la llave de subida no está en el repositorio.
+  group('Build final (Sprint 4)', () {
+    final manifiesto = File('android/app/src/main/AndroidManifest.xml').readAsStringSync();
+
+    test('La app no pide permisos peligrosos que no usa', () {
+      // Fotos del perfil con el selector del sistema (sin permiso de almacenamiento ni cámara).
+      const peligrosos = [
+        'CAMERA',
+        'READ_EXTERNAL_STORAGE',
+        'WRITE_EXTERNAL_STORAGE',
+        'READ_MEDIA_IMAGES',
+        'ACCESS_FINE_LOCATION',
+        'ACCESS_COARSE_LOCATION',
+        'READ_CONTACTS',
+        'RECORD_AUDIO',
+        'READ_PHONE_STATE',
+      ];
+      for (final permiso in peligrosos) {
+        expect(manifiesto, isNot(contains('android.permission.$permiso')), reason: permiso);
+      }
+    });
+
+    test('Solo se exporta la pantalla principal y no es depurable', () {
+      expect(RegExp('android:exported="true"').allMatches(manifiesto), hasLength(1));
+      expect(manifiesto, isNot(contains('android:debuggable="true"')));
+    });
+
+    test('La llave de subida y sus contraseñas no están en el repositorio', () {
+      final ignorados = File('android/.gitignore').readAsStringSync();
+      expect(ignorados, contains('key.properties'));
+      expect(ignorados, contains('**/*.jks'));
+      final versionados = Process.runSync('git', ['ls-files']).stdout as String;
+      expect(versionados, isNot(contains('key.properties')));
+      expect(versionados, isNot(contains('.jks')));
+      expect(versionados, isNot(contains('.keystore')));
+    });
+
+    test('El build de producción se firma con la llave de subida', () {
+      final gradle = File('android/app/build.gradle.kts').readAsStringSync();
+      expect(gradle, contains('signingConfigs.getByName("release")'));
+      expect(gradle, contains('keystoreProperties["storePassword"]'));
+    });
+
+    test('Crashlytics solo reporta en el build de producción', () {
+      final main = File('lib/main.dart').readAsStringSync();
+      expect(main, contains('setCrashlyticsCollectionEnabled(kReleaseMode)'));
     });
   });
 }
