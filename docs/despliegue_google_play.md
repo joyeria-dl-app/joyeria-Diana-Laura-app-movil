@@ -18,8 +18,8 @@ Google Play no acepta APK firmados con la llave de depuración: pide un **Androi
 
 | Paso | Tarea | Qué se hace |
 |---|---|---|
-| 1. Firma | #62 | Crear la llave de subida (`upload-keystore.jks`). La llave y sus contraseñas van en los secretos del repositorio, nunca en el código; `android/app/build.gradle.kts` deja de firmar con la llave de depuración. Google guarda la llave final (Play App Signing). |
-| 2. Build | #63 | `flutter build appbundle --release` genera el AAB firmado. |
+| 1. Firma | #62 (hecho) | Llave de subida `upload-keystore.jks` (RSA 2048, alias `upload`), guardada fuera del repositorio por el equipo. `android/app/build.gradle.kts` firma el build de producción con ella leyendo `android/key.properties` (ignorado por Git); sin ese archivo, como en los pipelines, firma con la llave de depuración. Google guarda la llave final (Play App Signing). |
+| 2. Build | #63 (hecho) | `flutter build appbundle --release` genera el AAB firmado. Ver [Generar el AAB](#generar-el-aab). |
 | 3. Pruebas internas | #64 | Subir el AAB al canal **Pruebas internas** de Google Play Console; los testers (el equipo y la maestra) instalan la app desde Google Play con un enlace de invitación. |
 | 4. Errores | #65 | Firebase Crashlytics reporta los cierres inesperados de la versión instalada. |
 | 5. Versión final | #93 | v1.0.0: develop se une a main, se publica en GitHub Releases y el mismo AAB se sube a Google Play. |
@@ -33,6 +33,25 @@ Google Play no acepta APK firmados con la llave de depuración: pide un **Androi
 | Producción | Publicar para todos | Cualquier usuario de Google Play | Fuera del alcance del cuatrimestre; requiere la cuenta de desarrollador de la tienda |
 
 Una versión solo avanza de canal (internas → cerradas → producción) si pasó en el canal anterior.
+
+## Generar el AAB
+
+Requisitos en la computadora que compila: `android/key.properties` con la ruta del keystore y sus contraseñas, y `env.json` con las variables de la app.
+
+```properties
+storePassword=<contraseña>
+keyPassword=<contraseña>
+keyAlias=upload
+storeFile=<ruta>/upload-keystore.jks
+```
+
+```bash
+flutter build appbundle --release --dart-define-from-file=env.json
+# Revisar que lo firmó la llave de subida y no la de depuración
+jarsigner -verify -verbose:summary -certs build/app/outputs/bundle/release/app-release.aab
+```
+
+Resultado del 4 nov 2026 (versión `0.3.0+3`): `build/app/outputs/bundle/release/app-release.aab`, 53.1 MB, firmado por `CN=Joyeria Diana Laura, OU=App Movil, O=Joyeria Diana Laura, L=Huejutla, ST=Hidalgo, C=MX`. Para la v1.0.0 (#93) se vuelve a generar con `1.0.0+4` en `pubspec.yaml`.
 
 ## Numeración de versiones
 
