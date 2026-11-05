@@ -13,7 +13,7 @@ import '../widgets/tarjeta_producto.dart';
 import 'detalle_screen.dart';
 import '../widgets/foto_red.dart';
 
-// Catálogo de piezas (boceto P6). En una categoría o búsqueda muestra páginas numeradas de 5 piezas (#279).
+// Catálogo de piezas (boceto P6). En una categoría o búsqueda muestra páginas numeradas de 6 piezas (#279).
 // Desde el Inicio (#244) el catálogo se abre ya filtrado por una categoría o con el buscador listo.
 class CatalogoScreen extends StatefulWidget {
   const CatalogoScreen({super.key, this.categoria, this.buscar = false});
@@ -212,7 +212,7 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
     );
   }
 
-  // "21 piezas · página 2 de 5"; sin el total del backend solo se indica la página.
+  // "21 piezas · página 2 de 4"; sin el total del backend solo se indica la página.
   String _contador() {
     final paginas = _paginas;
     if (paginas != null) return paginas > 1 ? '$_total piezas · página ${_pagina + 1} de $paginas' : '$_total piezas';
@@ -579,7 +579,7 @@ class _SeccionCategoriaState extends State<_SeccionCategoria> {
   Future<void> _cargar() async {
     setState(() => _error = false);
     try {
-      // Solo la primera página (5 piezas): el resto se ve con "Ver todo" (#269).
+      // Solo la primera página (6 piezas): el resto se ve con "Ver todo" (#269).
       final piezas = await context.read<ProductoService>().productos(categoriaId: widget.categoria.id);
       if (mounted) setState(() => _piezas = piezas);
     } on ProductoException {

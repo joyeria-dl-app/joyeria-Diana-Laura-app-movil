@@ -17,7 +17,7 @@ import 'datos_prueba.dart';
 // Pruebas de integración y aceptación: la app real contra el backend de Render.
 // Se ejecutan en un emulador Android (pipeline pruebas-integracion.yml).
 
-// Contador del catálogo: "21 piezas · página 1 de 5" en la cuadrícula (#279), "Página 1" si el
+// Contador del catálogo: "21 piezas · página 1 de 4" en la cuadrícula (#279), "Página 1" si el
 // backend no manda el total, o "6 categorías" en las secciones sin filtro (#254). Desde #244 el
 // Inicio también dice "apartar piezas", así que la palabra sola ya no indica que el catálogo abrió.
 final contadorPiezas = RegExp(r'^(\d+ piezas( · página \d+ de \d+)?|\d+ categorías|Página \d+)$');

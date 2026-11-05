@@ -51,7 +51,7 @@ void _paso(String paso) => debugPrint('INTEGRACION PASO $paso');
 
 NavigatorState _navegador(WidgetTester tester) => tester.state<NavigatorState>(find.byType(Navigator).first);
 
-// Página que indica el contador: "21 piezas · página 2 de 5" o "Página 2" (#279).
+// Página que indica el contador: "21 piezas · página 2 de 4" o "Página 2" (#279).
 int _paginaEnPantalla(WidgetTester tester) {
   final texto = tester.widget<Text>(find.textContaining(contadorPiezas)).data!;
   return int.parse(RegExp(r'[Pp]ágina (\d+)').firstMatch(texto)?.group(1) ?? '1');
@@ -95,7 +95,7 @@ void main() {
     Future<Pedido?> pedido(String folio, bool Function(Pedido) cumple) async =>
         (await pedidos.misPedidos()).where((p) => p.folio == folio && cumple(p)).firstOrNull;
 
-    // I-02 (HU-05 y #279): el chip de Anillos abre la página 1 con 5 piezas y Siguiente pide la página 2.
+    // I-02 (HU-05 y #279): el chip de Anillos abre la página 1 con 6 piezas y Siguiente pide la página 2.
     final chip = find.text(PiezasPrueba.categoriaCompra).first;
     await tester.ensureVisible(chip);
     await tester.pumpAndSettle();

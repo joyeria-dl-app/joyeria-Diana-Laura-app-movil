@@ -126,7 +126,7 @@ void main() {
   });
 
   // #279: páginas numeradas; cada página se pide al elegirla y reemplaza a la anterior.
-  testWidgets('Muestra 5 piezas por página y la siguiente se pide al tocar su número', (tester) async {
+  testWidgets('Muestra 6 piezas por página y la siguiente se pide al tocar su número', (tester) async {
     final servicio = _ServicioFalso([
       List.generate(ProductoService.porPagina, (i) => _pieza(i)),
       [_pieza(100)],
@@ -134,7 +134,7 @@ void main() {
     await _abrir(tester, servicio);
 
     expect(servicio.pedidas, [0]);
-    expect(find.text('6 piezas · página 1 de 2'), findsOneWidget);
+    expect(find.text('${ProductoService.porPagina + 1} piezas · página 1 de 2'), findsOneWidget);
 
     await _alPaginador(tester, 'pagina_2');
     await tester.pumpAndSettle();
@@ -144,7 +144,7 @@ void main() {
     expect(servicio.pedidas, [0, 1]);
     expect(find.text('Anillo 100'), findsOneWidget);
     expect(find.text('Anillo 0'), findsNothing);
-    expect(find.text('6 piezas · página 2 de 2'), findsOneWidget);
+    expect(find.text('${ProductoService.porPagina + 1} piezas · página 2 de 2'), findsOneWidget);
   });
 
   testWidgets('Anterior y Siguiente cambian de página y se desactivan en los extremos', (tester) async {

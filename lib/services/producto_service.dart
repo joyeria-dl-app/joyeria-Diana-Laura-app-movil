@@ -27,8 +27,8 @@ class ProductoService {
 
   final ApiClient _api;
 
-  // Páginas de 5 (#269): dentro de una categoría llegan 5 piezas y, al bajar, las siguientes 5.
-  static const int porPagina = 5;
+  // Páginas de 6 (#279): 3 filas completas en la cuadrícula de 2 columnas.
+  static const int porPagina = 6;
 
   // Listado del catálogo. `categoriaId` filtra por categoría y `pagina`
   // (desde 0) permite cargar más productos al llegar al final de la lista.
