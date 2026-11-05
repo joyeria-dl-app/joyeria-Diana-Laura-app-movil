@@ -21,8 +21,9 @@ import 'package:joyeria_diana_laura/services/pedido_service.dart';
 import 'package:joyeria_diana_laura/services/producto_service.dart';
 import 'package:joyeria_diana_laura/services/session_storage.dart';
 import 'package:joyeria_diana_laura/utils/formato.dart';
+import 'package:joyeria_diana_laura/widgets/tarjeta_producto.dart';
 
-import 'catalogo_test.dart' show despertarServidor, esperar;
+import 'catalogo_test.dart' show contadorPiezas, despertarServidor, esperar;
 import 'sesion.dart';
 import 'datos_prueba.dart';
 
@@ -50,10 +51,10 @@ void _paso(String paso) => debugPrint('INTEGRACION PASO $paso');
 
 NavigatorState _navegador(WidgetTester tester) => tester.state<NavigatorState>(find.byType(Navigator).first);
 
-// "5+ piezas", "10+ piezas"… o "17 piezas" cuando ya llegaron todas (#269).
-int _piezasEnPantalla(WidgetTester tester) {
-  final texto = tester.widget<Text>(find.textContaining(RegExp(r'^\d+\+? piezas$'))).data!;
-  return int.parse(RegExp(r'^\d+').firstMatch(texto)!.group(0)!);
+// Página que indica el contador: "21 piezas · página 2 de 5" o "Página 2" (#279).
+int _paginaEnPantalla(WidgetTester tester) {
+  final texto = tester.widget<Text>(find.textContaining(contadorPiezas)).data!;
+  return int.parse(RegExp(r'[Pp]ágina (\d+)').firstMatch(texto)?.group(1) ?? '1');
 }
 
 void main() {
@@ -94,25 +95,21 @@ void main() {
     Future<Pedido?> pedido(String folio, bool Function(Pedido) cumple) async =>
         (await pedidos.misPedidos()).where((p) => p.folio == folio && cumple(p)).firstOrNull;
 
-    // I-02 (HU-05 y #269): el chip de Anillos abre la categoría de 5 en 5; al bajar llegan más.
+    // I-02 (HU-05 y #279): el chip de Anillos abre la página 1 con 5 piezas y Siguiente pide la página 2.
     final chip = find.text(PiezasPrueba.categoriaCompra).first;
     await tester.ensureVisible(chip);
     await tester.pumpAndSettle();
     await tester.tap(chip);
-    await esperar(tester, find.textContaining(RegExp(r'^\d+\+? piezas$')));
-    final primeras = _piezasEnPantalla(tester);
-    expect(primeras, ProductoService.porPagina);
-    for (var i = 0; i < 6 && _piezasEnPantalla(tester) == primeras; i++) {
-      await tester.drag(find.byType(CustomScrollView), const Offset(0, -900));
-      await tester.pump();
-      await tester.runAsync(() => Future<void>.delayed(const Duration(seconds: 2)));
-      await tester.pumpAndSettle();
-    }
-    final despues = _piezasEnPantalla(tester);
-    expect(despues, greaterThan(primeras));
-    await tester.drag(find.byType(CustomScrollView), const Offset(0, 3000));
+    await esperar(tester, find.byType(TarjetaProducto));
+    expect(_paginaEnPantalla(tester), 1);
+    final siguiente = find.byKey(const Key('pagina_siguiente'));
+    await tester.scrollUntilVisible(siguiente, 400, scrollable: find.byType(Scrollable).first);
     await tester.pumpAndSettle();
-    await _caso(tester, 'I-02', '${PiezasPrueba.categoriaCompra} abrió con $primeras piezas y al bajar llegó a $despues');
+    await tester.tap(siguiente);
+    await esperar(tester, find.byType(TarjetaProducto));
+    expect(_paginaEnPantalla(tester), 2);
+    final contador = tester.widget<Text>(find.textContaining(contadorPiezas)).data!;
+    await _caso(tester, 'I-02', '${PiezasPrueba.categoriaCompra} abrió en la página 1 de ${ProductoService.porPagina} piezas y Siguiente llevó a "$contador"');
 
     // I-03 (HU-06 y HU-09): la pieza más barata con existencia llega al carrito con su precio.
     final pieza = (await tester.runAsync(() async {
