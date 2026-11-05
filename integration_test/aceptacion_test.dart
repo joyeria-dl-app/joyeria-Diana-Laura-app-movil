@@ -96,6 +96,8 @@ void main() {
     // Catálogo filtrado por Anillos hasta la tarjeta de la pieza.
     await abrirPestana(tester, 'catalogo');
     await esperar(tester, find.byType(TarjetaProducto));
+    // Las categorías llegan aparte de las piezas: se espera su círculo antes de tocarlo.
+    await esperar(tester, find.text(anillos.nombre));
     await tester.tap(find.text(anillos.nombre).first);
     await esperar(tester, find.text(anillos.nombre).at(1));
     final tarjeta = find.byWidgetPredicate((w) => w is TarjetaProducto && w.producto.id == producto.id);
