@@ -14,6 +14,7 @@ import 'services/avisos_pedido.dart';
 import 'services/api_client.dart';
 import 'services/auth_service.dart';
 import 'services/carrito_service.dart';
+import 'services/dispositivo_root.dart';
 import 'services/favorito_service.dart';
 import 'services/inicio_service.dart';
 import 'services/notificaciones_service.dart';
@@ -24,6 +25,7 @@ import 'services/producto_service.dart';
 import 'services/service_factory.dart';
 import 'services/session_storage.dart';
 import 'services/zonas_service.dart';
+import 'widgets/aviso_root.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,7 +40,16 @@ Future<void> main() async {
   if (conFirebase) await _iniciarCrashlytics();
   final preferencia = SecurePreferenciaTema();
   final oscuro = await TemaProvider.leerInicial(preferencia);
-  runApp(JoyeriaApp(storage: SecureSessionStorage(), mensajeria: conFirebase ? FirebaseMensajeria() : null, preferenciaTema: preferencia, temaOscuro: oscuro));
+  // Con root la sesión vive solo mientras la app está abierta (#99).
+  final conRoot = await revisarRoot();
+  runApp(
+    JoyeriaApp(
+      storage: conRoot ? MemorySessionStorage() : SecureSessionStorage(),
+      mensajeria: conFirebase ? FirebaseMensajeria() : null,
+      preferenciaTema: preferencia,
+      temaOscuro: oscuro,
+    ),
+  );
   if (conFirebase) {
     // Avisos del pedido (#56). Se inicia después del primer cuadro para que ya exista el navegador
     // si la app se abrió desde un aviso.
@@ -142,7 +153,10 @@ class JoyeriaApp extends StatelessWidget {
           theme: tema.tema,
           // Sin animación entre temas: los colores fijos y los del tema cambian a la vez.
           themeAnimationDuration: Duration.zero,
-          builder: (context, child) => ReconstruirConTema(oscuro: tema.oscuro, child: child!),
+          builder: (context, child) => ReconstruirConTema(
+            oscuro: tema.oscuro,
+            child: dispositivoConRoot ? AvisoRoot(child: child!) : child!,
+          ),
           initialRoute: AppRoutes.home,
           routes: AppRoutes.routes,
         ),
