@@ -267,14 +267,24 @@ class _Invitacion extends StatelessWidget {
             style: TextStyle(color: AppColors.textoSuave, fontSize: 13, height: 1.4),
           ),
           const SizedBox(height: 14),
+          // En teléfonos de 360 dp (Moto G6) el texto no cabe con el relleno normal del botón: se reduce
+          // el relleno y, si aún no cabe, la letra se achica en lugar de partirse en dos líneas.
           Row(
             children: [
               Expanded(
-                child: FilledButton(onPressed: () => Navigator.pushNamed(context, AppRoutes.login), child: const Text('Iniciar sesión')),
+                child: FilledButton(
+                  style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 12)),
+                  onPressed: () => Navigator.pushNamed(context, AppRoutes.login),
+                  child: const FittedBox(fit: BoxFit.scaleDown, child: Text('Iniciar sesión', maxLines: 1)),
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: OutlinedButton(onPressed: () => Navigator.pushNamed(context, AppRoutes.register), child: const Text('Crear cuenta')),
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 12)),
+                  onPressed: () => Navigator.pushNamed(context, AppRoutes.register),
+                  child: const FittedBox(fit: BoxFit.scaleDown, child: Text('Crear cuenta', maxLines: 1)),
+                ),
               ),
             ],
           ),
