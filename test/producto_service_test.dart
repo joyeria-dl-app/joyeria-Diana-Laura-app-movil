@@ -88,7 +88,7 @@ void main() {
     final productos = await service.productos();
 
     expect(productos.single.nombre, 'Anillo con circonia');
-    expect(backend.peticiones.single.queryParameters, {'limit': 20, 'offset': 0});
+    expect(backend.peticiones.single.queryParameters, {'limit': 10, 'offset': 0});
   });
 
   test('Filtra por categoría y pide la página indicada', () async {
@@ -98,7 +98,7 @@ void main() {
 
     await service.productos(categoriaId: 1, pagina: 2);
 
-    expect(backend.peticiones.single.queryParameters, {'limit': 20, 'offset': 40, 'categoria_id': 1});
+    expect(backend.peticiones.single.queryParameters, {'limit': 10, 'offset': 20, 'categoria_id': 1});
   });
 
   test('Solo muestra las categorías principales activas', () async {

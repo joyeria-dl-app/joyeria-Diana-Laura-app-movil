@@ -19,7 +19,8 @@ class ProductoService {
 
   final ApiClient _api;
 
-  static const int porPagina = 20;
+  // Páginas de 10 (#269): en teléfonos de 360 dp caben 3 filas y la primera página carga más rápido.
+  static const int porPagina = 10;
 
   // Listado del catálogo. `categoriaId` filtra por categoría y `pagina`
   // (desde 0) permite cargar más productos al llegar al final de la lista.

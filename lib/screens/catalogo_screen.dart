@@ -13,7 +13,7 @@ import '../widgets/tarjeta_producto.dart';
 import 'detalle_screen.dart';
 import '../widgets/foto_red.dart';
 
-// Catálogo de piezas (boceto P6). Carga 20 productos y pide más al llegar al final.
+// Catálogo de piezas (boceto P6). Carga 10 productos y pide más al llegar al final.
 // Desde el Inicio (#244) el catálogo se abre ya filtrado por una categoría o con el buscador listo.
 class CatalogoScreen extends StatefulWidget {
   const CatalogoScreen({super.key, this.categoria, this.buscar = false});
@@ -355,7 +355,7 @@ class _Encabezado extends StatelessWidget {
     required this.onBuscar,
   });
   final String titulo;
-  // "20+ piezas" en la cuadrícula o "6 categorías" en secciones; null mientras no hay nada.
+  // "10+ piezas" en la cuadrícula o "6 categorías" en secciones; null mientras no hay nada.
   final String? contador;
   final List<Categoria> categorias;
   final Categoria? activa;
@@ -557,7 +557,6 @@ class _SeccionCategoria extends StatefulWidget {
   final Categoria categoria;
   final VoidCallback onVerTodo;
 
-  static const maxPiezas = 10;
   static const anchoTarjeta = 170.0;
 
   @override
@@ -577,8 +576,9 @@ class _SeccionCategoriaState extends State<_SeccionCategoria> {
   Future<void> _cargar() async {
     setState(() => _error = false);
     try {
+      // Solo la primera página (10 piezas): el resto se ve con "Ver todo" (#269).
       final piezas = await context.read<ProductoService>().productos(categoriaId: widget.categoria.id);
-      if (mounted) setState(() => _piezas = piezas.take(_SeccionCategoria.maxPiezas).toList());
+      if (mounted) setState(() => _piezas = piezas);
     } on ProductoException {
       if (mounted) setState(() => _error = true);
     }
