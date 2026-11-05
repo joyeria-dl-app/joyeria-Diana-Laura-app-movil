@@ -16,8 +16,10 @@ import 'package:joyeria_diana_laura/utils/formato.dart';
 
 // Devuelve productos de prueba sin llamar al backend.
 class _ServicioFalso extends ProductoService {
-  _ServicioFalso(this.paginas, {this.falla = false, this.listaCategorias = const []}) : super(api: ApiClient());
+  _ServicioFalso(this.paginas, {this.falla = false, this.listaCategorias = const [], this.total}) : super(api: ApiClient());
   final List<List<Producto>> paginas;
+  // Lo que respondería el backend en total_filtrado; null como un backend sin ese dato.
+  final int? total;
   final List<Categoria> listaCategorias;
   bool falla;
   final List<int> pedidas = [];
@@ -30,6 +32,10 @@ class _ServicioFalso extends ProductoService {
     if (falla) throw const ProductoException('No se pudo cargar el catálogo.');
     return pagina < paginas.length ? paginas[pagina] : [];
   }
+
+  @override
+  Future<PaginaProductos> pagina({int? categoriaId, String? busqueda, int pagina = 0}) async =>
+      PaginaProductos(await productos(categoriaId: categoriaId, busqueda: busqueda, pagina: pagina), total);
 
   @override
   Future<List<Categoria>> categorias() async {
@@ -52,6 +58,12 @@ Future<void> _abrir(WidgetTester tester, ProductoService servicio) async {
       ),
     ),
   );
+  await tester.pumpAndSettle();
+}
+
+// Los botones de página van al final de la cuadrícula: se baja hasta que se construyan.
+Future<void> _alPaginador(WidgetTester tester, String clave) async {
+  await tester.scrollUntilVisible(find.byKey(Key(clave)), 300, scrollable: find.byType(Scrollable).first);
   await tester.pumpAndSettle();
 }
 
@@ -113,14 +125,66 @@ void main() {
     expect(find.text('Agotado'), findsOneWidget);
   });
 
-  testWidgets('Pide la siguiente página al bajar hasta el final', (tester) async {
+  // #279: páginas numeradas; cada página se pide al elegirla y reemplaza a la anterior.
+  testWidgets('Muestra 6 piezas por página y la siguiente se pide al tocar su número', (tester) async {
+    final servicio = _ServicioFalso([
+      List.generate(ProductoService.porPagina, (i) => _pieza(i)),
+      [_pieza(100)],
+    ], total: ProductoService.porPagina + 1);
+    await _abrir(tester, servicio);
+
+    expect(servicio.pedidas, [0]);
+    expect(find.text('${ProductoService.porPagina + 1} piezas · página 1 de 2'), findsOneWidget);
+
+    await _alPaginador(tester, 'pagina_2');
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('pagina_2')));
+    await tester.pumpAndSettle();
+
+    expect(servicio.pedidas, [0, 1]);
+    expect(find.text('Anillo 100'), findsOneWidget);
+    expect(find.text('Anillo 0'), findsNothing);
+    expect(find.text('${ProductoService.porPagina + 1} piezas · página 2 de 2'), findsOneWidget);
+  });
+
+  testWidgets('Anterior y Siguiente cambian de página y se desactivan en los extremos', (tester) async {
+    final servicio = _ServicioFalso([
+      List.generate(ProductoService.porPagina, (i) => _pieza(i)),
+      [_pieza(100)],
+    ], total: ProductoService.porPagina + 1);
+    await _abrir(tester, servicio);
+
+    IconButton boton(String clave) => tester.widget<IconButton>(find.byKey(Key(clave)));
+    await _alPaginador(tester, 'pagina_anterior');
+    expect(boton('pagina_anterior').onPressed, isNull);
+
+    await _alPaginador(tester, 'pagina_siguiente');
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('pagina_siguiente')));
+    await tester.pumpAndSettle();
+    expect(find.text('Anillo 100'), findsOneWidget);
+    await _alPaginador(tester, 'pagina_siguiente');
+    expect(boton('pagina_siguiente').onPressed, isNull);
+
+    await _alPaginador(tester, 'pagina_anterior');
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('pagina_anterior')));
+    await tester.pumpAndSettle();
+    expect(servicio.pedidas, [0, 1, 0]);
+    expect(find.text('Anillo 0'), findsOneWidget);
+  });
+
+  testWidgets('Sin el total del backend se pasa de página con Siguiente', (tester) async {
     final servicio = _ServicioFalso([
       List.generate(ProductoService.porPagina, (i) => _pieza(i)),
       [_pieza(100)],
     ]);
     await _abrir(tester, servicio);
 
-    await tester.dragUntilVisible(find.text('Anillo 100'), find.byType(CustomScrollView), const Offset(0, -500));
+    expect(find.text('Página 1'), findsWidgets);
+    await _alPaginador(tester, 'pagina_siguiente');
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('pagina_siguiente')));
     await tester.pumpAndSettle();
 
     expect(servicio.pedidas, [0, 1]);
@@ -208,7 +272,9 @@ void main() {
     await tester.tap(find.text('Pulseras').first);
     await tester.pumpAndSettle();
 
-    await tester.dragUntilVisible(find.text('Anillo 100'), find.byType(CustomScrollView), const Offset(0, -500));
+    await _alPaginador(tester, 'pagina_siguiente');
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('pagina_siguiente')));
     await tester.pumpAndSettle();
 
     // Última petición: página 1 de la categoría 3.
@@ -339,6 +405,10 @@ class _PorCategoria extends ProductoService {
     if (pagina > 0) return [];
     return categoriaId == null ? porCategoria.values.expand((p) => p).toList() : porCategoria[categoriaId] ?? [];
   }
+
+  @override
+  Future<PaginaProductos> pagina({int? categoriaId, String? busqueda, int pagina = 0}) async =>
+      PaginaProductos(await productos(categoriaId: categoriaId, busqueda: busqueda, pagina: pagina), null);
 
   @override
   Future<List<Categoria>> categorias() async => [
