@@ -20,7 +20,7 @@ Google Play no acepta APK firmados con la llave de depuración: pide un **Androi
 |---|---|---|
 | 1. Firma | #62 (hecho) | Llave de subida `upload-keystore.jks` (RSA 2048, alias `upload`), guardada fuera del repositorio por el equipo. `android/app/build.gradle.kts` firma el build de producción con ella leyendo `android/key.properties` (ignorado por Git); sin ese archivo, como en los pipelines, firma con la llave de depuración. Google guarda la llave final (Play App Signing). |
 | 2. Build | #63 (hecho) | `flutter build appbundle --release` genera el AAB firmado. Ver [Generar el AAB](#generar-el-aab). |
-| 3. Pruebas internas | #64 | Subir el AAB al canal **Pruebas internas** de Google Play Console; los testers (el equipo y la maestra) instalan la app desde Google Play con un enlace de invitación. |
+| 3. Pruebas internas | #64 (AAB listo; falta la cuenta) | Subir el AAB al canal **Pruebas internas** de Google Play Console; los testers (el equipo y la maestra) instalan la app desde Google Play con un enlace de invitación. |
 | 4. Errores | #65 | Firebase Crashlytics reporta los cierres inesperados de la versión instalada. |
 | 5. Versión final | #93 | v1.0.0: develop se une a main, se publica en GitHub Releases y el mismo AAB se sube a Google Play. |
 
@@ -52,6 +52,32 @@ jarsigner -verify -verbose:summary -certs build/app/outputs/bundle/release/app-r
 ```
 
 Resultado del 4 nov 2026 (versión `0.3.0+3`): `build/app/outputs/bundle/release/app-release.aab`, 53.1 MB, firmado por `CN=Joyeria Diana Laura, OU=App Movil, O=Joyeria Diana Laura, L=Huejutla, ST=Hidalgo, C=MX`. Para la v1.0.0 (#93) se vuelve a generar con `1.0.0+4` en `pubspec.yaml`.
+
+## Estado de Pruebas internas (#64)
+
+Al 4 nov 2026 el equipo **no tiene la cuenta de desarrollador de Google Play Console** (pago único de 25 USD). Por eso el AAB no se ha subido, pero todo lo que depende del proyecto está listo:
+
+| Requisito | Estado |
+|---|---|
+| Llave de subida (#62) | Lista, guardada fuera del repositorio |
+| AAB firmado con la llave de subida (#63) | Listo y verificado con `jarsigner` |
+| Versión (`versionName`/`versionCode`) | Se valida en el pipeline; la v1.0.0 sale con `1.0.0+4` |
+| `applicationId` | `com.joyeriadianalaura.joyeria_diana_laura` (no cambia después de subir la primera versión) |
+| Cuenta de Google Play Console | **Pendiente** (decisión del equipo) |
+
+Mientras tanto, la app se distribuye por **GitHub Releases** como APK, igual que en los sprints anteriores.
+
+### Pasos cuando exista la cuenta
+
+1. Crear la cuenta en [Play Console](https://play.google.com/console), pagar los 25 USD y verificar la identidad.
+2. **Crear app**: nombre "Joyería Diana Laura", idioma español (México), tipo App, gratuita.
+3. En **Prueba > Pruebas internas**, crear una lista de testers con los correos del equipo y de la maestra.
+4. **Crear versión**: aceptar **Play App Signing** (Google guarda la llave final y nuestra llave queda como llave de subida) y subir `app-release.aab` de la v1.0.0.
+5. Escribir las notas de la versión, revisar y **Lanzar en Pruebas internas**.
+6. Copiar el **enlace de invitación** y mandarlo a los testers; cada uno acepta y instala la app desde Google Play.
+7. Llenar lo que Play Console pide antes de pasar a otros canales: política de privacidad, clasificación de contenido, seguridad de los datos y ficha de la tienda.
+
+Si la llave de subida se pierde después de activar Play App Signing, se pide a Google un cambio de llave de subida desde Play Console; la app no se pierde.
 
 ## Numeración de versiones
 
