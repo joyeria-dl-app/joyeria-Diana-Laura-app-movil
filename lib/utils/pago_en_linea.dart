@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/pedido.dart';
+import '../services/dispositivo_root.dart';
 import '../services/pedido_service.dart';
 
 // Abre el enlace de pago en el navegador del teléfono. Las pruebas lo cambian para no abrir nada.
@@ -17,6 +18,13 @@ Stream<Uri> Function() enlacesDeRegreso = () => AppLinks().uriLinkStream;
 // Devuelve true si se abrió la página.
 Future<bool> abrirPagoMercadoPago(BuildContext context, Future<PreferenciaPago> Function() pedirPreferencia) async {
   final mensajero = ScaffoldMessenger.of(context);
+  // Con root no se abre el pago en línea (#99): el pedido sigue y se paga en la tienda.
+  if (dispositivoConRoot) {
+    mensajero
+      ..hideCurrentSnackBar()
+      ..showSnackBar(const SnackBar(content: Text('Por seguridad, en un teléfono con root no se puede pagar en línea. Puedes pagar en la tienda.')));
+    return false;
+  }
   try {
     final preferencia = await pedirPreferencia();
     if (!await abrirEnlacePago(Uri.parse(preferencia.enlace))) throw const PedidoException('No se pudo abrir Mercado Pago.');
