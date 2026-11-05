@@ -109,9 +109,15 @@ class _Servidor implements HttpClientAdapter {
   void close({bool force = false}) {}
 }
 
-Future<_Servidor> _abrir(WidgetTester tester, {bool conSesion = true, _Servidor? servidor}) async {
-  tester.view.physicalSize = const Size(1080, 2400);
-  tester.view.devicePixelRatio = 2.6;
+Future<_Servidor> _abrir(
+  WidgetTester tester, {
+  bool conSesion = true,
+  _Servidor? servidor,
+  Size pantalla = const Size(1080, 2400),
+  double densidad = 2.6,
+}) async {
+  tester.view.physicalSize = pantalla;
+  tester.view.devicePixelRatio = densidad;
   addTearDown(tester.view.reset);
   final s = servidor ?? _Servidor();
   final storage = MemorySessionStorage();
@@ -151,6 +157,16 @@ void main() {
     expect(find.byKey(const Key('inicio_notificaciones')), findsNothing);
     // El resto del Inicio se ve igual.
     expect(find.text('Colección Exclusiva'), findsOneWidget);
+  });
+
+  // Moto G6 Plus: 1080 x 2160 px con densidad 3, es decir, 360 dp de ancho.
+  testWidgets('En un teléfono de 360 dp los botones de la invitación caben en una sola línea', (tester) async {
+    await _abrir(tester, conSesion: false, pantalla: const Size(1080, 2160), densidad: 3);
+    for (final texto in ['Iniciar sesión', 'Crear cuenta']) {
+      final alto = tester.getSize(find.text(texto)).height;
+      expect(alto, lessThan(30), reason: '$texto se partió en dos líneas');
+    }
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('El carrusel muestra los banners del sitio web y omite los que no tienen foto', (tester) async {
