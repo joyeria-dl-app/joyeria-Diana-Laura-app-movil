@@ -51,6 +51,9 @@ dev_dependencies:
     sdk: flutter
   integration_test:
     sdk: flutter
+  # flutter drive en modo perfil para la integración con un build compilado como el de producción (#151).
+  flutter_driver:
+    sdk: flutter
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
