@@ -13,7 +13,7 @@ import '../widgets/tarjeta_producto.dart';
 import 'detalle_screen.dart';
 import '../widgets/foto_red.dart';
 
-// Catálogo de piezas (boceto P6). Carga 10 productos y pide más al llegar al final.
+// Catálogo de piezas (boceto P6). Carga 5 productos y pide más al llegar al final.
 // Desde el Inicio (#244) el catálogo se abre ya filtrado por una categoría o con el buscador listo.
 class CatalogoScreen extends StatefulWidget {
   const CatalogoScreen({super.key, this.categoria, this.buscar = false});
@@ -106,6 +106,11 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
         _productos.addAll(nuevos);
         _pagina++;
         _hayMas = nuevos.length == ProductoService.porPagina;
+      });
+      // Con páginas de 5, en pantallas altas la primera puede no llenar la pantalla y entonces no
+      // hay desplazamiento que pida la siguiente: se pide sola hasta que la lista pase del borde.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_porSecciones && _scroll.hasClients && _scroll.position.extentAfter < 400) _cargarMas();
       });
     } on ProductoException catch (e) {
       if (mounted && consulta == _consulta) setState(() => _error = e.mensaje);
@@ -355,7 +360,7 @@ class _Encabezado extends StatelessWidget {
     required this.onBuscar,
   });
   final String titulo;
-  // "10+ piezas" en la cuadrícula o "6 categorías" en secciones; null mientras no hay nada.
+  // "5+ piezas" en la cuadrícula o "6 categorías" en secciones; null mientras no hay nada.
   final String? contador;
   final List<Categoria> categorias;
   final Categoria? activa;
@@ -576,7 +581,7 @@ class _SeccionCategoriaState extends State<_SeccionCategoria> {
   Future<void> _cargar() async {
     setState(() => _error = false);
     try {
-      // Solo la primera página (10 piezas): el resto se ve con "Ver todo" (#269).
+      // Solo la primera página (5 piezas): el resto se ve con "Ver todo" (#269).
       final piezas = await context.read<ProductoService>().productos(categoriaId: widget.categoria.id);
       if (mounted) setState(() => _piezas = piezas);
     } on ProductoException {
