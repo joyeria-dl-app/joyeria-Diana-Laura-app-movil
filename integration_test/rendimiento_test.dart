@@ -15,7 +15,7 @@ import 'package:joyeria_diana_laura/screens/detalle_screen.dart';
 import 'package:joyeria_diana_laura/services/session_storage.dart';
 import 'package:joyeria_diana_laura/widgets/tarjeta_producto.dart';
 
-import 'catalogo_test.dart' show despertarServidor, esperar;
+import 'catalogo_test.dart' show contadorPiezas, despertarServidor, esperar;
 
 // Pruebas de rendimiento (HU-07 y HU-08): tiempos de la app en el emulador contra el backend real
 // (pipeline pruebas-rendimiento.yml). Criterios del plan: arranque < 3 s, catálogo < 2 s con el
@@ -36,7 +36,7 @@ void main() {
 
     // Primera visita: despierta el servidor de Render; no cuenta para el tiempo.
     await tester.tap(find.text('Explorar sin cuenta'));
-    await esperar(tester, find.textContaining('piezas'));
+    await esperar(tester, find.textContaining(contadorPiezas));
     // El catálogo no tiene flecha de regreso propia: se vuelve al inicio como con el botón Atrás del teléfono.
     tester.state<NavigatorState>(find.byType(Navigator).first).pop();
     await tester.pumpAndSettle();

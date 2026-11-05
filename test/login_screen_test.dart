@@ -65,6 +65,7 @@ void main() {
     await tester.enterText(find.byKey(const Key('login_password')), 'correcta');
     await _enviar(tester);
 
-    expect(find.text('Hola, Ana'), findsOneWidget);
+    expect(find.byKey(const Key('inicio_saludo')), findsOneWidget);
+    expect(find.descendant(of: find.byKey(const Key('inicio_saludo')), matching: find.textContaining('Ana')), findsOneWidget);
   });
 }

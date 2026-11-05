@@ -140,7 +140,7 @@ Future<void> _tocar(WidgetTester tester, Finder boton) async {
 }
 
 Future<void> _irAZonas(WidgetTester tester) async {
-  await _tocar(tester, find.widgetWithText(OutlinedButton, 'Mi perfil'));
+  await _tocar(tester, find.byKey(const Key('nav_perfil')));
   await _tocar(tester, find.text('Zonas de entrega'));
   expect(find.byType(ZonasEntregaScreen), findsOneWidget);
 }

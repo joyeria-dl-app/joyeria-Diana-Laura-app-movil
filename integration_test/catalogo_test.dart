@@ -17,6 +17,10 @@ import 'datos_prueba.dart';
 // Pruebas de integración y aceptación: la app real contra el backend de Render.
 // Se ejecutan en un emulador Android (pipeline pruebas-integracion.yml).
 
+// Contador del catálogo ("20+ piezas"). Desde #244 el Inicio también dice "apartar piezas", así que
+// la palabra sola ya no indica que el catálogo abrió.
+final contadorPiezas = RegExp(r'^\d+\+? piezas$');
+
 // Render apaga el servicio sin uso; la primera respuesta puede tardar.
 Future<void> esperar(WidgetTester tester, Finder buscado, {Duration limite = TiemposPrueba.espera}) async {
   final fin = DateTime.now().add(limite);
@@ -57,7 +61,7 @@ void main() {
     await tester.tap(find.text('Explorar sin cuenta'));
 
     // Catálogo con piezas reales.
-    await esperar(tester, find.textContaining('piezas'));
+    await esperar(tester, find.textContaining(contadorPiezas));
     expect(find.text('Nuestras joyas'), findsOneWidget);
 
     // Filtro por categoría.

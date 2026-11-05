@@ -13,6 +13,7 @@ import 'services/api_client.dart';
 import 'services/auth_service.dart';
 import 'services/carrito_service.dart';
 import 'services/favorito_service.dart';
+import 'services/inicio_service.dart';
 import 'services/notificaciones_service.dart';
 import 'services/pedido_service.dart';
 import 'services/perfil_service.dart';
@@ -67,6 +68,7 @@ class JoyeriaApp extends StatelessWidget {
     this.temaOscuro = true,
     this.apiClient,
     this.zonasService,
+    this.inicioService,
   });
 
   final SessionStorage storage;
@@ -85,6 +87,7 @@ class JoyeriaApp extends StatelessWidget {
   // Cliente del backend; las pruebas pasan uno con el backend simulado.
   final ApiClient? apiClient;
   final ZonasService? zonasService;
+  final InicioService? inicioService;
 
   @override
   Widget build(BuildContext context) {
@@ -105,6 +108,7 @@ class JoyeriaApp extends StatelessWidget {
           value: perfilService ?? fabrica.crearPerfilService(pedidos: pedidos, favoritos: favoritos),
         ),
         Provider<ZonasService>.value(value: zonasService ?? fabrica.crearZonasService()),
+        Provider<InicioService>.value(value: inicioService ?? fabrica.crearInicioService()),
         ChangeNotifierProvider<FavoritosProvider>(create: (_) => FavoritosProvider(favoritos)),
         ChangeNotifierProvider<CarritoProvider>(create: (_) => CarritoProvider(carrito)),
         ChangeNotifierProvider<TemaProvider>(create: (_) => TemaProvider(preferenciaTema ?? MemoriaPreferenciaTema(), oscuro: temaOscuro)),
