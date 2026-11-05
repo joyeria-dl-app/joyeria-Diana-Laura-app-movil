@@ -568,9 +568,14 @@ class _SeccionCategoria extends StatefulWidget {
   State<_SeccionCategoria> createState() => _SeccionCategoriaState();
 }
 
-class _SeccionCategoriaState extends State<_SeccionCategoria> {
+// Se conserva al salir de la pantalla (#154): sin esto, al subir y bajar la sección se reconstruía
+// vacía y volvía a pedir sus piezas al servidor.
+class _SeccionCategoriaState extends State<_SeccionCategoria> with AutomaticKeepAliveClientMixin {
   List<Producto>? _piezas;
   bool _error = false;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -591,6 +596,7 @@ class _SeccionCategoriaState extends State<_SeccionCategoria> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final piezas = _piezas;
     // Las categorías sin piezas no se muestran.
     if (piezas != null && piezas.isEmpty) return const SizedBox.shrink();

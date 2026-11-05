@@ -78,6 +78,8 @@ void main() {
     anotar('scroll_cuadros_lentos_al_dibujar', '$lentosAlDibujar (${cuadros == 0 ? 0 : (lentosAlDibujar * 100 / cuadros).toStringAsFixed(1)} %, informativo)');
 
     // Carga del detalle de una pieza (HU-08).
+    // Tras el scroll se espera a que la primera sección tenga sus tarjetas (catálogo por secciones, #254).
+    await esperar(tester, find.byType(TarjetaProducto), limite: const Duration(seconds: 10));
     final detalle = Stopwatch()..start();
     await tester.tap(find.byType(TarjetaProducto).first);
     await esperar(tester, find.text('Precio'), limite: const Duration(seconds: 10));
