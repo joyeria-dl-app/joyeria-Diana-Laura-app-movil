@@ -45,6 +45,10 @@ const inicioConSesion = Key('inicio_saludo');
 
 // Abre una pestaña de la barra inferior: inicio, catalogo, carrito, favoritos o perfil.
 Future<void> abrirPestana(WidgetTester tester, String pestana) async {
+  // Primero terminan las animaciones de regreso (popUntil): mientras una pantalla sale, su barra
+  // sigue en el árbol y tocarla no hace nada.
+  await _calmar(tester);
+  await _calmar(tester);
   // Cada pantalla abierta tiene su barra; se toca la de la pantalla de arriba (la última).
   await esperar(tester, find.byKey(Key('nav_$pestana')));
   await tester.tap(find.byKey(Key('nav_$pestana')).last);
