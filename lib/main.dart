@@ -1,4 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -33,6 +35,7 @@ Future<void> main() async {
     conFirebase = false;
     debugPrint('Firebase no se inició: $e');
   }
+  if (conFirebase) await _iniciarCrashlytics();
   final preferencia = SecurePreferenciaTema();
   final oscuro = await TemaProvider.leerInicial(preferencia);
   runApp(JoyeriaApp(storage: SecureSessionStorage(), mensajeria: conFirebase ? FirebaseMensajeria() : null, preferenciaTema: preferencia, temaOscuro: oscuro));
@@ -43,6 +46,18 @@ Future<void> main() async {
       AvisosPedido(fuente: FirebaseFuenteAvisos(), abrirPedido: abrirPedidoDesdeAviso).iniciar();
     });
   }
+}
+
+// Crashlytics (#65): manda a Firebase los errores no controlados de Flutter y de la plataforma.
+// Solo reporta en el build de producción para no mezclar los errores de desarrollo.
+Future<void> _iniciarCrashlytics() async {
+  final crashlytics = FirebaseCrashlytics.instance;
+  await crashlytics.setCrashlyticsCollectionEnabled(kReleaseMode);
+  FlutterError.onError = crashlytics.recordFlutterFatalError;
+  PlatformDispatcher.instance.onError = (error, stack) {
+    crashlytics.recordError(error, stack, fatal: true);
+    return true;
+  };
 }
 
 // Navegador de la app, para abrir un pedido al tocar su aviso desde fuera de una pantalla.

@@ -21,7 +21,7 @@ Google Play no acepta APK firmados con la llave de depuración: pide un **Androi
 | 1. Firma | #62 (hecho) | Llave de subida `upload-keystore.jks` (RSA 2048, alias `upload`), guardada fuera del repositorio por el equipo. `android/app/build.gradle.kts` firma el build de producción con ella leyendo `android/key.properties` (ignorado por Git); sin ese archivo, como en los pipelines, firma con la llave de depuración. Google guarda la llave final (Play App Signing). |
 | 2. Build | #63 (hecho) | `flutter build appbundle --release` genera el AAB firmado. Ver [Generar el AAB](#generar-el-aab). |
 | 3. Pruebas internas | #64 (AAB listo; falta la cuenta) | Subir el AAB al canal **Pruebas internas** de Google Play Console; los testers (el equipo y la maestra) instalan la app desde Google Play con un enlace de invitación. |
-| 4. Errores | #65 | Firebase Crashlytics reporta los cierres inesperados de la versión instalada. |
+| 4. Errores | #65 (hecho) | Firebase Crashlytics reporta los errores no controlados de Flutter y de la plataforma; solo en el build de producción (`kReleaseMode`). Los reportes se ven en Firebase Console > Crashlytics. |
 | 5. Versión final | #93 | v1.0.0: develop se une a main, se publica en GitHub Releases y el mismo AAB se sube a Google Play. |
 
 ### Canales de Google Play
