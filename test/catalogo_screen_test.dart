@@ -160,9 +160,10 @@ void main() {
     await _abrir(tester, servicio);
 
     expect(find.text('Nuestras joyas'), findsOneWidget);
-    expect(find.text('Esclavas'), findsOneWidget);
+    // Sin filtro cada categoría aparece en su círculo y como título de su sección (#254).
+    expect(find.text('Esclavas'), findsNWidgets(2));
 
-    await tester.tap(find.text('Anillos'));
+    await tester.tap(find.text('Anillos').first);
     await tester.pumpAndSettle();
     expect(servicio.categoriasPedidas.last, 1);
     expect(find.text('Anillos'), findsNWidgets(2));
@@ -170,8 +171,9 @@ void main() {
     // Tocar otra vez la categoría activa vuelve a mostrar todo el catálogo.
     await tester.tap(find.text('Anillos').last);
     await tester.pumpAndSettle();
-    expect(servicio.categoriasPedidas.last, isNull);
+    // Sin filtro vuelven las secciones (#254).
     expect(find.text('Nuestras joyas'), findsOneWidget);
+    expect(find.text('2 categorías'), findsOneWidget);
   });
 
   testWidgets('Al reintentar sin conexión también vuelven las categorías', (tester) async {
@@ -191,7 +193,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Anillo 1'), findsOneWidget);
-    expect(find.text('Anillos'), findsOneWidget);
+    expect(find.text('Anillos'), findsNWidgets(2));
   });
 
   testWidgets('Con un filtro activo las páginas siguientes siguen siendo de esa categoría', (tester) async {
@@ -203,7 +205,7 @@ void main() {
       listaCategorias: const [Categoria(id: 3, nombre: 'Pulseras')],
     );
     await _abrir(tester, servicio);
-    await tester.tap(find.text('Pulseras'));
+    await tester.tap(find.text('Pulseras').first);
     await tester.pumpAndSettle();
 
     await tester.dragUntilVisible(find.text('Anillo 100'), find.byType(CustomScrollView), const Offset(0, -500));
@@ -223,7 +225,7 @@ void main() {
     );
     await _abrir(tester, servicio);
     servicio.paginas.clear();
-    await tester.tap(find.text('Cadenas'));
+    await tester.tap(find.text('Cadenas').first);
     await tester.pumpAndSettle();
 
     expect(find.text('Aún no hay piezas'), findsOneWidget);
@@ -276,6 +278,37 @@ void main() {
 
     expect(find.text('Detalle 7'), findsOneWidget);
   });
+
+  testWidgets('Sin filtro organiza las piezas por secciones de categoría y omite las vacías', (tester) async {
+    final servicio = _PorCategoria({
+      1: [Producto(id: 1, nombre: 'Anillo de promesa', precioVenta: 449.5, stock: 3)],
+      2: [Producto(id: 2, nombre: 'Collar de perlas', precioVenta: 890, stock: 2)],
+      3: [],
+    });
+    await _abrir(tester, servicio);
+
+    expect(find.text('3 categorías'), findsOneWidget);
+    expect(find.text('Anillo de promesa'), findsOneWidget);
+    expect(find.text('Collar de perlas'), findsOneWidget);
+    expect(find.text('Ver todo'), findsNWidgets(2));
+    // Cada sección pidió solo sus piezas; la cuadrícula general no se pidió.
+    expect(servicio.categoriasPedidas.toSet(), {1, 2, 3});
+  });
+
+  testWidgets('Ver todo de una sección abre esa categoría en cuadrícula', (tester) async {
+    final servicio = _PorCategoria({
+      1: [Producto(id: 1, nombre: 'Anillo de promesa', precioVenta: 449.5, stock: 3)],
+      2: [Producto(id: 2, nombre: 'Collar de perlas', precioVenta: 890, stock: 2)],
+    });
+    await _abrir(tester, servicio);
+    await tester.tap(find.text('Ver todo').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Ver todo'), findsNothing);
+    expect(find.text('1 piezas'), findsOneWidget);
+    expect(find.text('Anillo de promesa'), findsOneWidget);
+    expect(find.text('Collar de perlas'), findsNothing);
+  });
 }
 
 class _ServicioCategoriasFallan extends _ServicioFalso {
@@ -292,4 +325,23 @@ class _ServicioDetalle extends _ServicioFalso {
   Future<DetalleProducto> detalle(int id) async => DetalleProducto(
     producto: Producto(id: id, nombre: 'Detalle $id', precioVenta: 890, stock: 5),
   );
+}
+
+// Responde según la categoría pedida, como el backend.
+class _PorCategoria extends ProductoService {
+  _PorCategoria(this.porCategoria) : super(api: ApiClient());
+  final Map<int, List<Producto>> porCategoria;
+  final List<int?> categoriasPedidas = [];
+
+  @override
+  Future<List<Producto>> productos({int? categoriaId, String? busqueda, int pagina = 0}) async {
+    categoriasPedidas.add(categoriaId);
+    if (pagina > 0) return [];
+    return categoriaId == null ? porCategoria.values.expand((p) => p).toList() : porCategoria[categoriaId] ?? [];
+  }
+
+  @override
+  Future<List<Categoria>> categorias() async => [
+    for (final id in porCategoria.keys) Categoria(id: id, nombre: const {1: 'Anillos', 2: 'Collares', 3: 'Relojes'}[id]!),
+  ];
 }

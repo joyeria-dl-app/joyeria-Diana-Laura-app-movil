@@ -42,6 +42,8 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
   bool _hayMas = true;
   String? _error;
   List<Categoria> _categorias = [];
+  // Ya respondió la consulta de categorías (con o sin resultado).
+  bool _categoriasListas = false;
   Categoria? _categoria;
   final _busqueda = TextEditingController();
   late bool _buscando = widget.buscar;
@@ -53,10 +55,11 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
     super.initState();
     _categoria = widget.categoria;
     _scroll.addListener(() {
-      if (_scroll.position.extentAfter < 400) _cargarMas();
+      if (!_porSecciones && _scroll.position.extentAfter < 400) _cargarMas();
     });
     _cargarCategorias();
-    _cargarMas();
+    // Sin filtro se muestran secciones (#254); la cuadrícula solo se pide al filtrar o buscar.
+    if (widget.categoria != null || widget.buscar) _cargarMas();
     // Para pintar los corazones; sin sesión se quedan sin marcar.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final favoritos = context.read<FavoritosProvider?>();
@@ -70,9 +73,17 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
       final categorias = await context.read<ProductoService>().categorias();
       if (mounted) setState(() => _categorias = categorias);
     } on ProductoException {
-      return;
+      // Sin categorías no hay secciones: se muestra la cuadrícula de siempre.
+    } finally {
+      if (mounted) setState(() => _categoriasListas = true);
+      if (mounted && _sinFiltro && _categorias.isEmpty && _productos.isEmpty) _cargarMas();
     }
   }
+
+  bool get _sinFiltro => _categoria == null && _busqueda.text.trim().isEmpty;
+
+  // Catálogo sin filtro (#254): una sección por categoría en lugar de todas las piezas revueltas.
+  bool get _porSecciones => _sinFiltro && _categorias.isNotEmpty;
 
   @override
   void dispose() {
@@ -105,7 +116,10 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
 
   // Si se abrió sin internet, las categorías tampoco llegaron: se piden de nuevo.
   Future<void> _reintentar() async {
-    if (_categorias.isEmpty) _cargarCategorias();
+    if (_categorias.isEmpty) {
+      await _cargarCategorias();
+      if (_porSecciones) return;
+    }
     await _cargarMas();
   }
 
@@ -118,6 +132,8 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
       _hayMas = true;
       _cargando = false;
     });
+    // En secciones, cambiar _consulta hace que cada sección vuelva a pedir sus piezas.
+    if (_porSecciones) return;
     await _cargarMas();
   }
 
@@ -156,8 +172,11 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
                   SliverToBoxAdapter(
                     child: _Encabezado(
                       titulo: _categoria?.nombreVisible ?? 'Nuestras joyas',
-                      total: _productos.length,
-                      completo: !_hayMas,
+                      contador: _porSecciones
+                          ? '${_categorias.length} categorías'
+                          : _productos.isEmpty
+                          ? null
+                          : (_hayMas ? '${_productos.length}+ piezas' : '${_productos.length} piezas'),
                       categorias: _categorias,
                       activa: _categoria,
                       onElegir: _elegir,
@@ -189,6 +208,20 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
   }
 
   List<Widget> _contenido() {
+    if (_porSecciones) {
+      return [
+        SliverList.builder(
+          itemCount: _categorias.length,
+          // Cada sección se construye (y pide sus piezas) al acercarse a la pantalla.
+          itemBuilder: (_, i) =>
+              _SeccionCategoria(key: ValueKey('seccion_${_categorias[i].id}_$_consulta'), categoria: _categorias[i], onVerTodo: () => _elegir(_categorias[i])),
+        ),
+      ];
+    }
+    // Mientras llegan las categorías sin filtro todavía no se sabe si habrá secciones.
+    if (_sinFiltro && !_categoriasListas) {
+      return [_cuadricula(4, (_) => const _TarjetaCargando())];
+    }
     // Boceto 4a: tarjetas vacías mientras llega la primera página.
     if (_productos.isEmpty && _cargando) {
       return [_cuadricula(4, (_) => const _TarjetaCargando())];
@@ -312,8 +345,7 @@ class _TarjetaCargando extends StatelessWidget {
 class _Encabezado extends StatelessWidget {
   const _Encabezado({
     required this.titulo,
-    required this.total,
-    required this.completo,
+    required this.contador,
     required this.categorias,
     required this.activa,
     required this.onElegir,
@@ -323,8 +355,8 @@ class _Encabezado extends StatelessWidget {
     required this.onBuscar,
   });
   final String titulo;
-  final int total;
-  final bool completo;
+  // "20+ piezas" en la cuadrícula o "6 categorías" en secciones; null mientras no hay nada.
+  final String? contador;
   final List<Categoria> categorias;
   final Categoria? activa;
   final ValueChanged<Categoria> onElegir;
@@ -379,11 +411,11 @@ class _Encabezado extends StatelessWidget {
               ),
             ),
           ],
-          if (total > 0)
+          if (contador != null)
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
               // Mientras falten páginas por cargar no se conoce el total exacto.
-              child: Text(completo ? '$total piezas' : '$total+ piezas', style: TextStyle(color: AppColors.textoSuave, fontSize: 12)),
+              child: Text(contador!, style: TextStyle(color: AppColors.textoSuave, fontSize: 12)),
             ),
         ],
       ),
@@ -512,6 +544,94 @@ class _Aviso extends StatelessWidget {
               ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+// Sección de una categoría (#254): título, "Ver todo" y una fila con sus primeras piezas. Pide sus
+// piezas al construirse, es decir, cuando el usuario llega a ella.
+class _SeccionCategoria extends StatefulWidget {
+  const _SeccionCategoria({super.key, required this.categoria, required this.onVerTodo});
+  final Categoria categoria;
+  final VoidCallback onVerTodo;
+
+  static const maxPiezas = 10;
+  static const anchoTarjeta = 170.0;
+
+  @override
+  State<_SeccionCategoria> createState() => _SeccionCategoriaState();
+}
+
+class _SeccionCategoriaState extends State<_SeccionCategoria> {
+  List<Producto>? _piezas;
+  bool _error = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargar();
+  }
+
+  Future<void> _cargar() async {
+    setState(() => _error = false);
+    try {
+      final piezas = await context.read<ProductoService>().productos(categoriaId: widget.categoria.id);
+      if (mounted) setState(() => _piezas = piezas.take(_SeccionCategoria.maxPiezas).toList());
+    } on ProductoException {
+      if (mounted) setState(() => _error = true);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final piezas = _piezas;
+    // Las categorías sin piezas no se muestran.
+    if (piezas != null && piezas.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 12, 6),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    widget.categoria.nombreVisible,
+                    style: TextStyle(color: AppColors.texto, fontSize: 18, fontWeight: FontWeight.w700, letterSpacing: -0.4),
+                  ),
+                ),
+                TextButton(onPressed: widget.onVerTodo, child: const Text('Ver todo')),
+              ],
+            ),
+          ),
+          SizedBox(
+            height: TarjetaProducto.alto,
+            child: _error
+                ? Center(
+                    child: TextButton(onPressed: _cargar, child: const Text('No se pudieron cargar. Reintentar')),
+                  )
+                : ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    itemCount: piezas?.length ?? 3,
+                    separatorBuilder: (_, _) => const SizedBox(width: 14),
+                    itemBuilder: (_, i) => SizedBox(
+                      width: _SeccionCategoria.anchoTarjeta,
+                      child: piezas == null
+                          ? const _TarjetaCargando()
+                          : TarjetaProducto(
+                              producto: piezas[i],
+                              favorita: context.watch<FavoritosProvider?>()?.esFavorita(piezas[i].id) ?? false,
+                              onFavorito: () => alternarFavorito(context, piezas[i]),
+                              onTap: () => Navigator.push(context, MaterialPageRoute<void>(builder: (_) => DetalleScreen(productoId: piezas[i].id))),
+                            ),
+                    ),
+                  ),
+          ),
         ],
       ),
     );
