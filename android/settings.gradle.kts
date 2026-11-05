@@ -23,6 +23,8 @@ plugins {
     id("org.jetbrains.kotlin.android") version "2.4.0" apply false
     // Lee android/app/google-services.json para Firebase Cloud Messaging (HU-15, #55).
     id("com.google.gms.google-services") version "4.5.0" apply false
+    // Sube los símbolos del build de producción para leer los errores de Crashlytics (#65).
+    id("com.google.firebase.crashlytics") version "3.0.6" apply false
 }
 
 include(":app")

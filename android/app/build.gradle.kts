@@ -13,6 +13,8 @@ plugins {
     // Firebase Cloud Messaging (HU-15, #55). google-services.json no se sube al repositorio:
     // en la computadora se copia de la consola de Firebase y en los pipelines sale de un secreto.
     id("com.google.gms.google-services")
+    // Firebase Crashlytics (HU-17, #65): reporta los cierres inesperados de la app instalada.
+    id("com.google.firebase.crashlytics")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
