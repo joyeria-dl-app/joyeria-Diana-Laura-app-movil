@@ -10,6 +10,11 @@ abstract class SessionStorage {
   Future<Usuario?> leerUsuario();
   Future<bool> leerRecordar();
   Future<void> borrar();
+  // Token de renovación de Firebase (#272): con él se pide un ID token nuevo sin la contraseña.
+  Future<void> guardarRenovacion(String refreshToken);
+  Future<String?> leerRenovacion();
+  // Cambia solo el token del backend y conserva el usuario y "Recordarme".
+  Future<void> cambiarToken(String token);
 }
 
 class SecureSessionStorage implements SessionStorage {
@@ -20,6 +25,7 @@ class SecureSessionStorage implements SessionStorage {
   static const _claveToken = 'auth_token';
   static const _claveUsuario = 'auth_usuario';
   static const _claveRecordar = 'auth_recordar';
+  static const _claveRenovacion = 'auth_renovacion';
 
   @override
   Future<void> guardar(String token, Usuario usuario, {bool recordar = true}) async {
@@ -45,7 +51,17 @@ class SecureSessionStorage implements SessionStorage {
     await _storage.delete(key: _claveToken);
     await _storage.delete(key: _claveUsuario);
     await _storage.delete(key: _claveRecordar);
+    await _storage.delete(key: _claveRenovacion);
   }
+
+  @override
+  Future<void> guardarRenovacion(String refreshToken) => _storage.write(key: _claveRenovacion, value: refreshToken);
+
+  @override
+  Future<String?> leerRenovacion() => _storage.read(key: _claveRenovacion);
+
+  @override
+  Future<void> cambiarToken(String token) => _storage.write(key: _claveToken, value: token);
 }
 
 class MemorySessionStorage implements SessionStorage {
@@ -74,5 +90,17 @@ class MemorySessionStorage implements SessionStorage {
     _token = null;
     _usuario = null;
     _recordar = true;
+    _renovacion = null;
   }
+
+  String? _renovacion;
+
+  @override
+  Future<void> guardarRenovacion(String refreshToken) async => _renovacion = refreshToken;
+
+  @override
+  Future<String?> leerRenovacion() async => _renovacion;
+
+  @override
+  Future<void> cambiarToken(String token) async => _token = token;
 }

@@ -7,7 +7,14 @@ import '../services/auth_service.dart';
 import '../services/notificaciones_service.dart';
 
 class AuthProvider extends ChangeNotifier {
-  AuthProvider(this._service, {this._notificaciones});
+  AuthProvider(this._service, {this._notificaciones, VoidCallback? alVencerSesion}) {
+    // #272: si el backend rechaza la sesión y no se pudo renovar, la app queda sin sesión.
+    _service.alVencerSesion(() {
+      _usuario = null;
+      notifyListeners();
+      alVencerSesion?.call();
+    });
+  }
 
   final AuthService _service;
   // Notificaciones push del pedido (#55). Las pruebas que no las usan no la pasan.

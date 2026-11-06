@@ -19,18 +19,24 @@ class AuthException implements Exception {
 }
 
 class AuthService {
-  AuthService({required this._api, required this._storage, Dio? firebaseDio, String? apiKey})
+  AuthService({required this._api, required this._storage, Dio? firebaseDio, Dio? tokenDio, String? apiKey})
     : _firebase = firebaseDio ?? Dio(BaseOptions(baseUrl: 'https://identitytoolkit.googleapis.com/v1')),
-      _apiKey = apiKey ?? firebaseApiKey;
+      _tokens = tokenDio ?? Dio(BaseOptions(baseUrl: 'https://securetoken.googleapis.com/v1')),
+      _apiKey = apiKey ?? firebaseApiKey {
+    // #272: ante un 401 el cliente del backend renueva la sesión con este servicio.
+    _api.renovarSesion = renovarToken;
+  }
 
   final ApiClient _api;
   final SessionStorage _storage;
   final Dio _firebase;
+  // Servicio de tokens de Firebase: cambia el refreshToken por un ID token nuevo.
+  final Dio _tokens;
   final String _apiKey;
 
   Future<Usuario> iniciarSesion(String email, String password, {bool recordar = true}) async {
     final correo = email.trim();
-    final idToken = await _validarConFirebase(correo, password);
+    final (idToken, renovacion) = await _validarConFirebase(correo, password);
 
     final Response<dynamic> respuesta;
     try {
@@ -55,8 +61,43 @@ class AuthService {
 
     final usuario = Usuario.fromJson(datos!['user'] as Map<String, dynamic>);
     await _storage.guardar(token, usuario, recordar: recordar);
+    if (renovacion != null) await _storage.guardarRenovacion(renovacion);
     return usuario;
   }
+
+  // #272: cuando el backend responde 401 (token vencido o revocado), se pide a Firebase un ID token
+  // nuevo con el refreshToken guardado y se vuelve a entrar al backend, sin pedir la contraseña.
+  // Devuelve el token nuevo o null si no se pudo (sin refreshToken, cuenta deshabilitada, sin red).
+  Future<String?> renovarToken() async {
+    final renovacion = await _storage.leerRenovacion();
+    if (renovacion == null || _apiKey.isEmpty) return null;
+    try {
+      final firebase = await _tokens.post(
+        '/token',
+        queryParameters: {'key': _apiKey},
+        data: {'grant_type': 'refresh_token', 'refresh_token': renovacion},
+        options: Options(contentType: Headers.formUrlEncodedContentType),
+      );
+      final datosFirebase = firebase.data as Map<String, dynamic>;
+      final idToken = datosFirebase['id_token'] as String?;
+      if (idToken == null) return null;
+
+      final respuesta = await _api.dio.post('/auth/login/movil', data: {'idToken': idToken});
+      final data = respuesta.data as Map<String, dynamic>;
+      final token = (data['data'] as Map<String, dynamic>?)?['token'] as String?;
+      if (data['success'] != true || token == null) return null;
+
+      await _storage.cambiarToken(token);
+      final nuevaRenovacion = datosFirebase['refresh_token'] as String?;
+      if (nuevaRenovacion != null) await _storage.guardarRenovacion(nuevaRenovacion);
+      return token;
+    } on DioException {
+      return null;
+    }
+  }
+
+  // Aviso cuando la sesión terminó en el servidor y no se pudo renovar (#272).
+  void alVencerSesion(void Function() aviso) => _api.alVencerSesion = aviso;
 
   // Se llama al abrir la app: una sesión sin "Recordarme" no se conserva.
   Future<Usuario?> sesionGuardada() async {
@@ -146,7 +187,8 @@ class AuthService {
     }
   }
 
-  Future<String> _validarConFirebase(String email, String password) async {
+  // Devuelve el ID token y el refreshToken de Firebase (#272).
+  Future<(String, String?)> _validarConFirebase(String email, String password) async {
     _revisarConfiguracion();
     try {
       final respuesta = await _firebase.post(
@@ -154,7 +196,8 @@ class AuthService {
         queryParameters: {'key': _apiKey},
         data: {'email': email, 'password': password, 'returnSecureToken': true},
       );
-      return (respuesta.data as Map<String, dynamic>)['idToken'] as String;
+      final datos = respuesta.data as Map<String, dynamic>;
+      return (datos['idToken'] as String, datos['refreshToken'] as String?);
     } on DioException catch (e) {
       final codigo = _codigoFirebase(e);
       if (codigo == 'INVALID_LOGIN_CREDENTIALS' || codigo == 'EMAIL_NOT_FOUND' || codigo == 'INVALID_PASSWORD') {

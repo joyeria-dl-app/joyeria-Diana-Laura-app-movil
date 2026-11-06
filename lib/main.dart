@@ -142,6 +142,8 @@ class JoyeriaApp extends StatelessWidget {
           create: (_) => AuthProvider(
             authService ?? fabrica.crearAuthService(storage),
             notificaciones: mensajeria == null ? null : NotificacionesService(api: api, mensajeria: mensajeria!),
+            // #272: la sesión venció y no se pudo renovar: se lleva a iniciar sesión.
+            alVencerSesion: () => navegadorApp.currentState?.pushNamedAndRemoveUntil(AppRoutes.login, (ruta) => ruta.isFirst),
           )..restaurarSesion(),
         ),
       ],
