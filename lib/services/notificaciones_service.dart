@@ -8,6 +8,8 @@ import 'api_client.dart';
 // Lo que la app usa de Firebase Cloud Messaging. Las pruebas lo reemplazan para no depender de
 // Firebase ni del teléfono.
 abstract class MensajeriaPush {
+  // Si el permiso ya está concedido (no muestra nada al usuario).
+  Future<bool> permisoConcedido();
   // Pide el permiso de notificaciones (en Android 13 o más aparece el aviso del sistema).
   Future<bool> pedirPermiso();
   Future<String?> token();
@@ -21,6 +23,12 @@ abstract class MensajeriaPush {
 // Firebase Installation ID, pero sigue funcionando y el backend aún no envía de esa otra forma.
 class FirebaseMensajeria implements MensajeriaPush {
   FirebaseMessaging get _fcm => FirebaseMessaging.instance;
+
+  @override
+  Future<bool> permisoConcedido() async {
+    final ajustes = await _fcm.getNotificationSettings();
+    return ajustes.authorizationStatus == AuthorizationStatus.authorized || ajustes.authorizationStatus == AuthorizationStatus.provisional;
+  }
 
   @override
   Future<bool> pedirPermiso() async {
@@ -45,7 +53,13 @@ class FirebaseMensajeria implements MensajeriaPush {
 // backend para recibir los avisos de esa cuenta; al cerrar sesión se quita. Nada de esto debe
 // impedir usar la app: si no hay permiso, conexión o Firebase, la sesión sigue igual.
 class NotificacionesService {
-  NotificacionesService({required this._api, required this._mensajeria});
+  NotificacionesService({required this._api, required this._mensajeria, this.explicarPermiso});
+
+  // #276: antes de pedir el permiso del sistema, la app explica para qué sirve. Devuelve true si la
+  // persona elige Permitir. Sin él (pruebas antiguas) el permiso se pide directo.
+  Future<bool> Function()? explicarPermiso;
+  // "Ahora no": no se vuelve a preguntar mientras la app siga abierta.
+  bool _rechazado = false;
 
   final ApiClient _api;
   final MensajeriaPush _mensajeria;
@@ -58,7 +72,15 @@ class NotificacionesService {
   // Al iniciar sesión o al abrir la app con la sesión guardada.
   Future<void> activar() async {
     try {
-      if (!await _mensajeria.pedirPermiso()) return;
+      if (!await _mensajeria.permisoConcedido()) {
+        if (_rechazado) return;
+        final explicar = explicarPermiso;
+        if (explicar != null && !await explicar()) {
+          _rechazado = true;
+          return;
+        }
+        if (!await _mensajeria.pedirPermiso()) return;
+      }
       final token = await _mensajeria.token();
       if (token == null) return;
       await _registrar(token);
