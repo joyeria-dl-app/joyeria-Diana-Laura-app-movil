@@ -481,6 +481,7 @@ class _Opciones extends StatelessWidget {
             ),
             onTap: () => tema.cambiar(oscuro: !tema.oscuro),
           ),
+          const _AvisosCuenta(),
           _Renglon(icono: Icons.logout_rounded, texto: 'Cerrar sesión', peligro: true, onTap: () => cerrarSesionConConfirmacion(context)),
           _Renglon(
             key: const Key('perfil_eliminar_cuenta'),
@@ -491,6 +492,101 @@ class _Opciones extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// Oposición (ARCO, #274): interruptores para dejar de recibir avisos push del pedido y correos
+// promocionales. Se leen y se guardan en el servidor, que los respeta antes de enviar. Mientras cargan
+// o si no se pudieron leer, los interruptores quedan desactivados.
+class _AvisosCuenta extends StatefulWidget {
+  const _AvisosCuenta();
+
+  @override
+  State<_AvisosCuenta> createState() => _AvisosCuentaState();
+}
+
+class _AvisosCuentaState extends State<_AvisosCuenta> {
+  PreferenciasAvisos? _preferencias;
+  bool _guardando = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargar();
+  }
+
+  Future<void> _cargar() async {
+    try {
+      final preferencias = await context.read<PerfilService>().preferencias();
+      if (mounted) setState(() => _preferencias = preferencias);
+    } on PerfilException {
+      // Sin conexión: los interruptores quedan desactivados; se vuelve a intentar al abrir Mi perfil.
+    }
+  }
+
+  Future<void> _cambiar({bool? avisosPush, bool? correosPromocion}) async {
+    final antes = _preferencias!;
+    setState(() {
+      _guardando = true;
+      _preferencias = PreferenciasAvisos(
+        avisosPush: avisosPush ?? antes.avisosPush,
+        correosPromocion: correosPromocion ?? antes.correosPromocion,
+      );
+    });
+    final avisos = ScaffoldMessenger.of(context);
+    try {
+      final guardadas = await context.read<PerfilService>().guardarPreferencias(avisosPush: avisosPush, correosPromocion: correosPromocion);
+      if (mounted) setState(() => _preferencias = guardadas);
+    } on PerfilException catch (e) {
+      if (mounted) setState(() => _preferencias = antes);
+      avisos.showSnackBar(SnackBar(content: Text(e.mensaje)));
+    } finally {
+      if (mounted) setState(() => _guardando = false);
+    }
+  }
+
+  Widget _interruptor(Key clave, String etiqueta, bool? valor, ValueChanged<bool> alCambiar) => Semantics(
+    label: etiqueta,
+    child: Switch(
+      key: clave,
+      value: valor ?? false,
+      onChanged: valor == null || _guardando ? null : alCambiar,
+      activeThumbColor: Colors.white,
+      activeTrackColor: AppColors.primario2,
+      inactiveThumbColor: AppColors.primario2,
+      inactiveTrackColor: AppColors.superficie2,
+      trackOutlineColor: WidgetStatePropertyAll(AppColors.borde),
+    ),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final p = _preferencias;
+    return Column(
+      children: [
+        _Renglon(
+          icono: Icons.notifications_active_rounded,
+          texto: 'Avisos de mis pedidos',
+          final_: _interruptor(const Key('perfil_avisos_push'), 'Avisos de mis pedidos', p?.avisosPush, (v) => _cambiar(avisosPush: v)),
+          onTap: () {
+            if (p != null && !_guardando) _cambiar(avisosPush: !p.avisosPush);
+          },
+        ),
+        _Renglon(
+          icono: Icons.mail_outline_rounded,
+          texto: 'Correos de promociones',
+          final_: _interruptor(
+            const Key('perfil_correos_promocion'),
+            'Correos de promociones',
+            p?.correosPromocion,
+            (v) => _cambiar(correosPromocion: v),
+          ),
+          onTap: () {
+            if (p != null && !_guardando) _cambiar(correosPromocion: !p.correosPromocion);
+          },
+        ),
+      ],
     );
   }
 }

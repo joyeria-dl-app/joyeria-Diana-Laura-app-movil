@@ -41,3 +41,16 @@ class ResumenCliente {
   final int? apartados;
   final int? favoritos;
 }
+
+// Oposición (ARCO, #274): qué avisos acepta la clienta. Se guardan en el servidor.
+class PreferenciasAvisos {
+  const PreferenciasAvisos({required this.avisosPush, required this.correosPromocion});
+
+  factory PreferenciasAvisos.fromJson(Map<String, dynamic> json) =>
+      PreferenciasAvisos(avisosPush: json['avisos_push'] != false, correosPromocion: json['correos_promocion'] != false);
+
+  // Avisos push del estado de sus pedidos.
+  final bool avisosPush;
+  // Correos con promociones de la tienda.
+  final bool correosPromocion;
+}
