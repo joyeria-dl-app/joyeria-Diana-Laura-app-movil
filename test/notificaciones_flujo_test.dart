@@ -119,8 +119,17 @@ class _Fcm implements MensajeriaPush, FuenteAvisos {
   void Function(Map<String, dynamic>)? _tocarAvisoMostrado;
   final List<AvisoPush> mostrados = [];
 
+  // Permiso concedido de antes; si no, se pide (y se cuenta cuántas veces).
+  bool concedido = true;
+  int pedidos = 0;
   @override
-  Future<bool> pedirPermiso() async => permiso;
+  Future<bool> permisoConcedido() async => concedido;
+  @override
+  Future<bool> pedirPermiso() async {
+    pedidos++;
+    return permiso;
+  }
+
   @override
   Future<String?> token() async => _tokenTelefono;
   @override
@@ -155,13 +164,15 @@ class _App {
   final MemorySessionStorage storage;
 }
 
-Future<_App> _abrir(WidgetTester tester, {bool permiso = true}) async {
+Future<_App> _abrir(WidgetTester tester, {bool permiso = true, bool concedido = true}) async {
   tester.view.physicalSize = const Size(1080, 2400);
   tester.view.devicePixelRatio = 2.6;
   addTearDown(tester.view.reset);
 
   final servidor = _Servidor();
-  final fcm = _Fcm()..permiso = permiso;
+  final fcm = _Fcm()
+    ..permiso = permiso
+    ..concedido = concedido;
   final storage = MemorySessionStorage();
   await storage.guardar(_token, const Usuario(email: 'ana@correo.com', nombre: 'Ana Martínez', rol: 'cliente'));
   final api = ApiClient(
@@ -195,8 +206,33 @@ void main() {
     expect(app.servidor.telefonos, {_tokenTelefono});
   });
 
-  testWidgets('Sin permiso de notificaciones no se registra y la app funciona igual', (tester) async {
-    final app = await _abrir(tester, permiso: false);
+  // #276: sin permiso, la app explica para qué lo quiere antes del aviso del sistema.
+  testWidgets('Sin permiso, "Ahora no": no se pide el permiso del sistema, no se registra y la app funciona igual', (tester) async {
+    final app = await _abrir(tester, concedido: false);
+    expect(find.text('¿Te avisamos de tus pedidos?'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('permiso_ahora_no')));
+    await tester.pumpAndSettle();
+
+    expect(app.fcm.pedidos, 0);
+    expect(app.servidor.telefonos, isEmpty);
+    expect(find.byKey(const Key('inicio_saludo')), findsOneWidget);
+  });
+
+  testWidgets('Sin permiso, "Permitir": se pide el permiso del sistema y el teléfono queda registrado', (tester) async {
+    final app = await _abrir(tester, concedido: false);
+    await tester.tap(find.byKey(const Key('permiso_permitir')));
+    await tester.pumpAndSettle();
+
+    expect(app.fcm.pedidos, 1);
+    expect(app.servidor.telefonos, {_tokenTelefono});
+  });
+
+  testWidgets('Si Android niega el permiso después de "Permitir", no se registra', (tester) async {
+    final app = await _abrir(tester, concedido: false, permiso: false);
+    await tester.tap(find.byKey(const Key('permiso_permitir')));
+    await tester.pumpAndSettle();
+
+    expect(app.fcm.pedidos, 1);
     expect(app.servidor.telefonos, isEmpty);
     expect(find.byKey(const Key('inicio_saludo')), findsOneWidget);
   });

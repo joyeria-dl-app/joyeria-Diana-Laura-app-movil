@@ -30,8 +30,16 @@ class _MensajeriaFalsa implements MensajeriaPush {
     _nuevos.add(nuevo);
   }
 
+  // Permiso concedido de antes; si no, se pide (y se cuenta cuántas veces).
+  bool concedido = true;
+  int pedidos = 0;
   @override
-  Future<bool> pedirPermiso() async => permiso;
+  Future<bool> permisoConcedido() async => concedido;
+  @override
+  Future<bool> pedirPermiso() async {
+    pedidos++;
+    return permiso;
+  }
 
   @override
   Future<String?> token() async => actual;
@@ -117,12 +125,60 @@ void main() {
     });
 
     test('Sin permiso de notificaciones no registra nada', () async {
-      mensajeria.permiso = false;
+      mensajeria
+        ..concedido = false
+        ..permiso = false;
       final servicio = NotificacionesService(api: api, mensajeria: mensajeria);
       await servicio.activar();
 
       expect(backend.peticiones, isEmpty);
       expect(servicio.tokenRegistrado, isNull);
+    });
+
+    // #276: el diálogo de la app va antes del aviso del sistema.
+    test('Sin permiso, "Ahora no" en el diálogo: no se pide el permiso del sistema ni se registra', () async {
+      mensajeria.concedido = false;
+      var explicados = 0;
+      final servicio = NotificacionesService(
+        api: api,
+        mensajeria: mensajeria,
+        explicarPermiso: () async {
+          explicados++;
+          return false;
+        },
+      );
+      await servicio.activar();
+      await servicio.activar();
+
+      expect(explicados, 1, reason: 'mientras la app siga abierta no se vuelve a preguntar');
+      expect(mensajeria.pedidos, 0);
+      expect(backend.peticiones, isEmpty);
+    });
+
+    test('Sin permiso, "Permitir" en el diálogo: se pide el permiso del sistema y se registra', () async {
+      mensajeria.concedido = false;
+      final servicio = NotificacionesService(api: api, mensajeria: mensajeria, explicarPermiso: () async => true);
+      await servicio.activar();
+
+      expect(mensajeria.pedidos, 1);
+      expect(servicio.tokenRegistrado, _token);
+    });
+
+    test('Con el permiso ya concedido no aparece el diálogo ni el aviso del sistema', () async {
+      var explicados = 0;
+      final servicio = NotificacionesService(
+        api: api,
+        mensajeria: mensajeria,
+        explicarPermiso: () async {
+          explicados++;
+          return true;
+        },
+      );
+      await servicio.activar();
+
+      expect(explicados, 0);
+      expect(mensajeria.pedidos, 0);
+      expect(servicio.tokenRegistrado, _token);
     });
 
     test('Si Firebase cambia el token, registra el nuevo', () async {
