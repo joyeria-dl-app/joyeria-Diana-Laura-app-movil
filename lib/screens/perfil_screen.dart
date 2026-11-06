@@ -9,6 +9,7 @@ import '../routes/app_routes.dart';
 import '../services/perfil_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/cerrar_sesion.dart';
+import '../utils/eliminar_cuenta.dart';
 import '../utils/fechas.dart';
 import '../widgets/barra_navegacion.dart';
 import '../widgets/estado_pedido.dart';
@@ -481,6 +482,13 @@ class _Opciones extends StatelessWidget {
             onTap: () => tema.cambiar(oscuro: !tema.oscuro),
           ),
           _Renglon(icono: Icons.logout_rounded, texto: 'Cerrar sesión', peligro: true, onTap: () => cerrarSesionConConfirmacion(context)),
+          _Renglon(
+            key: const Key('perfil_eliminar_cuenta'),
+            icono: Icons.delete_forever_rounded,
+            texto: 'Eliminar mi cuenta',
+            peligro: true,
+            onTap: () => eliminarCuentaConConfirmacion(context),
+          ),
         ],
       ),
     );

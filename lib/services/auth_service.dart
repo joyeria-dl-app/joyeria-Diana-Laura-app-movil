@@ -96,6 +96,9 @@ class AuthService {
     }
   }
 
+  // Borra la sesión del teléfono sin avisar al backend (la cuenta ya no existe, #273).
+  Future<void> olvidarSesion() => _storage.borrar();
+
   // Aviso cuando la sesión terminó en el servidor y no se pudo renovar (#272).
   void alVencerSesion(void Function() aviso) => _api.alVencerSesion = aviso;
 
