@@ -82,7 +82,10 @@ jobs:
           echo "Versión anterior: $anterior"
           mkdir -p .regresion_anterior
           for f in $(git ls-tree --name-only -r "$anterior" -- test); do git show "$anterior:$f" > ".regresion_anterior/$(basename "$f")"; done
-          flutter test .regresion_anterior --reporter expanded --file-reporter json:resultados/regresion-version-anterior.json
+          # Las pruebas que cambiaron a propósito están en .github/regresion-reemplazadas.txt con su motivo;
+          # el paso falla solo si se rompe otra (#153).
+          flutter test .regresion_anterior --reporter expanded --file-reporter json:resultados/regresion-version-anterior.json || true
+          python3 .github/scripts/revisar_regresion.py resultados/regresion-version-anterior.json .github/regresion-reemplazadas.txt
 
       # Resultados de la suite actual y de la versión anterior, descargables desde la corrida (#230).
       - name: Guardar evidencia
