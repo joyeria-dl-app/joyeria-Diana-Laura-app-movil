@@ -42,6 +42,21 @@ class PerfilService {
     await _pedir(() => _api.dio.put('/auth/profile', data: datos), 'No se pudieron guardar tus datos.');
   }
 
+  // GET /notificaciones/preferencias (#274): qué avisos acepta la clienta.
+  Future<PreferenciasAvisos> preferencias() async {
+    final data = await _pedir(() => _api.dio.get('/notificaciones/preferencias'), 'No se pudieron cargar tus avisos.');
+    return PreferenciasAvisos.fromJson(data['data'] as Map<String, dynamic>);
+  }
+
+  // PUT /notificaciones/preferencias (#274): solo se envía lo que cambia.
+  Future<PreferenciasAvisos> guardarPreferencias({bool? avisosPush, bool? correosPromocion}) async {
+    final data = await _pedir(
+      () => _api.dio.put('/notificaciones/preferencias', data: {'avisos_push': ?avisosPush, 'correos_promocion': ?correosPromocion}),
+      'No se pudo guardar tu preferencia. Intenta de nuevo.',
+    );
+    return PreferenciasAvisos.fromJson(data['data'] as Map<String, dynamic>);
+  }
+
   // DELETE /auth/profile (#273): el backend anonimiza la cuenta, borra lo personal y la cuenta de
   // Firebase. Con pedidos o apartados en curso responde 409 con el motivo.
   Future<void> eliminarCuenta() async {

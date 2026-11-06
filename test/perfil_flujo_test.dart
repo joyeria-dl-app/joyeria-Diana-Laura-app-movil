@@ -48,6 +48,10 @@ class _Servidor implements HttpClientAdapter {
   bool sesionVencida = false;
   // #273: con pedidos o apartados en curso el backend no deja eliminar la cuenta.
   bool conPendientes = false;
+  // #274: preferencias de avisos guardadas en el servidor y si el guardado falla.
+  Map<String, Object?> preferencias = {'avisos_push': true, 'correos_promocion': true};
+  final List<Map<String, dynamic>> cambiosPreferencias = [];
+  bool preferenciasFallan = false;
 
   static final _pedidos = [
     {
@@ -152,6 +156,14 @@ class _Servidor implements HttpClientAdapter {
         });
       case 'POST /auth/logout':
         return _json(200, {'success': true});
+      case 'GET /notificaciones/preferencias':
+        return _json(200, {'success': true, 'data': preferencias});
+      case 'PUT /notificaciones/preferencias':
+        if (preferenciasFallan) return _json(500, {'success': false, 'message': 'Error interno del servidor'});
+        final datos = Map<String, dynamic>.from(options.data as Map);
+        cambiosPreferencias.add(datos);
+        preferencias = {...preferencias, ...datos};
+        return _json(200, {'success': true, 'data': preferencias});
       case 'DELETE /auth/profile':
         if (conPendientes) {
           return _json(409, {
@@ -390,5 +402,50 @@ void main() {
     expect(find.textContaining('pedidos o apartados en curso'), findsOneWidget);
     expect(await app.storage.leerToken(), _token);
     expect(find.byType(PerfilScreen), findsOneWidget);
+  });
+
+  // #274 (ARCO, oposición).
+  testWidgets('Apaga los avisos de sus pedidos y la preferencia se guarda en el servidor', (tester) async {
+    final app = await _abrir(tester);
+    await _irAlPerfil(tester);
+    Switch interruptor(String clave) => tester.widget<Switch>(find.byKey(Key(clave)));
+    expect(interruptor('perfil_avisos_push').value, isTrue);
+    expect(interruptor('perfil_correos_promocion').value, isTrue);
+
+    await _tocar(tester, find.byKey(const Key('perfil_avisos_push')));
+
+    expect(app.servidor.cambiosPreferencias, [
+      {'avisos_push': false},
+    ]);
+    expect(interruptor('perfil_avisos_push').value, isFalse);
+    expect(interruptor('perfil_correos_promocion').value, isTrue);
+  });
+
+  testWidgets('Apaga los correos de promociones desde el renglón', (tester) async {
+    final app = await _abrir(tester);
+    await _irAlPerfil(tester);
+    await _tocar(tester, find.text('Correos de promociones'));
+
+    expect(app.servidor.cambiosPreferencias, [
+      {'correos_promocion': false},
+    ]);
+    expect(tester.widget<Switch>(find.byKey(const Key('perfil_correos_promocion'))).value, isFalse);
+  });
+
+  testWidgets('Si no se puede guardar, el interruptor regresa y se avisa', (tester) async {
+    final app = await _abrir(tester);
+    app.servidor.preferenciasFallan = true;
+    await _irAlPerfil(tester);
+    await _tocar(tester, find.byKey(const Key('perfil_avisos_push')));
+
+    expect(tester.widget<Switch>(find.byKey(const Key('perfil_avisos_push'))).value, isTrue);
+    expect(find.textContaining('No se pudo'), findsOneWidget);
+  });
+
+  testWidgets('Muestra las preferencias que ya tenía guardadas', (tester) async {
+    final app = await _abrir(tester);
+    app.servidor.preferencias = {'avisos_push': false, 'correos_promocion': true};
+    await _irAlPerfil(tester);
+    expect(tester.widget<Switch>(find.byKey(const Key('perfil_avisos_push'))).value, isFalse);
   });
 }
