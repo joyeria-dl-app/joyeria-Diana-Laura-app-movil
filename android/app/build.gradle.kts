@@ -59,6 +59,11 @@ android {
 
     buildTypes {
         release {
+            // #275: R8 reduce y ofusca el código Java/Kotlin (Firebase y plugins) y quita recursos sin usar.
+            // El código Dart se ofusca aparte con --obfuscate --split-debug-info (release-apk.yml).
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             signingConfig = if (keystorePropertiesFile.exists()) {
                 signingConfigs.getByName("release")
             } else {
