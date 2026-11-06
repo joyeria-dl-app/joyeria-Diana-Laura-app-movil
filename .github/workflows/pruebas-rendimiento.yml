@@ -124,6 +124,11 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
+          # 4 núcleos y 4 GB: con 2 núcleos y 2.5 GB el emulador quedaba "device offline"
+          # a mitad de las pruebas del catálogo (#93).
+          cores: 4
+          ram-size: 4096M
+          heap-size: 512M
           arch: x86_64
           target: google_apis
           profile: pixel_6
