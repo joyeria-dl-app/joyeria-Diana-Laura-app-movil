@@ -34,10 +34,10 @@ class BotonPrimario extends StatelessWidget {
                   Expanded(
                     child: Center(
                       child: cargando
-                          ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
+                          ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: AppColors.sobreDegradado))
                           : Text(
                               texto,
-                              style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
+                              style: TextStyle(color: AppColors.sobreDegradado, fontSize: 15, fontWeight: FontWeight.w600),
                             ),
                     ),
                   ),
@@ -46,7 +46,7 @@ class BotonPrimario extends StatelessWidget {
                     height: 34,
                     margin: const EdgeInsets.only(right: 12),
                     decoration: const BoxDecoration(color: Color(0x40FFFFFF), shape: BoxShape.circle),
-                    child: const Icon(Icons.arrow_forward, size: 18, color: Colors.white),
+                    child: Icon(Icons.arrow_forward, size: 18, color: AppColors.sobreDegradado),
                   ),
                 ],
               ),

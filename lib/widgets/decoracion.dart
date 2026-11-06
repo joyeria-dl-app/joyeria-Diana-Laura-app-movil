@@ -140,7 +140,7 @@ class BotonCristal extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: onPressed,
-          child: SizedBox(width: 44, height: 44, child: Icon(icono, size: 20, color: AppColors.texto)),
+          child: SizedBox(width: 48, height: 48, child: Icon(icono, size: 20, color: AppColors.texto)),
         ),
       ),
     );

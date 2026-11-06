@@ -114,6 +114,9 @@ class AppColors {
   // Iguales en los dos temas.
   static const exito = Color(0xFF2EBD85);
   static const error = Color(0xFFEF4B5B);
+  // Texto e iconos sobre el degradado rosa-lila (#152): el blanco daba 1.8 a 4.3:1 y WCAG pide 4.5:1;
+  // este tono oscuro da 4.6 a 10.8:1 en los dos temas.
+  static const sobreDegradado = Color(0xFF0D080C);
 
   static LinearGradient get degradado => LinearGradient(begin: Alignment.centerLeft, end: Alignment.centerRight, colors: [primario, primario2, lila]);
 }
