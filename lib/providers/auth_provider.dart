@@ -91,6 +91,15 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // #273: el backend elimina la cuenta; si responde bien, se olvida la sesión del teléfono. Si falla
+  // (por ejemplo, pedidos en curso), la sesión sigue abierta y el error llega a la pantalla.
+  Future<void> eliminarCuenta(Future<void> Function() eliminarEnServidor) async {
+    await eliminarEnServidor();
+    await _service.olvidarSesion();
+    _usuario = null;
+    notifyListeners();
+  }
+
   Future<void> cerrarSesion() async {
     // Primero se quita el teléfono de las notificaciones: el backend lo pide con la sesión activa.
     await _notificaciones?.desactivar();

@@ -46,6 +46,8 @@ class _Servidor implements HttpClientAdapter {
   final List<Map<String, dynamic>> cambiosPerfil = [];
   final List<String> carpetasFoto = [];
   bool sesionVencida = false;
+  // #273: con pedidos o apartados en curso el backend no deja eliminar la cuenta.
+  bool conPendientes = false;
 
   static final _pedidos = [
     {
@@ -150,6 +152,14 @@ class _Servidor implements HttpClientAdapter {
         });
       case 'POST /auth/logout':
         return _json(200, {'success': true});
+      case 'DELETE /auth/profile':
+        if (conPendientes) {
+          return _json(409, {
+            'success': false,
+            'message': 'Tienes pedidos o apartados en curso. Cuando terminen o se cancelen podrás eliminar tu cuenta.',
+          });
+        }
+        return _json(200, {'success': true, 'message': 'Tu cuenta y tus datos personales se eliminaron'});
     }
     return _json(404, {'success': false, 'message': 'Ruta no simulada: $ruta'});
   }
@@ -343,5 +353,42 @@ void main() {
     await _tocar(tester, find.byKey(const Key('nav_perfil')));
 
     expect(find.byKey(const Key('login_email')), findsOneWidget);
+  });
+
+  // #273 (ARCO, cancelación).
+  testWidgets('Elimina su cuenta: confirma, el backend la borra y el teléfono ya no guarda la sesión', (tester) async {
+    final app = await _abrir(tester);
+    await _irAlPerfil(tester);
+    await _tocar(tester, find.byKey(const Key('perfil_eliminar_cuenta')));
+    expect(find.text('¿Eliminar tu cuenta?'), findsOneWidget);
+    await _tocar(tester, find.byKey(const Key('eliminar_cuenta_confirmar')));
+
+    expect(app.servidor.peticiones, contains('DELETE /auth/profile'));
+    expect(await app.storage.leerToken(), isNull);
+    expect(find.text('Tu cuenta se eliminó'), findsOneWidget);
+    expect(find.byType(PerfilScreen), findsNothing);
+  });
+
+  testWidgets('Si cancela, la cuenta no se toca', (tester) async {
+    final app = await _abrir(tester);
+    await _irAlPerfil(tester);
+    await _tocar(tester, find.byKey(const Key('perfil_eliminar_cuenta')));
+    await _tocar(tester, find.text('Cancelar'));
+
+    expect(app.servidor.peticiones, isNot(contains('DELETE /auth/profile')));
+    expect(await app.storage.leerToken(), _token);
+    expect(find.byType(PerfilScreen), findsOneWidget);
+  });
+
+  testWidgets('Con pedidos o apartados en curso ve el motivo y conserva su sesión', (tester) async {
+    final app = await _abrir(tester);
+    app.servidor.conPendientes = true;
+    await _irAlPerfil(tester);
+    await _tocar(tester, find.byKey(const Key('perfil_eliminar_cuenta')));
+    await _tocar(tester, find.byKey(const Key('eliminar_cuenta_confirmar')));
+
+    expect(find.textContaining('pedidos o apartados en curso'), findsOneWidget);
+    expect(await app.storage.leerToken(), _token);
+    expect(find.byType(PerfilScreen), findsOneWidget);
   });
 }

@@ -42,6 +42,12 @@ class PerfilService {
     await _pedir(() => _api.dio.put('/auth/profile', data: datos), 'No se pudieron guardar tus datos.');
   }
 
+  // DELETE /auth/profile (#273): el backend anonimiza la cuenta, borra lo personal y la cuenta de
+  // Firebase. Con pedidos o apartados en curso responde 409 con el motivo.
+  Future<void> eliminarCuenta() async {
+    await _pedir(() => _api.dio.delete('/auth/profile'), 'No se pudo eliminar tu cuenta. Intenta de nuevo.');
+  }
+
   // POST /upload/image en la carpeta de usuarios, la misma que usa el perfil del sitio web.
   Future<String> subirFoto(List<int> bytes, String nombreArchivo) async {
     final respuesta = await _pedir(
@@ -64,9 +70,9 @@ class PerfilService {
     } on DioException catch (e) {
       final status = e.response?.statusCode;
       if (status == 401 || status == 403) throw const PerfilException('Inicia sesión para cambiar tus datos.', sinSesion: true);
-      // 400 trae el motivo, por ejemplo "El teléfono debe tener 10 dígitos".
+      // 400 y 409 traen el motivo, por ejemplo "El teléfono debe tener 10 dígitos" o los pedidos en curso.
       final mensaje = switch (e.response?.data) {
-        {'message': final String m} when status == 400 => m,
+        {'message': final String m} when status == 400 || status == 409 => m,
         _ => null,
       };
       throw PerfilException(mensaje ?? 'No se pudo conectar. Revisa tu conexión e intenta de nuevo.');
