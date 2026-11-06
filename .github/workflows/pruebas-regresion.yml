@@ -157,7 +157,14 @@ jobs:
           target: google_apis
           profile: pixel_6
           disable-animations: true
-          script: flutter test integration_test/catalogo_test.dart integration_test/recorrido_cliente_test.dart integration_test/aceptacion_test.dart integration_test/aceptacion_pedidos_test.dart --concurrency=1 --dart-define-from-file=env.json --reporter expanded --file-reporter json:resultados/regresion-integracion.json
+          # Un flutter test por archivo: con varios archivos en un solo comando el emulador se
+          # desconectaba ("adb: device offline") al pasar al siguiente (#93). Cada línea corre por separado
+          # y si una falla se detiene el paso.
+          script: |
+            flutter test integration_test/catalogo_test.dart --dart-define-from-file=env.json --reporter expanded --file-reporter json:resultados/regresion-integracion-catalogo.json
+            flutter test integration_test/recorrido_cliente_test.dart --dart-define-from-file=env.json --reporter expanded --file-reporter json:resultados/regresion-integracion-recorrido_cliente.json
+            flutter test integration_test/aceptacion_test.dart --dart-define-from-file=env.json --reporter expanded --file-reporter json:resultados/regresion-integracion-aceptacion.json
+            flutter test integration_test/aceptacion_pedidos_test.dart --dart-define-from-file=env.json --reporter expanded --file-reporter json:resultados/regresion-integracion-aceptacion_pedidos.json
 
       # Resultados de la regresión en el emulador, descargables desde la corrida (#230).
       - name: Guardar evidencia
