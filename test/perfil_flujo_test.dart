@@ -331,17 +331,17 @@ void main() {
     expect(find.byType(PerfilScreen), findsNothing);
   });
 
-  testWidgets('Si la sesión venció, Mi perfil invita a iniciarla de nuevo', (tester) async {
+  // #272: el backend rechaza la sesión (401) y no hay con qué renovarla: se borra y la app lleva a
+  // iniciar sesión sin que la clienta tenga que tocar nada.
+  testWidgets('Si la sesión venció y no se puede renovar, la app lleva a iniciar sesión', (tester) async {
     final app = await _abrir(tester);
     app.servidor.sesionVencida = true;
-    await _tocar(tester, find.byKey(const Key('nav_perfil')));
-
-    expect(find.text('Inicia sesión para ver tu perfil'), findsOneWidget);
     // El login se revisa con la vista de prueba por defecto, como en login_screen_test.dart: la fuente
     // de prueba de Flutter es más ancha que Poppins y en una vista de teléfono desborda el renglón.
     tester.view.resetPhysicalSize();
     tester.view.resetDevicePixelRatio();
-    await _tocar(tester, find.text('Iniciar sesión').last);
+    await _tocar(tester, find.byKey(const Key('nav_perfil')));
+
     expect(find.byKey(const Key('login_email')), findsOneWidget);
   });
 }

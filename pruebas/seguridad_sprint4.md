@@ -54,6 +54,23 @@ Se intentó primero con el paquete `flutter_jailbreak_detection`, pero está sin
 
 **Emulador con root:** imagen `android-35 google_apis x86_64` (sin Play Store), AVD `Root_35`. `su 0 id` devuelve `uid=0(root)` y `ro.build.type` es `userdebug` (evidencia 157b). En el emulador normal (`google_apis_playstore`, tipo `user`) no aparece el aviso.
 
+## Sesión ante un 401 y Certificate Pinning (#272, 5 de noviembre de 2026)
+
+**Renovación de la sesión.** Al iniciar sesión la app guarda, en el almacenamiento cifrado del teléfono, el `refreshToken` que entrega Firebase. Si el backend responde **401** (token vencido o revocado), el interceptor de Dio pide a Firebase un ID token nuevo (`securetoken.googleapis.com/v1/token`), vuelve a entrar con `POST /auth/login/movil` y repite la petición una sola vez. Si varias peticiones reciben 401 juntas, comparten la misma renovación. Si no se puede renovar (sin `refreshToken`, cuenta deshabilitada o Firebase lo rechaza), se borra la sesión y la app lleva a iniciar sesión. Un 401 de `/auth/login` (contraseña incorrecta) no intenta renovar.
+
+**Certificate Pinning.** El certificado de `onrender.com` lo firma Google Trust Services (WE1 → GTS Root R4, con versión cruzada firmada por GlobalSign Root CA) y Render lo renueva cada ~90 días (el actual vence el 20 de diciembre de 2026). Fijar ese certificado haría que la app dejara de conectarse en cada renovación, así que se fijan las **autoridades raíz**: el cliente HTTP de la app usa un `SecurityContext` sin las autoridades del teléfono y solo con estas dos, y antes de usarlas comprueba su huella SHA-256:
+
+| Autoridad | SHA-256 | Vence |
+|---|---|---|
+| GTS Root R4 | `349dfa4058c5e263123b398ae795573c4e1313c83fe68f93556cd5e8031b3c7d` | 2036 |
+| GlobalSign Root CA | `ebd41040e4bb3ec742c9e381d31ef2a41a48b6685c96e7cef3c1df6cd4331c99` | 2028 |
+
+Un certificado de otra autoridad (un proxy que intercepta el tráfico o una CA instalada en el teléfono) se rechaza. Si el texto de un certificado fijado se altera, su huella deja de coincidir y la app no confía en ninguno.
+
+**Pruebas** (`test/sesion_seguridad_test.dart`, 11 casos, evidencia 196): renovación sin que se note, una sola renovación para varias peticiones, sesión borrada cuando no se puede renovar, sin renovar en el login, `refreshToken` guardado al iniciar sesión, huellas correctas, certificado alterado, **servidor HTTPS local con certificado autofirmado rechazado** (con un cliente de control que sí confía en él y se conecta) y conexión aceptada al backend real de Render. Además, la prueba de aceptación de perfil y zonas pasó 8 de 8 en el emulador con el cliente fijado contra Render. Con estos cambios pasan 388 pruebas.
+
+**Mantenimiento.** Si Render cambia de autoridad, la app dejaría de conectarse; la prueba "El cliente de la app sí se conecta al backend real de Render" falla en el pipeline antes de publicar una versión. GlobalSign Root CA vence en enero de 2028: antes hay que revisar la cadena de Render y actualizar la lista.
+
 ## Observación
 
 La clave de Firebase (`FIREBASE_API_KEY`) sí está dentro del APK porque la app la necesita para iniciar sesión. Igual que en el Sprint 2, Firebase la trata como un identificador público del proyecto; se recomienda mantener sus restricciones por aplicación y por API en la consola de Google Cloud.
