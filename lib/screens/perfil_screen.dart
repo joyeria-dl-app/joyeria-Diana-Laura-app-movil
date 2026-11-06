@@ -181,7 +181,7 @@ class _Contenido extends StatelessWidget {
                         const Expanded(
                           child: Text(
                             'Mi perfil',
-                            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600),
+                            style: TextStyle(color: AppColors.sobreDegradado, fontSize: 18, fontWeight: FontWeight.w600),
                           ),
                         ),
                         _BotonClaro(icono: Icons.settings_outlined, descripcion: 'Ajustes', onPressed: onAjustes),
@@ -263,7 +263,7 @@ class _BotonClaro extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: onPressed,
-        child: SizedBox(width: 44, height: 44, child: Icon(icono, size: 20, color: Colors.white)),
+        child: SizedBox(width: 48, height: 48, child: Icon(icono, size: 20, color: AppColors.sobreDegradado)),
       ),
     ),
   );
@@ -305,7 +305,7 @@ class _Identidad extends StatelessWidget {
                     child: perfil.fotoUrl == null
                         ? Text(
                             perfil.iniciales,
-                            style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w700),
+                            style: TextStyle(color: AppColors.sobreDegradado, fontSize: 26, fontWeight: FontWeight.w700),
                           )
                         : Image.network(
                             perfil.fotoUrl!,
@@ -318,12 +318,12 @@ class _Identidad extends StatelessWidget {
                                 : Center(
                                     child: Text(
                                       perfil.iniciales,
-                                      style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w700),
+                                      style: TextStyle(color: AppColors.sobreDegradado, fontSize: 26, fontWeight: FontWeight.w700),
                                     ),
                                   ),
                             errorBuilder: (_, _, _) => Text(
                               perfil.iniciales,
-                              style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w700),
+                              style: TextStyle(color: AppColors.sobreDegradado, fontSize: 26, fontWeight: FontWeight.w700),
                             ),
                           ),
                   ),
@@ -334,7 +334,7 @@ class _Identidad extends StatelessWidget {
                       height: 72,
                       decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.45), borderRadius: BorderRadius.circular(26)),
                       alignment: Alignment.center,
-                      child: const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white)),
+                      child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2.5, color: AppColors.sobreDegradado)),
                     ),
                   Positioned(
                     right: 0,
@@ -359,13 +359,13 @@ class _Identidad extends StatelessWidget {
                 perfil.nombre.isEmpty ? 'Clienta' : perfil.nombre,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700, letterSpacing: -0.5),
+                style: TextStyle(color: AppColors.sobreDegradado, fontSize: 20, fontWeight: FontWeight.w700, letterSpacing: -0.5),
               ),
               Text(
                 perfil.email,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(color: Colors.white.withValues(alpha: 0.85), fontSize: 12),
+                style: TextStyle(color: AppColors.sobreDegradado.withValues(alpha: 0.85), fontSize: 12),
               ),
               if (desde != null) ...[
                 const SizedBox(height: 6),
@@ -375,11 +375,11 @@ class _Identidad extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.workspace_premium_rounded, size: 13, color: Colors.white),
+                      Icon(Icons.workspace_premium_rounded, size: 13, color: AppColors.sobreDegradado),
                       const SizedBox(width: 4),
                       Text(
                         'Clienta desde ${mesAnio(desde)}',
-                        style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.w600),
+                        style: TextStyle(color: AppColors.sobreDegradado, fontSize: 10.5, fontWeight: FontWeight.w600),
                       ),
                     ],
                   ),
@@ -464,15 +464,19 @@ class _Opciones extends StatelessWidget {
           _Renglon(
             icono: tema.oscuro ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
             texto: 'Tema oscuro',
-            final_: Switch(
-              key: const Key('perfil_tema'),
-              value: tema.oscuro,
-              onChanged: (oscuro) => tema.cambiar(oscuro: oscuro),
-              activeThumbColor: Colors.white,
-              activeTrackColor: AppColors.primario2,
-              inactiveThumbColor: AppColors.primario2,
-              inactiveTrackColor: AppColors.superficie2,
-              trackOutlineColor: WidgetStatePropertyAll(AppColors.borde),
+            // Sin etiqueta TalkBack solo leía "Activado, interruptor" (#152).
+            final_: Semantics(
+              label: 'Tema oscuro',
+              child: Switch(
+                key: const Key('perfil_tema'),
+                value: tema.oscuro,
+                onChanged: (oscuro) => tema.cambiar(oscuro: oscuro),
+                activeThumbColor: Colors.white,
+                activeTrackColor: AppColors.primario2,
+                inactiveThumbColor: AppColors.primario2,
+                inactiveTrackColor: AppColors.superficie2,
+                trackOutlineColor: WidgetStatePropertyAll(AppColors.borde),
+              ),
             ),
             onTap: () => tema.cambiar(oscuro: !tema.oscuro),
           ),

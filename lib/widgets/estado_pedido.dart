@@ -46,7 +46,7 @@ class ChipEstado extends StatelessWidget {
       TonoEstado.exito => (const Color(0x262EBD85), AppColors.exito),
       TonoEstado.error => (const Color(0x26EF4B5B), AppColors.error),
       TonoEstado.rosa => (AppColors.suave, AppColors.primario),
-      TonoEstado.claro => (const Color(0x40FFFFFF), Colors.white),
+      TonoEstado.claro => (const Color(0x40FFFFFF), AppColors.sobreDegradado),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -306,13 +306,13 @@ class BotonDegradado extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                if (icono != null) ...[Icon(icono, size: 20, color: Colors.white), const SizedBox(width: 8)],
+                if (icono != null) ...[Icon(icono, size: 20, color: AppColors.sobreDegradado), const SizedBox(width: 8)],
                 Flexible(
                   child: Text(
                     texto,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
+                    style: TextStyle(color: AppColors.sobreDegradado, fontSize: 15, fontWeight: FontWeight.w600),
                   ),
                 ),
               ],

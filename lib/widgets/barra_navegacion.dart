@@ -118,11 +118,11 @@ class _Boton extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(relleno, size: 19, color: Colors.white),
+                    Icon(relleno, size: 19, color: AppColors.sobreDegradado),
                     const SizedBox(width: 8),
                     Text(
                       nombre,
-                      style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w600),
+                      style: TextStyle(color: AppColors.sobreDegradado, fontSize: 12.5, fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),

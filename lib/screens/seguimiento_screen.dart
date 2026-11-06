@@ -356,7 +356,7 @@ class _BotonClaro extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: onPressed,
-          child: SizedBox(width: 44, height: 44, child: Icon(icono, size: 20, color: Colors.white)),
+          child: SizedBox(width: 48, height: 48, child: Icon(icono, size: 20, color: Colors.white)),
         ),
       ),
     );
@@ -424,7 +424,7 @@ class _BotonAccion extends StatelessWidget {
           child: InkWell(
             borderRadius: BorderRadius.circular(14),
             onTap: onPressed,
-            child: SizedBox(width: 40, height: 40, child: Icon(icono, size: 20, color: Colors.white)),
+            child: SizedBox(width: 48, height: 48, child: Icon(icono, size: 20, color: Colors.white)),
           ),
         ),
       ),
