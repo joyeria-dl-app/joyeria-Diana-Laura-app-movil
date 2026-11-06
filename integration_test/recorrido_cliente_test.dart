@@ -17,6 +17,7 @@ import 'package:joyeria_diana_laura/services/session_storage.dart';
 import 'package:joyeria_diana_laura/widgets/tarjeta_producto.dart';
 
 import 'catalogo_test.dart' show contadorPiezas, despertarServidor, esperar;
+import 'paginas.dart';
 import 'sesion.dart';
 import 'datos_prueba.dart';
 
@@ -28,12 +29,8 @@ import 'datos_prueba.dart';
 Future<void> _abrirPiezaDisponible(WidgetTester tester) async {
   await esperar(tester, find.byType(TarjetaProducto));
   final disponible = find.byWidgetPredicate((w) => w is TarjetaProducto && !w.producto.agotado);
-  // Las tarjetas se construyen al desplazarse: se baja hasta que aparezca una disponible.
-  final lista = find.byWidgetPredicate((w) => w is Scrollable && w.axisDirection == AxisDirection.down).first;
-  for (var i = 0; i < 20 && disponible.evaluate().isEmpty; i++) {
-    await tester.drag(lista, const Offset(0, -300));
-    await tester.pumpAndSettle();
-  }
+  // Las tarjetas se construyen al desplazarse y el catálogo va por páginas (#279): se busca en todas.
+  await buscarEnPaginas(tester, disponible);
   expect(disponible, findsWidgets, reason: 'No hay piezas con existencias en el filtro');
   await Scrollable.ensureVisible(tester.element(disponible.first), alignment: 0.3);
   await tester.pumpAndSettle();
