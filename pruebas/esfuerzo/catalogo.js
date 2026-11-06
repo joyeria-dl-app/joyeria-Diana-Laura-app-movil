@@ -1,5 +1,7 @@
-// Prueba de esfuerzo del backend que usa la app (pipeline pruebas-esfuerzo.yml, tarea #149).
-// Recorre lo mismo que un cliente en la app: catálogo, detalle, carrito y pedidos con sesión.
+// Prueba de esfuerzo del backend que usa la app (pipeline pruebas-esfuerzo.yml, tareas #149 y #155).
+// Recorre lo mismo que un cliente en la app: inicio, catálogo por páginas de 6, detalle y, con sesión,
+// inicio de sesión, carrito, pedidos, apartados, favoritos, perfil, zonas de entrega y el registro del
+// teléfono para las notificaciones (#155, Sprint 4).
 //
 // ESCENARIO=criterio (por defecto): sube a USUARIOS simultáneos y se queda ahí; debe cumplir
 //   95 % de respuestas en menos de 2 s y menos del 1 % de errores.
@@ -14,7 +16,10 @@
 // Actions con una base de datos propia (pipeline, trabajo "aislado"), que no toca producción.
 //
 // El carrito y los pedidos solo se leen (no se crean pedidos ni pagos). La sesión es la de la
-// cuenta de prueba (PRUEBAS_CORREO / PRUEBAS_CONTRASENA) y se abre una vez en setup().
+// cuenta de prueba (PRUEBAS_CORREO / PRUEBAS_CONTRASENA) y se abre una vez en setup(); cada usuario
+// simulado vuelve a iniciar sesión en el backend cada 5 vueltas con el mismo token de Firebase (no se
+// carga Firebase). Para las notificaciones cada usuario registra un token falso propio
+// ("prueba-esfuerzo-k6-usuario-<n>") y lo borra en la misma vuelta, igual que la app al iniciar y cerrar sesión.
 //
 // Importante: el backend limita a 500 peticiones por IP cada 15 minutos (RASP_RATE_LIMIT_MAX).
 // Como toda la carga sale de una sola máquina, antes de la prueba se sube ese límite en Render
@@ -101,16 +106,30 @@ export function setup() {
   });
   const token = login.json('data.token');
   if (!token) throw new Error(`No se pudo iniciar sesión con la cuenta de prueba (${login.status})`);
-  return { token };
+  return { token, idToken: firebase.json('idToken') };
 }
 
+// Piezas por página de la cuadrícula, igual que ProductoService.porPagina (#279).
+const POR_PAGINA = 6;
+
 export default function (datos) {
+  group('inicio', () => {
+    const carrusel = http.get(`${API}/content/carrusel-inicio`, { tags: { endpoint: 'carrusel' } });
+    check(carrusel, { 'carrusel 200': (r) => r.status === 200 });
+  });
+
   group('catálogo', () => {
     const categorias = http.get(`${API}/products/categorias`, { tags: { endpoint: 'categorias' } });
     check(categorias, { 'categorías 200': (r) => r.status === 200 });
 
-    const pagina = Math.floor(Math.random() * 4);
-    const lista = http.get(`${API}/products/filter?limit=20&offset=${pagina * 20}`, { tags: { endpoint: 'catalogo' } });
+    // Una página de 6 de una categoría al azar, como al tocar un chip y un número de página (#279).
+    const lista_categorias = categorias.status === 200 ? categorias.json('data') || [] : [];
+    const categoria = lista_categorias.length > 0 ? lista_categorias[Math.floor(Math.random() * lista_categorias.length)] : null;
+    const filtro = categoria ? `&categoria_id=${categoria.id}` : '';
+    const pagina = Math.floor(Math.random() * 3);
+    const lista = http.get(`${API}/products/filter?limit=${POR_PAGINA}&offset=${pagina * POR_PAGINA}${filtro}`, {
+      tags: { endpoint: 'catalogo' },
+    });
     check(lista, { 'catálogo 200': (r) => r.status === 200 });
 
     const piezas = lista.status === 200 ? lista.json('data') || [] : [];
@@ -133,6 +152,37 @@ export default function (datos) {
       const apartados = http.get(`${API}/apartados/mis-apartados`, { ...sesion, tags: { endpoint: 'apartados' } });
       check(apartados, { 'apartados 200': (r) => r.status === 200 });
     });
+
+    group('perfil', () => {
+      const favoritos = http.get(`${API}/favoritos`, { ...sesion, tags: { endpoint: 'favoritos' } });
+      check(favoritos, { 'favoritos 200': (r) => r.status === 200 });
+
+      const perfil = http.get(`${API}/auth/profile`, { ...sesion, tags: { endpoint: 'perfil' } });
+      check(perfil, { 'perfil 200': (r) => r.status === 200 });
+
+      const zonas = http.get(`${API}/zonas-entrega`, { ...sesion, tags: { endpoint: 'zonas' } });
+      check(zonas, { 'zonas 200': (r) => r.status === 200 });
+    });
+
+    group('notificaciones', () => {
+      const cuerpo = JSON.stringify({ token: `prueba-esfuerzo-k6-usuario-${__VU}`, plataforma: 'android' });
+      const json = { headers: { ...sesion.headers, 'Content-Type': 'application/json' } };
+      const alta = http.post(`${API}/notificaciones/dispositivo`, cuerpo, { ...json, tags: { endpoint: 'push_alta' } });
+      check(alta, { 'registro del teléfono 2xx': (r) => r.status >= 200 && r.status < 300 });
+      const baja = http.del(`${API}/notificaciones/dispositivo`, cuerpo, { ...json, tags: { endpoint: 'push_baja' } });
+      check(baja, { 'baja del teléfono 2xx': (r) => r.status >= 200 && r.status < 300 });
+    });
+
+    // Inicio de sesión en el backend cada 5 vueltas (no en todas, como un cliente real).
+    if (__ITER % 5 === 0) {
+      group('inicio de sesión', () => {
+        const login = http.post(`${API}/auth/login/movil`, JSON.stringify({ idToken: datos.idToken }), {
+          headers: { 'Content-Type': 'application/json' },
+          tags: { endpoint: 'login' },
+        });
+        check(login, { 'login 200': (r) => r.status === 200 });
+      });
+    }
   }
   sleep(1);
 }
