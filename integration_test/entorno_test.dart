@@ -19,6 +19,7 @@ import 'package:joyeria_diana_laura/services/producto_service.dart';
 import 'package:joyeria_diana_laura/services/session_storage.dart';
 
 import 'catalogo_test.dart' show contadorPiezas, despertarServidor, esperar;
+import 'paginas.dart';
 import 'sesion.dart';
 import 'datos_prueba.dart';
 
@@ -96,7 +97,7 @@ void main() {
 
     // Una compra a medias: una pieza en el carrito y la pantalla del carrito abierta.
     final pieza = (await tester.runAsync(() async {
-      final p = (await contexto.read<ProductoService>().productos()).firstWhere((p) => p.stock > 0);
+      final p = (await todasLasPiezas(contexto.read<ProductoService>())).firstWhere((p) => p.stock > 0);
       await carritoServidor.vaciar();
       await carritoServidor.agregar(p.id);
       await carrito.cargar();

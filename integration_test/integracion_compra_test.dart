@@ -23,6 +23,7 @@ import 'package:joyeria_diana_laura/services/session_storage.dart';
 import 'package:joyeria_diana_laura/utils/formato.dart';
 
 import 'catalogo_test.dart' show despertarServidor, esperar;
+import 'paginas.dart';
 import 'sesion.dart';
 import 'datos_prueba.dart';
 
@@ -87,7 +88,7 @@ void main() {
     final pieza = (await tester.runAsync(() async {
       final productos = contexto.read<ProductoService>();
       final anillos = (await productos.categorias()).firstWhere((c) => c.nombre == PiezasPrueba.categoriaCompra);
-      final lista = (await productos.productos(categoriaId: anillos.id)).where((p) => p.stock >= 2).toList()
+      final lista = (await todasLasPiezas(productos, categoriaId: anillos.id)).where((p) => p.stock >= 2).toList()
         ..sort((a, b) => a.precioFinal.compareTo(b.precioFinal));
       return lista.first;
     }))!;
