@@ -22,12 +22,21 @@ class InicioProvider extends ChangeNotifier {
   bool cargando = false;
   // Las tres consultas fallaron: no hay nada que mostrar y se ofrece reintentar.
   bool sinConexion = false;
+  // Si el Inicio se cierra antes de que lleguen las respuestas, ya no se avisa (#93).
+  bool _cerrado = false;
+
+  @override
+  void dispose() {
+    _cerrado = true;
+    super.dispose();
+  }
 
   Future<void> cargar() async {
     cargando = true;
     sinConexion = false;
     notifyListeners();
     final (c, b, d) = await (_opcional(_productos.categorias), _opcional(_inicio.carrusel), _opcional(_destacadas)).wait;
+    if (_cerrado) return;
     categorias = c ?? const [];
     banners = b ?? const [];
     destacadas = d ?? const [];
