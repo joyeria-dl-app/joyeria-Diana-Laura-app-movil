@@ -126,6 +126,20 @@ class PedidoService {
     return (data as List<dynamic>).cast<Map<String, dynamic>>().map(Apartado.fromJson).toList();
   }
 
+  // HU-14: detalle de un apartado con todos sus abonos, igual que en el sitio web (GET /apartados/:id).
+  Future<Apartado> detalleApartado(int apartadoId) async {
+    final data = await _pedir(() => _api.dio.get('/apartados/$apartadoId'));
+    return Apartado.fromJson(data as Map<String, dynamic>);
+  }
+
+  // HU-14: recibo de un pedido entregado. Es una página del backend que se abre en el navegador,
+  // igual que "Ver / Descargar recibo" del sitio web; la sesión va en el enlace.
+  Future<Uri> enlaceRecibo(int pedidoId) async {
+    final token = await _api.token();
+    if (token == null) throw const PedidoException('Inicia sesión para ver tu recibo.', sinSesion: true);
+    return Uri.parse('${_api.dio.options.baseUrl}/carrito/pedidos/$pedidoId/recibo').replace(queryParameters: {'token': token});
+  }
+
   // HU-12: enlace de Mercado Pago para pagar un pedido que la tienda ya confirmó.
   // origen 'app' hace que Mercado Pago regrese a la app y no al sitio web.
   Future<PreferenciaPago> preferenciaPedido(int pedidoId) async {

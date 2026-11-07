@@ -11,7 +11,6 @@ import 'package:provider/provider.dart';
 import 'package:joyeria_diana_laura/main.dart';
 import 'package:joyeria_diana_laura/providers/carrito_provider.dart';
 import 'package:joyeria_diana_laura/screens/carrito_screen.dart';
-import 'package:joyeria_diana_laura/screens/catalogo_screen.dart';
 import 'package:joyeria_diana_laura/screens/detalle_screen.dart';
 import 'package:joyeria_diana_laura/screens/favoritos_screen.dart';
 import 'package:joyeria_diana_laura/services/carrito_service.dart';
@@ -23,6 +22,7 @@ import 'package:joyeria_diana_laura/widgets/galeria_fotos.dart';
 import 'package:joyeria_diana_laura/widgets/tarjeta_producto.dart';
 
 import 'catalogo_test.dart' show despertarServidor, esperar;
+import 'paginas.dart';
 import 'sesion.dart';
 import 'datos_prueba.dart';
 
@@ -77,7 +77,7 @@ void main() {
     // Pieza de prueba: el primer anillo con existencias y más de una foto.
     final (anillos, pieza) = (await tester.runAsync(() async {
       final anillos = (await productos.categorias()).firstWhere((c) => c.nombre == PiezasPrueba.categoriaCompra);
-      for (final p in await productos.productos(categoriaId: anillos.id)) {
+      for (final p in await todasLasPiezas(productos, categoriaId: anillos.id)) {
         if (p.agotado) continue;
         final detalle = await productos.detalle(p.id);
         if (detalle.imagenes.length > 1) return (anillos, detalle);
@@ -94,18 +94,15 @@ void main() {
     }
 
     // Catálogo filtrado por Anillos hasta la tarjeta de la pieza.
-    await tester.tap(find.text('Ver catálogo'));
+    await abrirPestana(tester, 'catalogo');
     await esperar(tester, find.byType(TarjetaProducto));
+    // Las categorías llegan aparte de las piezas: se espera su círculo antes de tocarlo.
+    await esperar(tester, find.text(anillos.nombre));
     await tester.tap(find.text(anillos.nombre).first);
     await esperar(tester, find.text(anillos.nombre).at(1));
     final tarjeta = find.byWidgetPredicate((w) => w is TarjetaProducto && w.producto.id == producto.id);
-    final lista = find
-        .descendant(of: find.byType(CatalogoScreen), matching: find.byWidgetPredicate((w) => w is Scrollable && w.axisDirection == AxisDirection.down))
-        .first;
-    for (var i = 0; i < 20 && tarjeta.evaluate().isEmpty; i++) {
-      await tester.drag(lista, const Offset(0, -300));
-      await tester.pumpAndSettle();
-    }
+    // El catálogo va por páginas (#279): se busca la tarjeta en todas.
+    await buscarEnPaginas(tester, tarjeta);
     expect(tarjeta, findsOneWidget, reason: 'La pieza de prueba no aparece en el catálogo');
     await Scrollable.ensureVisible(tester.element(tarjeta), alignment: 0.3);
     await tester.pumpAndSettle();
@@ -200,8 +197,6 @@ void main() {
 
     // Cerrar sesión para que las demás pruebas inicien sin cuenta.
     _navegador(tester).popUntil((ruta) => ruta.isFirst);
-    await esperar(tester, find.text('Cerrar sesión'));
-    await tester.tap(find.text('Cerrar sesión'));
-    await esperar(tester, find.text('Explorar sin cuenta'));
+    await cerrarSesionDesdePerfil(tester);
   });
 }

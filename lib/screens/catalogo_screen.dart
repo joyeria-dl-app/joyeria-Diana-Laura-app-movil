@@ -7,13 +7,28 @@ import '../services/producto_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/accion_favorito.dart';
 import '../widgets/barra_navegacion.dart';
+import '../widgets/campo_busqueda.dart';
 import '../widgets/decoracion.dart';
 import '../widgets/tarjeta_producto.dart';
 import 'detalle_screen.dart';
+import '../widgets/foto_red.dart';
 
-// Catálogo de piezas (boceto P6). Carga 20 productos y pide más al llegar al final.
+// Catálogo de piezas (boceto P6). En una categoría o búsqueda muestra páginas numeradas de 6 piezas (#279).
+// Desde el Inicio (#244) el catálogo se abre ya filtrado por una categoría o con el buscador listo.
 class CatalogoScreen extends StatefulWidget {
-  const CatalogoScreen({super.key});
+  const CatalogoScreen({super.key, this.categoria, this.buscar = false});
+
+  // Lee lo que le pasa el Inicio al abrir la ruta.
+  factory CatalogoScreen.desdeRuta(BuildContext context) {
+    final args = ModalRoute.of(context)?.settings.arguments;
+    return CatalogoScreen(categoria: args is Categoria ? args : null, buscar: args == CatalogoScreen.conBuscador);
+  }
+
+  // Argumento de la ruta para abrir el catálogo con el buscador.
+  static const conBuscador = 'buscar';
+
+  final Categoria? categoria;
+  final bool buscar;
 
   @override
   State<CatalogoScreen> createState() => _CatalogoScreenState();
@@ -21,24 +36,29 @@ class CatalogoScreen extends StatefulWidget {
 
 class _CatalogoScreenState extends State<CatalogoScreen> {
   final _scroll = ScrollController();
+  // Piezas de la página que se ve; cada página se pide al servidor al elegirla (#279).
   final List<Producto> _productos = [];
   int _pagina = 0;
+  // Piezas del filtro en todas las páginas; null si el backend no lo envía.
+  int? _total;
   bool _cargando = false;
-  bool _hayMas = true;
   String? _error;
   List<Categoria> _categorias = [];
+  // Ya respondió la consulta de categorías (con o sin resultado).
+  bool _categoriasListas = false;
   Categoria? _categoria;
+  final _busqueda = TextEditingController();
+  late bool _buscando = widget.buscar;
   // Cambia al elegir otra categoría; así se descartan respuestas de la anterior.
   int _consulta = 0;
 
   @override
   void initState() {
     super.initState();
-    _scroll.addListener(() {
-      if (_scroll.position.extentAfter < 400) _cargarMas();
-    });
+    _categoria = widget.categoria;
     _cargarCategorias();
-    _cargarMas();
+    // Sin filtro se muestran secciones (#254); la cuadrícula solo se pide al filtrar o buscar.
+    if (widget.categoria != null || widget.buscar) _cargarPagina(0);
     // Para pintar los corazones; sin sesión se quedan sin marcar.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final favoritos = context.read<FavoritosProvider?>();
@@ -52,30 +72,45 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
       final categorias = await context.read<ProductoService>().categorias();
       if (mounted) setState(() => _categorias = categorias);
     } on ProductoException {
-      return;
+      // Sin categorías no hay secciones: se muestra la cuadrícula de siempre.
+    } finally {
+      if (mounted) setState(() => _categoriasListas = true);
+      if (mounted && _sinFiltro && _categorias.isEmpty && _productos.isEmpty) _cargarPagina(0);
     }
   }
+
+  bool get _sinFiltro => _categoria == null && _busqueda.text.trim().isEmpty;
+
+  // Catálogo sin filtro (#254): una sección por categoría en lugar de todas las piezas revueltas.
+  bool get _porSecciones => _sinFiltro && _categorias.isNotEmpty;
 
   @override
   void dispose() {
     _scroll.dispose();
+    _busqueda.dispose();
     super.dispose();
   }
 
-  Future<void> _cargarMas() async {
-    if (_cargando || !_hayMas) return;
-    final consulta = _consulta;
+  int? get _paginas => _total == null ? null : (_total! / ProductoService.porPagina).ceil();
+
+  // Sin el total del backend, se sabe que hay otra página si esta vino llena.
+  bool get _haySiguiente => _paginas != null ? _pagina + 1 < _paginas! : _productos.length == ProductoService.porPagina;
+
+  Future<void> _cargarPagina(int pagina) async {
+    final consulta = ++_consulta;
     setState(() {
       _cargando = true;
       _error = null;
+      _pagina = pagina;
+      _productos.clear();
     });
+    if (_scroll.hasClients) _scroll.jumpTo(0);
     try {
-      final nuevos = await context.read<ProductoService>().productos(categoriaId: _categoria?.id, pagina: _pagina);
+      final respuesta = await context.read<ProductoService>().pagina(categoriaId: _categoria?.id, busqueda: _busqueda.text, pagina: pagina);
       if (!mounted || consulta != _consulta) return;
       setState(() {
-        _productos.addAll(nuevos);
-        _pagina++;
-        _hayMas = nuevos.length == ProductoService.porPagina;
+        _productos.addAll(respuesta.piezas);
+        _total = respuesta.total;
       });
     } on ProductoException catch (e) {
       if (mounted && consulta == _consulta) setState(() => _error = e.mensaje);
@@ -86,8 +121,11 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
 
   // Si se abrió sin internet, las categorías tampoco llegaron: se piden de nuevo.
   Future<void> _reintentar() async {
-    if (_categorias.isEmpty) _cargarCategorias();
-    await _cargarMas();
+    if (_categorias.isEmpty) {
+      await _cargarCategorias();
+      if (_porSecciones) return;
+    }
+    await _cargarPagina(_pagina);
   }
 
   Future<void> _recargar() async {
@@ -96,10 +134,12 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
       _consulta++;
       _productos.clear();
       _pagina = 0;
-      _hayMas = true;
+      _total = null;
       _cargando = false;
     });
-    await _cargarMas();
+    // En secciones, cambiar _consulta hace que cada sección vuelva a pedir sus piezas.
+    if (_porSecciones) return;
+    await _cargarPagina(0);
   }
 
   // Tocar la categoría activa la quita y vuelve a mostrar todas las piezas.
@@ -107,6 +147,15 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
     _categoria = categoria.id == _categoria?.id ? null : categoria;
     if (_scroll.hasClients) _scroll.jumpTo(0);
     _recargar();
+  }
+
+  // Al cerrar el buscador se vuelve a mostrar todo el catálogo.
+  void _alternarBuscador() {
+    setState(() => _buscando = !_buscando);
+    if (!_buscando && _busqueda.text.isNotEmpty) {
+      _busqueda.clear();
+      _recargar();
+    }
   }
 
   @override
@@ -128,11 +177,21 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
                   SliverToBoxAdapter(
                     child: _Encabezado(
                       titulo: _categoria?.nombreVisible ?? 'Nuestras joyas',
-                      total: _productos.length,
-                      completo: !_hayMas,
+                      contador: _porSecciones
+                          ? '${_categorias.length} categorías'
+                          : _productos.isEmpty
+                          ? null
+                          : _contador(),
                       categorias: _categorias,
                       activa: _categoria,
                       onElegir: _elegir,
+                      buscando: _buscando,
+                      busqueda: _busqueda,
+                      onBuscador: _alternarBuscador,
+                      onBuscar: (_) {
+                        if (_scroll.hasClients) _scroll.jumpTo(0);
+                        _recargar();
+                      },
                     ),
                   ),
                   ..._contenido(),
@@ -153,7 +212,29 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
     );
   }
 
+  // "21 piezas · página 2 de 4"; sin el total del backend solo se indica la página.
+  String _contador() {
+    final paginas = _paginas;
+    if (paginas != null) return paginas > 1 ? '$_total piezas · página ${_pagina + 1} de $paginas' : '$_total piezas';
+    if (_pagina == 0 && !_haySiguiente) return '${_productos.length} piezas';
+    return 'Página ${_pagina + 1}';
+  }
+
   List<Widget> _contenido() {
+    if (_porSecciones) {
+      return [
+        SliverList.builder(
+          itemCount: _categorias.length,
+          // Cada sección se construye (y pide sus piezas) al acercarse a la pantalla.
+          itemBuilder: (_, i) =>
+              _SeccionCategoria(key: ValueKey('seccion_${_categorias[i].id}_$_consulta'), categoria: _categorias[i], onVerTodo: () => _elegir(_categorias[i])),
+        ),
+      ];
+    }
+    // Mientras llegan las categorías sin filtro todavía no se sabe si habrá secciones.
+    if (_sinFiltro && !_categoriasListas) {
+      return [_cuadricula(4, (_) => const _TarjetaCargando())];
+    }
     // Boceto 4a: tarjetas vacías mientras llega la primera página.
     if (_productos.isEmpty && _cargando) {
       return [_cuadricula(4, (_) => const _TarjetaCargando())];
@@ -167,7 +248,27 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
         ),
       ];
     }
+    // Una página posterior que ya no tiene piezas (cambió el catálogo): se puede volver a las anteriores.
+    if (_productos.isEmpty && _pagina > 0) {
+      return [
+        SliverToBoxAdapter(
+          child: _Paginador(pagina: _pagina, paginas: _paginas, haySiguiente: false, onIr: _cargarPagina),
+        ),
+      ];
+    }
     // Boceto 4c.
+    if (_productos.isEmpty && _busqueda.text.trim().isNotEmpty) {
+      return [
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: _Aviso(
+            icono: Icons.search_off_rounded,
+            titulo: 'Sin resultados',
+            texto: 'No encontramos piezas con "${_busqueda.text.trim()}". Prueba con otra palabra.',
+          ),
+        ),
+      ];
+    }
     if (_productos.isEmpty) {
       return const [
         SliverFillRemaining(
@@ -186,27 +287,9 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
           onTap: () => Navigator.push(context, MaterialPageRoute<void>(builder: (_) => DetalleScreen(productoId: _productos[i].id))),
         ),
       ),
-      // Boceto 4d: aviso al pie mientras llega la siguiente página.
-      if (_cargando || _error != null)
+      if (_pagina > 0 || _haySiguiente)
         SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.only(top: 18),
-            child: _error != null
-                ? Center(
-                    child: TextButton(onPressed: _cargarMas, child: const Text('No se pudieron cargar más. Reintentar')),
-                  )
-                : const Column(
-                    children: [
-                      SizedBox(
-                        width: 28,
-                        height: 28,
-                        child: CircularProgressIndicator(strokeWidth: 3, color: AppColors.primario, backgroundColor: AppColors.superficie2),
-                      ),
-                      SizedBox(height: 8),
-                      Text('Cargando más piezas…', style: TextStyle(color: AppColors.textoSuave, fontSize: 11.5)),
-                    ],
-                  ),
-          ),
+          child: _Paginador(pagina: _pagina, paginas: _paginas, haySiguiente: _haySiguiente, onIr: _cargarPagina),
         ),
     ];
   }
@@ -244,14 +327,14 @@ class _TarjetaCargando extends StatelessWidget {
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: const Color(0xFF1A0F18),
+        color: AppColors.tarjeta,
         borderRadius: BorderRadius.circular(26),
         border: Border.all(color: AppColors.borde),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Expanded(child: ColoredBox(color: Color(0xB3261C22))),
+          Expanded(child: ColoredBox(color: AppColors.superficie2)),
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 16),
             child: Column(children: [barra(0.8, 12), const SizedBox(height: 8), barra(0.4, 14)]),
@@ -265,18 +348,25 @@ class _TarjetaCargando extends StatelessWidget {
 class _Encabezado extends StatelessWidget {
   const _Encabezado({
     required this.titulo,
-    required this.total,
-    required this.completo,
+    required this.contador,
     required this.categorias,
     required this.activa,
     required this.onElegir,
+    required this.buscando,
+    required this.busqueda,
+    required this.onBuscador,
+    required this.onBuscar,
   });
   final String titulo;
-  final int total;
-  final bool completo;
+  // "5+ piezas" en la cuadrícula o "6 categorías" en secciones; null mientras no hay nada.
+  final String? contador;
   final List<Categoria> categorias;
   final Categoria? activa;
   final ValueChanged<Categoria> onElegir;
+  final bool buscando;
+  final TextEditingController busqueda;
+  final VoidCallback onBuscador;
+  final ValueChanged<String> onBuscar;
 
   @override
   Widget build(BuildContext context) {
@@ -287,11 +377,29 @@ class _Encabezado extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [const Antetitulo('Catálogo'), const SizedBox(height: 2), TituloDegradado(titulo, tamano: 28)],
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [const Antetitulo('Catálogo'), const SizedBox(height: 2), TituloDegradado(titulo, tamano: 28)],
+                  ),
+                ),
+                // Boceto P6: botón de búsqueda a la derecha del título.
+                BotonCristal(
+                  icono: buscando ? Icons.close_rounded : Icons.search_rounded,
+                  descripcion: buscando ? 'Cerrar búsqueda' : 'Buscar',
+                  onPressed: onBuscador,
+                ),
+              ],
             ),
           ),
+          if (buscando)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
+              child: CampoBusqueda(controlador: busqueda, autofocus: true, onBuscar: onBuscar),
+            ),
           if (categorias.isNotEmpty) ...[
             const SizedBox(height: 14),
             SizedBox(
@@ -306,11 +414,11 @@ class _Encabezado extends StatelessWidget {
               ),
             ),
           ],
-          if (total > 0)
+          if (contador != null)
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
               // Mientras falten páginas por cargar no se conoce el total exacto.
-              child: Text(completo ? '$total piezas' : '$total+ piezas', style: const TextStyle(color: AppColors.textoSuave, fontSize: 12)),
+              child: Text(contador!, style: TextStyle(color: AppColors.textoSuave, fontSize: 12)),
             ),
         ],
       ),
@@ -327,7 +435,7 @@ class _CirculoCategoria extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const sinFoto = ColoredBox(
+    final sinFoto = ColoredBox(
       color: AppColors.superficie2,
       child: Center(child: Icon(Icons.diamond_outlined, size: 26, color: AppColors.textoSuave)),
     );
@@ -354,7 +462,7 @@ class _CirculoCategoria extends StatelessWidget {
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(20),
-                  child: (url == null || url.isEmpty) ? sinFoto : Image.network(url, fit: BoxFit.cover, errorBuilder: (_, _, _) => sinFoto),
+                  child: (url == null || url.isEmpty) ? sinFoto : FotoRed(url, error: sinFoto),
                 ),
               ),
               const SizedBox(height: 6),
@@ -396,7 +504,7 @@ class _Aviso extends StatelessWidget {
           const SizedBox(height: 18),
           Text(
             titulo,
-            style: const TextStyle(color: AppColors.texto, fontSize: 20, fontWeight: FontWeight.w700),
+            style: TextStyle(color: AppColors.texto, fontSize: 20, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 6),
           ConstrainedBox(
@@ -404,7 +512,7 @@ class _Aviso extends StatelessWidget {
             child: Text(
               texto,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textoSuave, fontSize: 13),
+              style: TextStyle(color: AppColors.textoSuave, fontSize: 13),
             ),
           ),
           if (onReintentar != null) ...[
@@ -440,6 +548,183 @@ class _Aviso extends StatelessWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+// Sección de una categoría (#254): título, "Ver todo" y una fila con sus primeras piezas. Pide sus
+// piezas al construirse, es decir, cuando el usuario llega a ella.
+class _SeccionCategoria extends StatefulWidget {
+  const _SeccionCategoria({super.key, required this.categoria, required this.onVerTodo});
+  final Categoria categoria;
+  final VoidCallback onVerTodo;
+
+  static const anchoTarjeta = 170.0;
+
+  @override
+  State<_SeccionCategoria> createState() => _SeccionCategoriaState();
+}
+
+// Se conserva al salir de la pantalla (#154): sin esto, al subir y bajar la sección se reconstruía
+// vacía y volvía a pedir sus piezas al servidor.
+class _SeccionCategoriaState extends State<_SeccionCategoria> with AutomaticKeepAliveClientMixin {
+  List<Producto>? _piezas;
+  bool _error = false;
+
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargar();
+  }
+
+  Future<void> _cargar() async {
+    setState(() => _error = false);
+    try {
+      // Solo la primera página (6 piezas): el resto se ve con "Ver todo" (#269).
+      final piezas = await context.read<ProductoService>().productos(categoriaId: widget.categoria.id);
+      if (mounted) setState(() => _piezas = piezas);
+    } on ProductoException {
+      if (mounted) setState(() => _error = true);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    final piezas = _piezas;
+    // Las categorías sin piezas no se muestran.
+    if (piezas != null && piezas.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 12, 6),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    widget.categoria.nombreVisible,
+                    style: TextStyle(color: AppColors.texto, fontSize: 18, fontWeight: FontWeight.w700, letterSpacing: -0.4),
+                  ),
+                ),
+                TextButton(onPressed: widget.onVerTodo, child: const Text('Ver todo')),
+              ],
+            ),
+          ),
+          SizedBox(
+            height: TarjetaProducto.alto,
+            child: _error
+                ? Center(
+                    child: TextButton(onPressed: _cargar, child: const Text('No se pudieron cargar. Reintentar')),
+                  )
+                : ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    itemCount: piezas?.length ?? 3,
+                    separatorBuilder: (_, _) => const SizedBox(width: 14),
+                    itemBuilder: (_, i) => SizedBox(
+                      width: _SeccionCategoria.anchoTarjeta,
+                      child: piezas == null
+                          ? const _TarjetaCargando()
+                          : TarjetaProducto(
+                              producto: piezas[i],
+                              favorita: context.watch<FavoritosProvider?>()?.esFavorita(piezas[i].id) ?? false,
+                              onFavorito: () => alternarFavorito(context, piezas[i]),
+                              onTap: () => Navigator.push(context, MaterialPageRoute<void>(builder: (_) => DetalleScreen(productoId: piezas[i].id))),
+                            ),
+                    ),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Páginas numeradas de la cuadrícula (#279): Anterior, hasta 5 números alrededor de la actual y
+// Siguiente. Sin el total del backend solo hay Anterior y Siguiente.
+class _Paginador extends StatelessWidget {
+  const _Paginador({required this.pagina, required this.paginas, required this.haySiguiente, required this.onIr});
+  final int pagina;
+  final int? paginas;
+  final bool haySiguiente;
+  final ValueChanged<int> onIr;
+
+  @override
+  Widget build(BuildContext context) {
+    final total = paginas;
+    final numeros = <int>[];
+    if (total != null) {
+      final inicio = (pagina - 2).clamp(0, (total - 5).clamp(0, total));
+      for (var n = inicio; n < total && numeros.length < 5; n++) {
+        numeros.add(n);
+      }
+    }
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 18, 12, 0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          IconButton(
+            key: const Key('pagina_anterior'),
+            tooltip: 'Página anterior',
+            onPressed: pagina > 0 ? () => onIr(pagina - 1) : null,
+            icon: const Icon(Icons.chevron_left_rounded),
+          ),
+          for (final n in numeros)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 3),
+              child: _NumeroPagina(numero: n, activa: n == pagina, onTap: () => onIr(n)),
+            ),
+          if (total == null) Text('Página ${pagina + 1}', style: TextStyle(color: AppColors.textoSuave, fontSize: 13)),
+          IconButton(
+            key: const Key('pagina_siguiente'),
+            tooltip: 'Página siguiente',
+            onPressed: haySiguiente ? () => onIr(pagina + 1) : null,
+            icon: const Icon(Icons.chevron_right_rounded),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NumeroPagina extends StatelessWidget {
+  const _NumeroPagina({required this.numero, required this.activa, required this.onTap});
+  final int numero;
+  final bool activa;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      selected: activa,
+      label: 'Página ${numero + 1}',
+      excludeSemantics: true,
+      child: GestureDetector(
+        key: Key('pagina_${numero + 1}'),
+        onTap: activa ? null : onTap,
+        child: Container(
+          width: 40,
+          height: 40,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: activa ? AppColors.primario : AppColors.superficie,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: activa ? AppColors.primario : AppColors.borde),
+          ),
+          child: Text(
+            '${numero + 1}',
+            style: TextStyle(color: activa ? Colors.white : AppColors.texto, fontSize: 14, fontWeight: FontWeight.w600),
+          ),
+        ),
       ),
     );
   }

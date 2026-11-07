@@ -64,7 +64,7 @@ class PedidoListoScreen extends StatelessWidget {
                     width: 92,
                     height: 92,
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(colors: [AppColors.primario, AppColors.primario2]),
+                      gradient: LinearGradient(colors: [AppColors.primario, AppColors.primario2]),
                       borderRadius: BorderRadius.circular(30),
                       boxShadow: const [BoxShadow(color: Color(0x80CF819F), blurRadius: 30, offset: Offset(0, 16), spreadRadius: -12)],
                     ),
@@ -83,7 +83,7 @@ class PedidoListoScreen extends StatelessWidget {
                       ? 'Quedan reservadas para ti. Liquida antes de la fecha límite para recogerlas en tienda.'
                       : 'Un trabajador lo revisará y te avisaremos cuando esté confirmado.',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.textoSuave, fontSize: 13),
+                  style: TextStyle(color: AppColors.textoSuave, fontSize: 13),
                 ),
                 const SizedBox(height: 20),
                 _Resumen(listo: listo),
@@ -144,7 +144,7 @@ class _Resumen extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text('${listo.apartado ? 'Apartado' : 'Pedido'} ${listo.folio}', style: const TextStyle(color: AppColors.textoSuave, fontSize: 12)),
+                child: Text('${listo.apartado ? 'Apartado' : 'Pedido'} ${listo.folio}', style: TextStyle(color: AppColors.textoSuave, fontSize: 12)),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -163,7 +163,7 @@ class _Resumen extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(nombre, style: const TextStyle(color: AppColors.textoSuave, fontSize: 12)),
+                  Text(nombre, style: TextStyle(color: AppColors.textoSuave, fontSize: 12)),
                   Text(valor, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                 ],
               ),

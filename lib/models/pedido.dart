@@ -252,6 +252,33 @@ class Pedido {
   }
 }
 
+// Un abono de un apartado (GET /apartados/:id): el pago inicial y los abonos siguientes.
+class Abono {
+  const Abono({required this.id, required this.monto, required this.estado, this.fecha, this.metodo, this.metodoCodigo, this.saldoDespues});
+
+  factory Abono.fromJson(Map<String, dynamic> json) => Abono(
+    id: json['id'] as int,
+    monto: _aNumero(json['monto']) ?? 0,
+    // pagado (confirmado por la tienda), pendiente (por confirmar) o rechazado.
+    estado: json['estado'] as String? ?? 'pendiente',
+    fecha: _aFecha(json['fecha_abono']),
+    metodo: json['metodo_nombre'] as String?,
+    metodoCodigo: json['metodo_codigo'] as String?,
+    saldoDespues: _aNumero(json['monto_despues']),
+  );
+
+  final int id;
+  final double monto;
+  final String estado;
+  final DateTime? fecha;
+  final String? metodo;
+  final String? metodoCodigo;
+  // Lo que faltaba por pagar después de este abono.
+  final double? saldoDespues;
+
+  bool get confirmado => estado == 'pagado';
+}
+
 // Apartado del cliente (GET /apartados/mis-apartados).
 class Apartado {
   const Apartado({
@@ -267,6 +294,7 @@ class Apartado {
     this.abonoPorConfirmar = false,
     this.metodoInicial,
     this.piezas = const [],
+    this.abonos = const [],
   });
 
   factory Apartado.fromJson(Map<String, dynamic> json) => Apartado(
@@ -282,6 +310,7 @@ class Apartado {
     abonoPorConfirmar: json['abono_pendiente'] != null,
     metodoInicial: json['metodo_pago_inicial'] as String?,
     piezas: (json['productos'] as List<dynamic>? ?? const []).cast<Map<String, dynamic>>().map(PiezaPedido.fromJson).toList(),
+    abonos: (json['abonos'] as List<dynamic>? ?? const []).cast<Map<String, dynamic>>().map(Abono.fromJson).toList(),
   );
 
   final int id;
@@ -300,6 +329,8 @@ class Apartado {
   // Código del método con que se hizo el pago inicial (efectivo, transferencia, mercadopago o paypal).
   final String? metodoInicial;
   final List<PiezaPedido> piezas;
+  // Historial de pagos; en Mis apartados solo vienen los confirmados, en el detalle todos.
+  final List<Abono> abonos;
 
   // Abono sugerido: la cuota del plan, sin pasar del saldo.
   double get abonoSugerido {

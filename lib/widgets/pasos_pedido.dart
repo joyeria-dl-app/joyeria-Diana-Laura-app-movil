@@ -26,7 +26,7 @@ class PasosPedido extends StatelessWidget {
                     margin: const EdgeInsets.symmetric(horizontal: 6),
                     decoration: BoxDecoration(
                       color: i < actual ? null : AppColors.superficie2,
-                      gradient: i < actual ? const LinearGradient(colors: [AppColors.primario, AppColors.primario2]) : null,
+                      gradient: i < actual ? LinearGradient(colors: [AppColors.primario, AppColors.primario2]) : null,
                       borderRadius: BorderRadius.circular(1),
                     ),
                   ),
@@ -65,7 +65,7 @@ class _Circulo extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: hecho ? null : (actual ? AppColors.suave : AppColors.superficie2),
-        gradient: hecho ? const LinearGradient(colors: [AppColors.primario, AppColors.primario2]) : null,
+        gradient: hecho ? LinearGradient(colors: [AppColors.primario, AppColors.primario2]) : null,
         border: actual ? Border.all(color: AppColors.primario, width: 2) : null,
       ),
       child: hecho

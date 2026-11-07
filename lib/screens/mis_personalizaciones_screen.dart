@@ -91,7 +91,7 @@ class _MisPersonalizacionesScreenState extends State<MisPersonalizacionesScreen>
             );
     }
     final solicitudes = _solicitudes;
-    if (solicitudes == null) return const Center(child: CircularProgressIndicator(color: AppColors.primario));
+    if (solicitudes == null) return Center(child: CircularProgressIndicator(color: AppColors.primario));
     if (solicitudes.isEmpty) {
       return AvisoVacio(
         icono: Icons.brush_rounded,
@@ -113,7 +113,7 @@ class _MisPersonalizacionesScreenState extends State<MisPersonalizacionesScreen>
             enRevision == 0
                 ? '${solicitudes.length} ${solicitudes.length == 1 ? 'solicitud' : 'solicitudes'}'
                 : '${solicitudes.length} ${solicitudes.length == 1 ? 'solicitud' : 'solicitudes'} · $enRevision en revisión',
-            style: const TextStyle(color: AppColors.textoSuave, fontSize: 12.5),
+            style: TextStyle(color: AppColors.textoSuave, fontSize: 12.5),
           ),
           const SizedBox(height: 12),
           for (final s in solicitudes) ...[_TarjetaSolicitud(solicitud: s, onVerPieza: () => _verPieza(s)), const SizedBox(height: 12)],
@@ -168,7 +168,7 @@ class _TarjetaSolicitud extends StatelessWidget {
                         if (s.fechaCreacion case final f?) 'Pedida el ${fechaCorta(f)}',
                         if (s.precioPersonalizacion case final p? when p > 0) '+${formatoPrecio(p)}',
                       ].join(' · '),
-                      style: const TextStyle(color: AppColors.textoSuave, fontSize: 11.5),
+                      style: TextStyle(color: AppColors.textoSuave, fontSize: 11.5),
                     ),
                   ],
                 ),

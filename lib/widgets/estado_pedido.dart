@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/pedido.dart';
 import '../theme/app_theme.dart';
 import '../utils/fechas.dart';
+import 'foto_red.dart';
 
 // Color de "Pendiente" en los bocetos (--warn).
 const colorAviso = Color(0xFFF6A723);
@@ -45,7 +46,7 @@ class ChipEstado extends StatelessWidget {
       TonoEstado.exito => (const Color(0x262EBD85), AppColors.exito),
       TonoEstado.error => (const Color(0x26EF4B5B), AppColors.error),
       TonoEstado.rosa => (AppColors.suave, AppColors.primario),
-      TonoEstado.claro => (const Color(0x40FFFFFF), Colors.white),
+      TonoEstado.claro => (const Color(0x40FFFFFF), AppColors.sobreDegradado),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -168,7 +169,7 @@ class _Paso extends StatelessWidget {
                       color: error ? AppColors.error : (paso.actual ? AppColors.primario : (activo ? AppColors.texto : AppColors.textoSuave)),
                     ),
                   ),
-                  if (paso.fecha != null) Text(fechaHora(paso.fecha!), style: const TextStyle(color: AppColors.textoSuave, fontSize: 11)),
+                  if (paso.fecha != null) Text(fechaHora(paso.fecha!), style: TextStyle(color: AppColors.textoSuave, fontSize: 11)),
                 ],
               ),
             ),
@@ -202,9 +203,9 @@ class _Punto extends StatelessWidget {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           border: Border.all(color: AppColors.primario, width: 2),
-          boxShadow: const [BoxShadow(color: AppColors.suave, spreadRadius: 4)],
+          boxShadow: [BoxShadow(color: AppColors.suave, spreadRadius: 4)],
         ),
-        child: const DecoratedBox(
+        child: DecoratedBox(
           decoration: BoxDecoration(color: AppColors.primario, shape: BoxShape.circle),
         ),
       );
@@ -213,7 +214,7 @@ class _Punto extends StatelessWidget {
       return Container(
         width: 26,
         height: 26,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(colors: [AppColors.primario, AppColors.primario2]),
           shape: BoxShape.circle,
         ),
@@ -223,7 +224,7 @@ class _Punto extends StatelessWidget {
     return Container(
       width: 26,
       height: 26,
-      decoration: const BoxDecoration(color: AppColors.superficie2, shape: BoxShape.circle),
+      decoration: BoxDecoration(color: AppColors.superficie2, shape: BoxShape.circle),
       child: Icon(paso.icono, size: 14, color: AppColors.textoSuave),
     );
   }
@@ -265,7 +266,7 @@ class AvisoVacio extends StatelessWidget {
               child: Text(
                 texto,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.textoSuave, fontSize: 13),
+                style: TextStyle(color: AppColors.textoSuave, fontSize: 13),
               ),
             ),
             if (boton != null) ...[const SizedBox(height: 22), BotonDegradado(texto: boton!, icono: iconoBoton, onPressed: onPressed)],
@@ -305,13 +306,13 @@ class BotonDegradado extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                if (icono != null) ...[Icon(icono, size: 20, color: Colors.white), const SizedBox(width: 8)],
+                if (icono != null) ...[Icon(icono, size: 20, color: AppColors.sobreDegradado), const SizedBox(width: 8)],
                 Flexible(
                   child: Text(
                     texto,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
+                    style: TextStyle(color: AppColors.sobreDegradado, fontSize: 15, fontWeight: FontWeight.w600),
                   ),
                 ),
               ],
@@ -332,7 +333,7 @@ class FotoPieza extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const sinFoto = ColoredBox(
+    final sinFoto = ColoredBox(
       color: AppColors.superficie2,
       child: Center(child: Icon(Icons.diamond_outlined, size: 20, color: AppColors.textoSuave)),
     );
@@ -341,7 +342,7 @@ class FotoPieza extends StatelessWidget {
       child: SizedBox(
         width: tamano,
         height: tamano,
-        child: url == null ? sinFoto : Image.network(url!, fit: BoxFit.cover, errorBuilder: (_, _, _) => sinFoto),
+        child: url == null ? sinFoto : FotoRed(url!, error: sinFoto),
       ),
     );
   }

@@ -70,6 +70,15 @@ class CarritoProvider extends ChangeNotifier {
 
   void limpiarAviso() => _aviso = null;
 
+  // HU-14: al cerrar sesión se olvida el carrito de la cuenta (en el servidor se conserva).
+  void limpiar() {
+    _carrito = const Carrito();
+    _sinSesion = true;
+    _error = null;
+    _aviso = null;
+    notifyListeners();
+  }
+
   Future<bool> _cambiar(Future<void> Function() accion) async {
     _aviso = null;
     var ok = true;

@@ -84,4 +84,14 @@ class FavoritosProvider extends ChangeNotifier {
     }
     notifyListeners();
   }
+
+  // HU-14: al cerrar sesión se olvidan los favoritos de la cuenta (en el servidor se conservan).
+  void limpiar() {
+    _lista = [];
+    _ids.clear();
+    _cargada = false;
+    _sinSesion = true;
+    _error = null;
+    notifyListeners();
+  }
 }

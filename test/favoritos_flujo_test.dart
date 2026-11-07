@@ -37,6 +37,10 @@ class _Catalogo extends ProductoService {
   Future<List<Producto>> productos({int? categoriaId, String? busqueda, int pagina = 0}) async => pagina == 0 ? [_anillo, _aretes] : [];
 
   @override
+  Future<PaginaProductos> pagina({int? categoriaId, String? busqueda, int pagina = 0}) async =>
+      PaginaProductos(await productos(categoriaId: categoriaId, pagina: pagina), 2);
+
+  @override
   Future<List<Categoria>> categorias() async => [];
 
   @override

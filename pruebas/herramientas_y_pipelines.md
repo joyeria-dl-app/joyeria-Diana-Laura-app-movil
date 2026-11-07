@@ -52,6 +52,7 @@ integración, aceptación y rendimiento en el emulador.
 ## Paralelo o secuencia
 
 - **Entre workflows: en paralelo.** Cada workflow corre en su propio runner (máquina virtual de GitHub con `ubuntu-24.04`). Los del emulador usan una cuenta de prueba distinta cada uno para no cambiarse el carrito (#185).
+- **Misma cuenta: en secuencia.** Dos corridas del mismo workflow, o integración y regresión, pueden usar la misma cuenta a la vez (por ejemplo, al unir un PR a `develop` mientras otro PR hacia `main` corre sus pruebas). Cada trabajo que inicia sesión tiene un grupo `concurrency` por cuenta (`cuenta-pruebas` para integración, regresión y esfuerzo en producción; `cuenta-aceptacion` y `cuenta-entorno`) sin cancelar la corrida en curso: la segunda espera a que termine la primera. Si llega una tercera mientras otra espera, GitHub deja solo la más reciente en espera y cancela la anterior pendiente (#238).
 - **Dentro de un workflow: en secuencia.** Cada paso espera al anterior; si uno falla, los siguientes no corren. Excepción: Pruebas de rendimiento tiene dos trabajos independientes (tamaño del APK y tiempos) que corren en paralelo.
 - **Trabajos encadenados:** Regresión corre integración solo si pasaron las unitarias (`needs: unitarias`) y Publicar APK compila solo si pasó la regresión (`needs: regresion`).
 - **Dentro de las pruebas:** `flutter test` reparte los archivos de pruebas unitarias en paralelo entre los núcleos del runner; las pruebas del emulador corren una tras otra en el mismo emulador.

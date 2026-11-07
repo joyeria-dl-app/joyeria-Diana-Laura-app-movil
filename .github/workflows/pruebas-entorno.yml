@@ -22,6 +22,11 @@ on:
 jobs:
   entorno:
     name: Entorno en emulador Android
+    # Una sola corrida a la vez por cuenta de prueba (ENTORNO_CORREO), en todo el repositorio (#238): si otra
+    # corrida ya la usa, esta espera a que termine en lugar de cambiarle el carrito a la mitad.
+    concurrency:
+      group: cuenta-entorno
+      cancel-in-progress: false
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
@@ -40,6 +45,13 @@ jobs:
       # Librerías de pubspec.yaml.
       - name: Instalar dependencias
         run: flutter pub get
+
+      # google-services.json (Firebase Cloud Messaging, #55) no se sube al repositorio porque el
+      # repositorio es público; Gradle lo necesita para compilar y aquí se crea desde un secreto.
+      - name: Crear google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
 
       # El emulador y la compilación de Android necesitan Java 17.
       - name: Instalar Java
@@ -66,6 +78,11 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
+          # 4 núcleos y 4 GB: con 2 núcleos y 2.5 GB el emulador quedaba "device offline"
+          # a mitad de las pruebas del catálogo (#93).
+          cores: 4
+          ram-size: 4096M
+          heap-size: 512M
           arch: x86_64
           target: google_apis
           profile: pixel_6

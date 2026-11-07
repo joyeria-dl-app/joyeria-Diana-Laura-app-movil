@@ -3,6 +3,14 @@ import 'package:dio/dio.dart';
 import '../models/producto.dart';
 import 'api_client.dart';
 
+// Una página del catálogo (#279). `total` son las piezas del filtro en todas las páginas; es null si
+// el backend todavía no lo envía.
+class PaginaProductos {
+  const PaginaProductos(this.piezas, this.total);
+  final List<Producto> piezas;
+  final int? total;
+}
+
 class ProductoException implements Exception {
   const ProductoException(this.mensaje, {this.noEncontrado = false});
   final String mensaje;
@@ -19,18 +27,33 @@ class ProductoService {
 
   final ApiClient _api;
 
-  static const int porPagina = 20;
+  // Páginas de 6 (#279): 3 filas completas en la cuadrícula de 2 columnas.
+  static const int porPagina = 6;
 
   // Listado del catálogo. `categoriaId` filtra por categoría y `pagina`
   // (desde 0) permite cargar más productos al llegar al final de la lista.
-  Future<List<Producto>> productos({int? categoriaId, String? busqueda, int pagina = 0}) async {
-    final lista = await _obtener('/products/filter', {
-      'limit': porPagina,
-      'offset': pagina * porPagina,
-      'categoria_id': ?categoriaId,
-      if (busqueda != null && busqueda.trim().isNotEmpty) 'nombre': busqueda.trim(),
-    });
-    return lista.map((p) => Producto.fromJson(p as Map<String, dynamic>)).toList();
+  Future<List<Producto>> productos({int? categoriaId, String? busqueda, int pagina = 0}) async =>
+      (await this.pagina(categoriaId: categoriaId, busqueda: busqueda, pagina: pagina)).piezas;
+
+  // La misma página con el total de piezas del filtro, para las páginas numeradas (#279).
+  Future<PaginaProductos> pagina({int? categoriaId, String? busqueda, int pagina = 0}) async {
+    try {
+      final respuesta = await _api.dio.get(
+        '/products/filter',
+        queryParameters: {
+          'limit': porPagina,
+          'offset': pagina * porPagina,
+          'categoria_id': ?categoriaId,
+          if (busqueda != null && busqueda.trim().isNotEmpty) 'nombre': busqueda.trim(),
+        },
+      );
+      final data = respuesta.data as Map<String, dynamic>;
+      if (data['success'] != true) throw ProductoException(data['message'] as String? ?? 'No se pudo cargar el catálogo.');
+      final piezas = (data['data'] as List<dynamic>).map((p) => Producto.fromJson(p as Map<String, dynamic>)).toList();
+      return PaginaProductos(piezas, data['total_filtrado'] as int?);
+    } on DioException {
+      throw const ProductoException('No se pudo cargar el catálogo. Revisa tu conexión e intenta de nuevo.');
+    }
   }
 
   // El backend también devuelve las categorías desactivadas desde el panel.

@@ -111,7 +111,7 @@ class _MisPedidosScreenState extends State<MisPedidosScreen> {
               onPressed: _cargar,
             );
     }
-    if (_pedidos == null) return const Center(child: CircularProgressIndicator(color: AppColors.primario));
+    if (_pedidos == null) return Center(child: CircularProgressIndicator(color: AppColors.primario));
     final lista = _de(_filtro);
     if (lista.isEmpty) {
       // 9b.
@@ -179,7 +179,7 @@ class _Filtros extends StatelessWidget {
                   ),
                   child: Text(
                     f == actual ? '${_nombres[f]} · $cuenta' : _nombres[f]!,
-                    style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: f == actual ? Colors.white : AppColors.texto),
+                    style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: f == actual ? AppColors.sobreDegradado : AppColors.texto),
                   ),
                 ),
               ),
@@ -229,7 +229,7 @@ class _PedidoAbierto extends StatelessWidget {
           children: [
             Container(
               padding: const EdgeInsets.all(18),
-              decoration: const BoxDecoration(gradient: AppColors.degradado),
+              decoration: BoxDecoration(gradient: AppColors.degradado),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -237,7 +237,7 @@ class _PedidoAbierto extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        child: Text('Pedido ${pedido.folio}', style: const TextStyle(color: Color(0xDDFFFFFF), fontSize: 11.5)),
+                        child: Text('Pedido ${pedido.folio}', style: TextStyle(color: AppColors.sobreDegradado.withValues(alpha: 0.85), fontSize: 11.5)),
                       ),
                       ChipEstado(nombreEstado(pedido.estado), tono: TonoEstado.claro),
                     ],
@@ -245,7 +245,7 @@ class _PedidoAbierto extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     tituloPedido(pedido, corto: true),
-                    style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700, letterSpacing: -0.4),
+                    style: TextStyle(color: AppColors.sobreDegradado, fontSize: 20, fontWeight: FontWeight.w700, letterSpacing: -0.4),
                   ),
                   const SizedBox(height: 10),
                   Row(
@@ -255,7 +255,7 @@ class _PedidoAbierto extends StatelessWidget {
                       Expanded(
                         child: Text(
                           _resumen(pedido),
-                          style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500),
+                          style: TextStyle(color: AppColors.sobreDegradado, fontSize: 12, fontWeight: FontWeight.w500),
                         ),
                       ),
                     ],
@@ -304,7 +304,7 @@ class _PedidoCerrado extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     [if (fecha != null) fechaCorta(fecha), formatoPrecioCompleto(pedido.total), ?pedido.metodoPago].join(' · '),
-                    style: const TextStyle(color: AppColors.textoSuave, fontSize: 11),
+                    style: TextStyle(color: AppColors.textoSuave, fontSize: 11),
                   ),
                 ],
               ),

@@ -38,6 +38,7 @@ jobs:
       FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
       PRUEBAS_CORREO: ${{ secrets.PRUEBAS_CORREO }}
       PRUEBAS_CONTRASENA: ${{ secrets.PRUEBAS_CONTRASENA }}
+      GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
 
   # 2. Solo si la regresión pasó.
   compilar-apk:
@@ -87,13 +88,30 @@ jobs:
       - name: Instalar dependencias
         run: flutter pub get
 
+      # google-services.json (Firebase Cloud Messaging, #55) no se sube al repositorio porque el
+      # repositorio es público; Gradle lo necesita para compilar y aquí se crea desde un secreto.
+      - name: Crear google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+
       # La clave pública de Firebase se guarda como secreto del repositorio, no en el código.
       - name: Crear env.json
         run: echo '{"FIREBASE_API_KEY":"${{ secrets.FIREBASE_API_KEY }}"}' > env.json
 
       # Compila con el versionName y versionCode de pubspec.yaml ya revisados.
+      # Ofuscado (#99): los nombres de clases y funciones de Dart no se leen en el APK. Los símbolos
+      # quedan aparte para traducir los errores de Crashlytics.
       - name: Compilar APK
-        run: flutter build apk --release --dart-define-from-file=env.json --build-name=${{ steps.version.outputs.nombre }} --build-number=${{ steps.version.outputs.codigo }}
+        run: flutter build apk --release --obfuscate --split-debug-info=build/simbolos --dart-define-from-file=env.json --build-name=${{ steps.version.outputs.nombre }} --build-number=${{ steps.version.outputs.codigo }}
+
+      # Sin los símbolos no se puede leer la pila de un error del APK ofuscado.
+      - name: Guardar los símbolos de depuración
+        uses: actions/upload-artifact@v7
+        with:
+          name: simbolos-${{ env.TAG }}
+          path: build/simbolos
+          retention-days: 90
 
       # El APK se sube a la página de la versión con el nombre joyeria-diana-laura-vX.Y.Z+N.apk.
       - name: Adjuntar el APK a la versión

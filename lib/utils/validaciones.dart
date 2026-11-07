@@ -15,6 +15,16 @@ class Validaciones {
     return null;
   }
 
+  // Teléfono de Ajustes del perfil (#213): opcional; si se escribe, 10 dígitos. Se aceptan
+  // espacios y guiones, como en el backend (PUT /auth/profile).
+  static String? telefono(String? valor) {
+    final digitos = soloDigitos(valor);
+    if (digitos.isEmpty) return null;
+    return RegExp(r'^\d{10}$').hasMatch(digitos) ? null : 'El teléfono debe tener 10 dígitos';
+  }
+
+  static String soloDigitos(String? valor) => (valor ?? '').replaceAll(RegExp(r'[\s-]'), '');
+
   static String? correo(String? valor) {
     final v = (valor ?? '').trim();
     if (v.isEmpty) return 'Ingresa tu correo electrónico';

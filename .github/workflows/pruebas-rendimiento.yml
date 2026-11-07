@@ -38,6 +38,13 @@ jobs:
       - name: Instalar dependencias
         run: flutter pub get
 
+      # google-services.json (Firebase Cloud Messaging, #55) no se sube al repositorio porque el
+      # repositorio es público; Gradle lo necesita para compilar y aquí se crea desde un secreto.
+      - name: Crear google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+
       # El emulador y la compilación de Android necesitan Java 17.
       - name: Instalar Java
         uses: actions/setup-java@v6
@@ -91,6 +98,13 @@ jobs:
       - name: Instalar dependencias
         run: flutter pub get
 
+      # google-services.json (Firebase Cloud Messaging, #55) no se sube al repositorio porque el
+      # repositorio es público; Gradle lo necesita para compilar y aquí se crea desde un secreto.
+      - name: Crear google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+
       # El emulador y la compilación de Android necesitan Java 17.
       - name: Instalar Java
         uses: actions/setup-java@v6
@@ -110,6 +124,11 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
+          # 4 núcleos y 4 GB: con 2 núcleos y 2.5 GB el emulador quedaba "device offline"
+          # a mitad de las pruebas del catálogo (#93).
+          cores: 4
+          ram-size: 4096M
+          heap-size: 512M
           arch: x86_64
           target: google_apis
           profile: pixel_6

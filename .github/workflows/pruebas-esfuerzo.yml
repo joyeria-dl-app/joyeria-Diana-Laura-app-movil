@@ -141,6 +141,11 @@ jobs:
 
   produccion:
     name: Esfuerzo del backend en Render
+    # Una sola corrida a la vez por cuenta de prueba (PRUEBAS_CORREO), en todo el repositorio (#238): si otra
+    # corrida ya la usa, esta espera a que termine en lugar de cambiarle el carrito a la mitad.
+    concurrency:
+      group: cuenta-pruebas
+      cancel-in-progress: false
     if: github.event_name == 'workflow_dispatch' && inputs.entorno == 'produccion'
     runs-on: ubuntu-24.04
     steps:

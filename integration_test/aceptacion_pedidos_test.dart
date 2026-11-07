@@ -22,6 +22,7 @@ import 'package:joyeria_diana_laura/services/session_storage.dart';
 import 'package:joyeria_diana_laura/utils/formato.dart';
 
 import 'catalogo_test.dart' show despertarServidor, esperar;
+import 'paginas.dart';
 import 'sesion.dart';
 import 'datos_prueba.dart';
 
@@ -68,7 +69,7 @@ void main() {
       final pieza = (await tester.runAsync(() async {
         final productos = contexto.read<ProductoService>();
         final anillos = (await productos.categorias()).firstWhere((c) => c.nombre == PiezasPrueba.categoriaCompra);
-        final lista = (await productos.productos(categoriaId: anillos.id)).where((p) => p.stock >= 2).toList()
+        final lista = (await todasLasPiezas(productos, categoriaId: anillos.id)).where((p) => p.stock >= 2).toList()
           ..sort((a, b) => a.precioFinal.compareTo(b.precioFinal));
         return lista.isEmpty ? null : lista.first;
       }))!;
@@ -150,7 +151,8 @@ void main() {
 
     // CA-14: Mis pedidos de la app coincide con el servidor (lo que ve el sitio web).
     final pedidos = (await tester.runAsync(pedidosServidor.misPedidos))!;
-    await tester.tap(find.text('Mis pedidos'));
+    // La campana del Inicio abre Mis pedidos (#244).
+    await tester.tap(find.byKey(const Key('inicio_notificaciones')));
     await esperar(tester, find.byType(MisPedidosScreen));
     final enCurso = pedidos.where((p) => p.enCurso).toList();
     await esperar(tester, find.text('En curso · ${enCurso.length}'));
@@ -163,6 +165,9 @@ void main() {
     // CA-15: Mis apartados de la app coincide con el servidor.
     final apartados = (await tester.runAsync(pedidosServidor.misApartados))!;
     final activos = apartados.where((a) => a.activo).toList();
+    // Desde #244 Mis apartados está en Mi perfil.
+    await abrirPestana(tester, 'perfil');
+    await esperar(tester, find.text('Mis apartados'));
     await tester.tap(find.text('Mis apartados'));
     await esperar(tester, find.byType(MisApartadosScreen));
     if (apartados.isEmpty) {
@@ -181,8 +186,6 @@ void main() {
     await tester.pumpAndSettle();
 
     // Cerrar sesión para que las demás pruebas inicien sin cuenta.
-    await esperar(tester, find.text('Cerrar sesión'));
-    await tester.tap(find.text('Cerrar sesión'));
-    await esperar(tester, find.text('Explorar sin cuenta'));
+    await cerrarSesionDesdePerfil(tester);
   });
 }

@@ -9,7 +9,9 @@ import '../screens/login_screen.dart';
 import '../screens/mis_apartados_screen.dart';
 import '../screens/mis_pedidos_screen.dart';
 import '../screens/mis_personalizaciones_screen.dart';
+import '../screens/perfil_screen.dart';
 import '../screens/register_screen.dart';
+import '../screens/zonas_entrega_screen.dart';
 
 class AppRoutes {
   static const String home = '/';
@@ -22,17 +24,21 @@ class AppRoutes {
   static const String misPedidos = '/mis-pedidos';
   static const String misApartados = '/mis-apartados';
   static const String misPersonalizaciones = '/mis-personalizaciones';
+  static const String perfil = '/perfil';
+  static const String zonasEntrega = '/zonas-entrega';
 
   static Map<String, WidgetBuilder> get routes => {
     home: (_) => const HomeScreen(),
     login: (_) => const LoginScreen(),
     register: (_) => const RegisterScreen(),
-    catalogo: (_) => const CatalogoScreen(),
+    catalogo: CatalogoScreen.desdeRuta,
     carrito: (_) => const CarritoScreen(),
     favoritos: (_) => const FavoritosScreen(),
     confirmarPedido: (_) => const ConfirmarPedidoScreen(),
     misPedidos: (_) => const MisPedidosScreen(),
     misApartados: (_) => const MisApartadosScreen(),
     misPersonalizaciones: (_) => const MisPersonalizacionesScreen(),
+    perfil: (_) => const PerfilScreen(),
+    zonasEntrega: (_) => const ZonasEntregaScreen(),
   };
 }

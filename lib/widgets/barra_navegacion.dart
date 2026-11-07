@@ -2,6 +2,9 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
+import 'package:provider/provider.dart';
+
+import '../providers/carrito_provider.dart';
 import '../routes/app_routes.dart';
 import '../theme/app_theme.dart';
 
@@ -34,10 +37,7 @@ class BarraNavegacion extends StatelessWidget {
       case Seccion.favoritos:
         Navigator.pushNamed(context, AppRoutes.favoritos);
       case Seccion.perfil:
-        // Se conecta en su historia (HU-14).
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(const SnackBar(content: Text('Disponible muy pronto')));
+        Navigator.pushNamed(context, AppRoutes.perfil);
     }
   }
 
@@ -47,8 +47,8 @@ class BarraNavegacion extends StatelessWidget {
       height: 70,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(28),
-        boxShadow: const [
-          BoxShadow(color: Color(0x80000000), blurRadius: 40, offset: Offset(0, 20), spreadRadius: -10),
+        boxShadow: [
+          BoxShadow(color: AppColors.sombra, blurRadius: 40, offset: Offset(0, 20), spreadRadius: -10),
           BoxShadow(color: Color(0x59CF819F), blurRadius: 18, spreadRadius: -10),
         ],
       ),
@@ -58,13 +58,23 @@ class BarraNavegacion extends StatelessWidget {
           filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
           child: Container(
             decoration: BoxDecoration(
-              color: const Color(0x8C281224),
+              color: AppColors.cristal,
               borderRadius: BorderRadius.circular(28),
-              border: Border.all(color: const Color(0x2EFFAAD7)),
+              border: Border.all(color: AppColors.cristalBorde),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [for (final seccion in Seccion.values) _Boton(seccion: seccion, activa: seccion == actual, onTap: () => _ir(context, seccion))],
+              children: [
+                for (final seccion in Seccion.values)
+                  _Boton(
+                    key: Key('nav_${seccion.name}'),
+                    seccion: seccion,
+                    activa: seccion == actual,
+                    // Boceto P5: piezas del carrito en un globo sobre la bolsa.
+                    contador: seccion == Seccion.carrito ? context.watch<CarritoProvider?>()?.piezas ?? 0 : 0,
+                    onTap: () => _ir(context, seccion),
+                  ),
+              ],
             ),
           ),
         ),
@@ -74,11 +84,12 @@ class BarraNavegacion extends StatelessWidget {
 }
 
 class _Boton extends StatelessWidget {
-  const _Boton({required this.seccion, required this.activa, required this.onTap});
+  const _Boton({super.key, required this.seccion, required this.activa, required this.onTap, this.contador = 0});
 
   final Seccion seccion;
   final bool activa;
   final VoidCallback onTap;
+  final int contador;
 
   @override
   Widget build(BuildContext context) {
@@ -86,7 +97,7 @@ class _Boton extends StatelessWidget {
     return Semantics(
       button: true,
       selected: activa,
-      label: nombre,
+      label: contador > 0 ? '$nombre, $contador piezas' : nombre,
       excludeSemantics: true,
       child: GestureDetector(
         onTap: onTap,
@@ -97,7 +108,7 @@ class _Boton extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(18),
-                  gradient: const LinearGradient(
+                  gradient: LinearGradient(
                     begin: Alignment(-0.6, -1),
                     end: Alignment(0.6, 1),
                     colors: [AppColors.primario, AppColors.primario2, AppColors.lila],
@@ -107,16 +118,48 @@ class _Boton extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(relleno, size: 19, color: Colors.white),
+                    Icon(relleno, size: 19, color: AppColors.sobreDegradado),
                     const SizedBox(width: 8),
                     Text(
                       nombre,
-                      style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w600),
+                      style: TextStyle(color: AppColors.sobreDegradado, fontSize: 12.5, fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),
               )
-            : SizedBox(width: 46, height: 46, child: Icon(vacio, size: 24, color: AppColors.textoSuave)),
+            : SizedBox(
+                width: 46,
+                height: 46,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  alignment: Alignment.center,
+                  children: [
+                    Icon(vacio, size: 24, color: AppColors.textoSuave),
+                    if (contador > 0) Positioned(top: 4, right: 2, child: _Globo(contador)),
+                  ],
+                ),
+              ),
+      ),
+    );
+  }
+}
+
+// Globo rosa con el número de piezas (.badge de los bocetos).
+class _Globo extends StatelessWidget {
+  const _Globo(this.numero);
+  final int numero;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 18),
+      height: 18,
+      padding: const EdgeInsets.symmetric(horizontal: 5),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(color: AppColors.primario, borderRadius: BorderRadius.circular(9)),
+      child: Text(
+        numero > 99 ? '99+' : '$numero',
+        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700),
       ),
     );
   }

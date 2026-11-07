@@ -142,6 +142,30 @@ void main() {
     expect(await service.sesionGuardada(), isNull);
   });
 
+  test('Cerrar sesión avisa al backend y borra la sesión aunque el servidor no responda', () async {
+    final service = crear(
+      {
+        '/accounts:signInWithPassword': const _Respuesta(200, {'idToken': 'id-token'}),
+      },
+      {
+        '/auth/login/movil': const _Respuesta(200, {
+          'success': true,
+          'data': {
+            'token': 'jwt-sesion',
+            'user': {'email': 'a@b.com', 'nombre': 'A', 'rol': 'cliente'},
+          },
+        }),
+        '/auth/logout': const _Respuesta(500, {'success': false}),
+      },
+    );
+    await service.iniciarSesion('a@b.com', 'x');
+    await service.cerrarSesion();
+
+    expect(backendFalso.peticiones.map((p) => '${p.method} ${p.path}'), contains('POST /auth/logout'));
+    expect(await storage.leerToken(), isNull);
+    expect(await service.sesionGuardada(), isNull);
+  });
+
   test('Sin "Recordarme" la sesión no se conserva al volver a abrir la app', () async {
     final service = crear(
       {

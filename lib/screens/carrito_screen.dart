@@ -9,6 +9,7 @@ import '../utils/formato.dart';
 import '../widgets/barra_navegacion.dart';
 import '../widgets/decoracion.dart';
 import '../widgets/resumen_carrito.dart';
+import '../widgets/foto_red.dart';
 
 // Color de "Solo quedan N" en los bocetos (--warn).
 const _aviso = Color(0xFFF6A723);
@@ -245,11 +246,7 @@ class _Pieza extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(20),
-            child: SizedBox(
-              width: 90,
-              height: 90,
-              child: item.imagen == null ? const _SinFoto() : Image.network(item.imagen!, fit: BoxFit.cover, errorBuilder: (_, _, _) => const _SinFoto()),
-            ),
+            child: SizedBox(width: 90, height: 90, child: item.imagen == null ? const _SinFoto() : FotoRed(item.imagen!, error: const _SinFoto())),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -369,7 +366,7 @@ class _SinFoto extends StatelessWidget {
   const _SinFoto();
 
   @override
-  Widget build(BuildContext context) => const ColoredBox(
+  Widget build(BuildContext context) => ColoredBox(
     color: AppColors.superficie2,
     child: Center(child: Icon(Icons.diamond_outlined, color: AppColors.textoSuave)),
   );
@@ -448,7 +445,7 @@ class _Aviso extends StatelessWidget {
           Text(
             titulo,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.texto, fontSize: 20, fontWeight: FontWeight.w700),
+            style: TextStyle(color: AppColors.texto, fontSize: 20, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 6),
           ConstrainedBox(
@@ -456,7 +453,7 @@ class _Aviso extends StatelessWidget {
             child: Text(
               texto,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textoSuave, fontSize: 13),
+              style: TextStyle(color: AppColors.textoSuave, fontSize: 13),
             ),
           ),
           const SizedBox(height: 22),
@@ -537,7 +534,7 @@ class _ConfirmarVaciar extends StatelessWidget {
             Text(
               'Se quitarán ${piezas == 1 ? 'la pieza' : 'las $piezas piezas'}. También se vacía en el sitio web.',
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textoSuave, fontSize: 13),
+              style: TextStyle(color: AppColors.textoSuave, fontSize: 13),
             ),
             const SizedBox(height: 20),
             FilledButton.icon(

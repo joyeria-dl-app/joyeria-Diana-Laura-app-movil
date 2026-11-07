@@ -155,7 +155,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             _paso == 1
                                 ? 'Guarda favoritos, aparta piezas y sigue tus pedidos.'
                                 : 'Si olvidas tu contraseña, te haremos esta pregunta para recuperarla.',
-                            style: const TextStyle(color: AppColors.textoSuave, fontSize: 13),
+                            style: TextStyle(color: AppColors.textoSuave, fontSize: 13),
                           ),
                           const SizedBox(height: 22),
                           if (_paso == 1) _pasoDatos() else _pasoPregunta(),
@@ -175,7 +175,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       alignment: WrapAlignment.center,
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        const Text('¿Ya tienes cuenta?', style: TextStyle(color: AppColors.textoSuave, fontSize: 13)),
+                        Text('¿Ya tienes cuenta?', style: TextStyle(color: AppColors.textoSuave, fontSize: 13)),
                         TextButton(
                           onPressed: () => Navigator.pushReplacementNamed(context, AppRoutes.login),
                           child: const Text('Inicia sesión', style: TextStyle(fontSize: 13)),
@@ -291,7 +291,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               _aceptaAviso = v;
               if (v) _mostrarErrorAviso = false;
             }),
-            etiqueta: const Text.rich(
+            etiqueta: Text.rich(
               TextSpan(
                 text: 'Acepto el ',
                 style: TextStyle(color: AppColors.texto, fontSize: 12.5, fontWeight: FontWeight.w500),
@@ -405,13 +405,13 @@ class _OpcionPregunta extends StatelessWidget {
         child: Ink(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
-            gradient: seleccionada ? const LinearGradient(colors: [AppColors.suave, Colors.transparent]) : null,
+            gradient: seleccionada ? LinearGradient(colors: [AppColors.suave, Colors.transparent]) : null,
           ),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
             children: [
               Expanded(
-                child: Text(texto, style: const TextStyle(color: AppColors.texto, fontSize: 13)),
+                child: Text(texto, style: TextStyle(color: AppColors.texto, fontSize: 13)),
               ),
               const SizedBox(width: 10),
               Container(
@@ -426,7 +426,7 @@ class _OpcionPregunta extends StatelessWidget {
                     ? Container(
                         width: 11,
                         height: 11,
-                        decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.primario),
+                        decoration: BoxDecoration(shape: BoxShape.circle, color: AppColors.primario),
                       )
                     : null,
               ),

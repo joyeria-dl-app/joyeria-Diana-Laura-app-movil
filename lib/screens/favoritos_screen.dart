@@ -110,7 +110,7 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
             sliver: SliverToBoxAdapter(
               child: Text(
                 lista.length == 1 ? '1 pieza guardada' : '${lista.length} piezas guardadas',
-                style: const TextStyle(color: AppColors.textoSuave, fontSize: 12),
+                style: TextStyle(color: AppColors.textoSuave, fontSize: 12),
               ),
             ),
           ),
@@ -183,15 +183,15 @@ class _Cargando extends StatelessWidget {
             itemBuilder: (_, _) => Container(
               clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
-                color: const Color(0xFF1A0F18),
+                color: AppColors.tarjeta,
                 borderRadius: BorderRadius.circular(26),
                 border: Border.all(color: AppColors.borde),
               ),
-              child: const Column(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: ColoredBox(color: Color(0xB3261C22), child: SizedBox.expand()),
+                    child: ColoredBox(color: AppColors.superficie2, child: SizedBox.expand()),
                   ),
                   Padding(
                     padding: EdgeInsets.fromLTRB(14, 12, 14, 16),
@@ -237,7 +237,7 @@ class _Aviso extends StatelessWidget {
           Text(
             titulo,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.texto, fontSize: 20, fontWeight: FontWeight.w700),
+            style: TextStyle(color: AppColors.texto, fontSize: 20, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 6),
           ConstrainedBox(
@@ -245,7 +245,7 @@ class _Aviso extends StatelessWidget {
             child: Text(
               texto,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textoSuave, fontSize: 13),
+              style: TextStyle(color: AppColors.textoSuave, fontSize: 13),
             ),
           ),
           const SizedBox(height: 22),
