@@ -190,6 +190,28 @@ void main() {
     expect(find.text('Abonar'), findsOneWidget);
   });
 
+  testWidgets('10a: un apartado vencido dice Vencido y no deja abonar (#303)', (tester) async {
+    final servicio = _PedidosFalso(
+      apartados: [
+        Apartado(
+          id: 9,
+          folio: 'AP-3',
+          estado: 'vencido',
+          montoTotal: 580.32,
+          montoPagado: 290.16,
+          saldo: 290.16,
+          fechaLimite: DateTime.now().subtract(const Duration(days: 3)),
+          piezas: const [_pieza],
+        ),
+      ],
+    );
+    await _abrir(tester, servicio, const MisApartadosScreen());
+
+    expect(find.text('Vencido'), findsOneWidget);
+    expect(find.text('Al corriente'), findsNothing);
+    expect(find.text('Abonar'), findsNothing);
+  });
+
   testWidgets('10b: sin apartados invita a ir al carrito', (tester) async {
     await _abrir(tester, _PedidosFalso(), const MisApartadosScreen());
 

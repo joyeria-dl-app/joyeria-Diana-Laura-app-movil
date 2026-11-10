@@ -370,6 +370,8 @@ class _TarjetaApartado extends StatelessWidget {
     final a = apartado;
     if (a.estado == 'liquidado') return ('Liquidado', TonoEstado.exito, null);
     if (a.estado == 'cancelado') return ('Cancelado', TonoEstado.error, null);
+    // El backend vence solo los apartados activos que pasaron su fecha límite (#303).
+    if (a.estado == 'vencido') return ('Vencido', TonoEstado.error, null);
     if (a.estado == 'pendiente_pago') return ('Pago inicial pendiente', TonoEstado.aviso, null);
     if (a.abonoPorConfirmar) return ('Abono por confirmar', TonoEstado.aviso, Icons.hourglass_top_rounded);
     final dias = a.fechaLimite == null ? null : diasHasta(a.fechaLimite!);
