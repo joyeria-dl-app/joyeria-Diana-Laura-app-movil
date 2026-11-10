@@ -105,7 +105,9 @@ class _Contenido extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final a = apartado;
-    final cancelado = a.estado == 'cancelado';
+    // Un apartado vencido (#303) termina igual que uno cancelado: sin saldo por pagar ni fecha límite.
+    final vencido = a.estado == 'vencido';
+    final cancelado = a.estado == 'cancelado' || vencido;
     // Del más reciente al más antiguo, como se consulta un historial.
     final abonos = [...a.abonos]..sort((x, y) => (y.fecha ?? DateTime(0)).compareTo(x.fecha ?? DateTime(0)));
     return ListView(
@@ -144,7 +146,7 @@ class _Contenido extends StatelessWidget {
                   ),
                   // Un apartado cancelado ya no tiene saldo por pagar.
                   if (cancelado)
-                    const ChipEstado('Cancelado', tono: TonoEstado.error)
+                    ChipEstado(vencido ? 'Vencido' : 'Cancelado', tono: TonoEstado.error)
                   else
                     Text(
                       a.saldo <= 0.009 ? 'Liquidado' : 'Faltan ${formatoPrecioCompleto(a.saldo)}',
