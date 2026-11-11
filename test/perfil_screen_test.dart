@@ -4,6 +4,7 @@
 // DATOS: backend simulado en memoria (sin red); perfil y conteos de ejemplo
 
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 
@@ -147,50 +148,70 @@ void main() {
     expect(find.text('Ana Martínez'), findsOneWidget);
   });
 
-  group('Tema (#212)', () {
-    testWidgets('El interruptor empieza encendido con el tema oscuro', (tester) async {
+  group('Tema (#212, #307)', () {
+    Finder opcion(TemaApp t) => find.byKey(Key('perfil_tema_${t.name}'));
+
+    testWidgets('Muestra los tres temas y empieza con el oscuro', (tester) async {
       await _abrir(tester, _PerfilFalso(cuenta: _ana));
-      expect(find.text('Tema oscuro'), findsOneWidget);
-      expect(tester.widget<Switch>(find.byKey(const Key('perfil_tema'))).value, isTrue);
+      expect(find.text('Tema'), findsOneWidget);
+      for (final t in TemaApp.values) {
+        expect(opcion(t), findsOneWidget);
+      }
+      expect(find.bySemanticsLabel('Tema Oscuro'), findsOneWidget);
+      expect(tester.getSemantics(find.bySemanticsLabel('Tema Oscuro')), containsSemantics(isSelected: true));
       expect(AppColors.fondo, Paleta.oscuraBoceto.fondo);
     });
 
-    testWidgets('Al apagarlo cambia a la paleta clara del boceto y guarda la preferencia', (tester) async {
+    testWidgets('Al elegir Dorado usa la paleta dorada del boceto y guarda la preferencia', (tester) async {
       final preferencia = MemoriaPreferenciaTema();
       final tema = TemaProvider(preferencia);
       await _abrir(tester, _PerfilFalso(cuenta: _ana), tema: tema);
-      await tester.ensureVisible(find.byKey(const Key('perfil_tema')));
-      await tester.tap(find.byKey(const Key('perfil_tema')));
+      await tester.ensureVisible(opcion(TemaApp.dorado));
+      await tester.tap(opcion(TemaApp.dorado));
       await tester.pumpAndSettle();
 
-      expect(tema.oscuro, isFalse);
-      expect(tester.widget<Switch>(find.byKey(const Key('perfil_tema'))).value, isFalse);
-      expect(AppColors.fondo, const Color(0xFFFFF6FA));
-      expect(AppColors.primario, const Color(0xFFC9668F));
-      expect(await preferencia.leerOscuro(), isFalse);
+      expect(tema.actual, TemaApp.dorado);
+      expect(tema.oscuro, isTrue);
+      expect(AppColors.fondo, const Color(0xFF0A0A0A));
+      expect(AppColors.primario, const Color(0xFFC9956C));
+      expect(await preferencia.leer(), TemaApp.dorado);
+      expect(tester.getSemantics(find.bySemanticsLabel('Tema Dorado')), containsSemantics(isSelected: true));
     });
 
-    testWidgets('Tocar el renglón también cambia el tema y se puede regresar al oscuro', (tester) async {
+    testWidgets('Se puede pasar al claro y regresar al oscuro', (tester) async {
       final tema = TemaProvider(MemoriaPreferenciaTema());
       await _abrir(tester, _PerfilFalso(cuenta: _ana), tema: tema);
-      await tester.ensureVisible(find.text('Tema oscuro'));
-      await tester.tap(find.text('Tema oscuro'));
+      await tester.ensureVisible(opcion(TemaApp.claro));
+      await tester.tap(opcion(TemaApp.claro));
       await tester.pumpAndSettle();
-      expect(tema.oscuro, isFalse);
+      expect(tema.actual, TemaApp.claro);
+      expect(AppColors.fondo, const Color(0xFFFFF6FA));
+      expect(AppColors.primario, const Color(0xFFC9668F));
 
-      await tester.tap(find.text('Tema oscuro'));
+      await tester.tap(opcion(TemaApp.oscuro));
       await tester.pumpAndSettle();
-      expect(tema.oscuro, isTrue);
+      expect(tema.actual, TemaApp.oscuro);
       expect(AppColors.fondo, Paleta.oscuraBoceto.fondo);
     });
 
     test('Al abrir la app usa la preferencia guardada y, si no hay, el oscuro', () async {
-      expect(await TemaProvider.leerInicial(MemoriaPreferenciaTema()), isTrue);
-      expect(await TemaProvider.leerInicial(MemoriaPreferenciaTema(false)), isFalse);
-      expect(await TemaProvider.leerInicial(_PreferenciaRota()), isTrue);
-      TemaProvider(MemoriaPreferenciaTema(), oscuro: false);
-      expect(AppColors.fondo, Paleta.claraBoceto.fondo);
+      expect(await TemaProvider.leerInicial(MemoriaPreferenciaTema()), TemaApp.oscuro);
+      expect(await TemaProvider.leerInicial(MemoriaPreferenciaTema(TemaApp.claro)), TemaApp.claro);
+      expect(await TemaProvider.leerInicial(MemoriaPreferenciaTema(TemaApp.dorado)), TemaApp.dorado);
+      expect(await TemaProvider.leerInicial(_PreferenciaRota()), TemaApp.oscuro);
+      TemaProvider(MemoriaPreferenciaTema(), inicial: TemaApp.dorado);
+      expect(AppColors.fondo, Paleta.doradaBoceto.fondo);
       AppColors.usar(Paleta.oscuraBoceto);
+    });
+
+    test('Quien ya había elegido claro u oscuro antes del dorado lo conserva', () async {
+      final viejoClaro = SecurePreferenciaTema(_StorageFalso({'tema_oscuro': 'false'}));
+      final viejoOscuro = SecurePreferenciaTema(_StorageFalso({'tema_oscuro': 'true'}));
+      final nuevo = SecurePreferenciaTema(_StorageFalso({'tema_oscuro': 'false', 'tema': 'dorado'}));
+      expect(await viejoClaro.leer(), TemaApp.claro);
+      expect(await viejoOscuro.leer(), TemaApp.oscuro);
+      expect(await nuevo.leer(), TemaApp.dorado);
+      expect(await SecurePreferenciaTema(_StorageFalso({})).leer(), isNull);
     });
   });
 }
@@ -198,8 +219,25 @@ void main() {
 // Teléfono que no deja leer la preferencia.
 class _PreferenciaRota implements PreferenciaTema {
   @override
-  Future<bool?> leerOscuro() => Future.error(Exception('sin acceso'));
+  Future<TemaApp?> leer() => Future.error(Exception('sin acceso'));
 
   @override
-  Future<void> guardarOscuro(bool oscuro) async {}
+  Future<void> guardar(TemaApp tema) async {}
+}
+
+// Almacenamiento seguro en memoria para probar la lectura de la preferencia guardada.
+class _StorageFalso extends Fake implements FlutterSecureStorage {
+  _StorageFalso(this.datos);
+  final Map<String, String> datos;
+
+  @override
+  Future<String?> read({
+    required String key,
+    AppleOptions? iOptions,
+    AndroidOptions? aOptions,
+    LinuxOptions? lOptions,
+    WebOptions? webOptions,
+    AppleOptions? mOptions,
+    WindowsOptions? wOptions,
+  }) async => datos[key];
 }

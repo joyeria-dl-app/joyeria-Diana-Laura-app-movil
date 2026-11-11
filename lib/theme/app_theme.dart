@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-// Las dos paletas de los bocetos (A3 Interfaces): la oscura (por defecto) y la clara de
-// data-theme="light" (#212). Cada valor es una variable del boceto: --bg, --s1s, --s2, --bd,
+// Las paletas de los bocetos (A3 Interfaces): la oscura (por defecto), la clara de
+// data-theme="light" (#212) y la dorada de data-theme="gold" (#307). Cada valor es una variable del boceto: --bg, --s1s, --s2, --bd,
 // --pri, --pri2, --pri3, --soft, --tx, --mu, --card, --glass, --glassb, --blob1 y --blob2.
 class Paleta {
   const Paleta({
@@ -61,6 +61,28 @@ class Paleta {
     sombra: Color(0x80000000),
     mancha1: Color(0xFFB8708F),
     mancha2: Color(0xFF6E5A8A),
+  );
+
+  // data-theme="gold": fondo negro y dorado (#307). Los botones con degradado usan el texto
+  // oscuro de AppColors.sobreDegradado, que contrasta igual sobre el dorado.
+  static const doradaBoceto = Paleta(
+    oscura: true,
+    fondo: Color(0xFF0A0A0A),
+    superficie: Color(0xFF141414),
+    superficie2: Color(0xFF1E1E1E),
+    borde: Color(0x29C9956C),
+    primario: Color(0xFFC9956C),
+    primario2: Color(0xFFB07E57),
+    lila: Color(0xFFE8D5B7),
+    suave: Color(0x24C9956C),
+    texto: Color(0xFFF5F0EB),
+    textoSuave: Color(0xFF9E9087),
+    tarjeta: Color(0xFF141414),
+    cristal: Color(0x99141414),
+    cristalBorde: Color(0x33C9956C),
+    sombra: Color(0xCC000000),
+    mancha1: Color(0xFF8A6446),
+    mancha2: Color(0xFF4A3A2C),
   );
 
   static const claraBoceto = Paleta(
