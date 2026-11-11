@@ -360,12 +360,13 @@ class _Banner extends StatelessWidget {
   final BannerInicio banner;
   final VoidCallback onTap;
 
-  // Degradado del boceto: rgba(60,8,50,.92) → rgba(120,20,90,.55) → transparente.
-  static const _velo = LinearGradient(
-    begin: Alignment(-1, -0.2),
+  // Degradado del boceto: rgba(60,8,50,.92) → rgba(120,20,90,.55) → transparente; en el tema
+  // Dorado, café oscuro (#307).
+  static LinearGradient get _velo => LinearGradient(
+    begin: const Alignment(-1, -0.2),
     end: Alignment(1, 0.2),
-    colors: [Color(0xEB3C0832), Color(0x8C78145A), Color(0x0078145A)],
-    stops: [0, 0.55, 1],
+    colors: [AppColors.velo.withValues(alpha: 0.92), AppColors.velo2.withValues(alpha: 0.55), AppColors.velo2.withValues(alpha: 0)],
+    stops: const [0, 0.55, 1],
   );
 
   @override
@@ -387,7 +388,7 @@ class _Banner extends StatelessWidget {
                 ancho: anchoFotoGrande,
                 error: ColoredBox(color: AppColors.superficie2),
               ),
-              const DecoratedBox(decoration: BoxDecoration(gradient: _velo)),
+              DecoratedBox(decoration: BoxDecoration(gradient: _velo)),
               Positioned(
                 left: 20,
                 top: 20,

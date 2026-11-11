@@ -49,7 +49,7 @@ class BarraNavegacion extends StatelessWidget {
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(color: AppColors.sombra, blurRadius: 40, offset: Offset(0, 20), spreadRadius: -10),
-          BoxShadow(color: Color(0x59CF819F), blurRadius: 18, spreadRadius: -10),
+          BoxShadow(color: AppColors.brillo.withValues(alpha: 0.35), blurRadius: 18, spreadRadius: -10),
         ],
       ),
       child: ClipRRect(
@@ -113,7 +113,7 @@ class _Boton extends StatelessWidget {
                     end: Alignment(0.6, 1),
                     colors: [AppColors.primario, AppColors.primario2, AppColors.lila],
                   ),
-                  boxShadow: const [BoxShadow(color: Color(0x59CF819F), blurRadius: 18, spreadRadius: -10)],
+                  boxShadow: [BoxShadow(color: AppColors.brillo.withValues(alpha: 0.35), blurRadius: 18, spreadRadius: -10)],
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,

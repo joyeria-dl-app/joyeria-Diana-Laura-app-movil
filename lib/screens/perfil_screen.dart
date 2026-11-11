@@ -21,7 +21,7 @@ Future<XFile?> Function(ImageSource) elegirFotoPerfil = (origen) => ImagePicker(
 // Mi perfil (HU-14, #50): boceto 10 "Perfil (P15)" de A3 Interfaces con los datos reales
 // de la cuenta. Del boceto, "Clienta frecuente" se muestra como "Clienta desde" (el segmento
 // no se guarda por cliente) y se agrega Mis personalizaciones (HU-13). El interruptor cambia
-// entre tema oscuro y claro (#212), el engrane abre Ajustes y la cámara cambia la foto (#213), y
+// entre los temas oscuro, dorado y claro (#212, #307), el engrane abre Ajustes y la cámara cambia la foto (#213), y
 // cerrar sesión ya funciona (#52).
 class PerfilScreen extends StatefulWidget {
   const PerfilScreen({super.key});
@@ -444,7 +444,6 @@ class _Opciones extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tema = context.watch<TemaProvider>();
     return Container(
       decoration: BoxDecoration(
         color: AppColors.tarjeta,
@@ -462,25 +461,7 @@ class _Opciones extends StatelessWidget {
             onTap: () => Navigator.pushNamed(context, AppRoutes.misPersonalizaciones),
           ),
           _Renglon(icono: Icons.local_shipping_rounded, texto: 'Zonas de entrega', onTap: () => Navigator.pushNamed(context, AppRoutes.zonasEntrega)),
-          _Renglon(
-            icono: tema.oscuro ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
-            texto: 'Tema oscuro',
-            // Sin etiqueta TalkBack solo leía "Activado, interruptor" (#152).
-            final_: Semantics(
-              label: 'Tema oscuro',
-              child: Switch(
-                key: const Key('perfil_tema'),
-                value: tema.oscuro,
-                onChanged: (oscuro) => tema.cambiar(oscuro: oscuro),
-                activeThumbColor: Colors.white,
-                activeTrackColor: AppColors.primario2,
-                inactiveThumbColor: AppColors.primario2,
-                inactiveTrackColor: AppColors.superficie2,
-                trackOutlineColor: WidgetStatePropertyAll(AppColors.borde),
-              ),
-            ),
-            onTap: () => tema.cambiar(oscuro: !tema.oscuro),
-          ),
+          const _SelectorTema(),
           const _AvisosCuenta(),
           _Renglon(icono: Icons.logout_rounded, texto: 'Cerrar sesión', peligro: true, onTap: () => cerrarSesionConConfirmacion(context)),
           _Renglon(
@@ -529,10 +510,7 @@ class _AvisosCuentaState extends State<_AvisosCuenta> {
     final antes = _preferencias!;
     setState(() {
       _guardando = true;
-      _preferencias = PreferenciasAvisos(
-        avisosPush: avisosPush ?? antes.avisosPush,
-        correosPromocion: correosPromocion ?? antes.correosPromocion,
-      );
+      _preferencias = PreferenciasAvisos(avisosPush: avisosPush ?? antes.avisosPush, correosPromocion: correosPromocion ?? antes.correosPromocion);
     });
     final avisos = ScaffoldMessenger.of(context);
     try {
@@ -576,17 +554,120 @@ class _AvisosCuentaState extends State<_AvisosCuenta> {
         _Renglon(
           icono: Icons.mail_outline_rounded,
           texto: 'Correos de promociones',
-          final_: _interruptor(
-            const Key('perfil_correos_promocion'),
-            'Correos de promociones',
-            p?.correosPromocion,
-            (v) => _cambiar(correosPromocion: v),
-          ),
+          final_: _interruptor(const Key('perfil_correos_promocion'), 'Correos de promociones', p?.correosPromocion, (v) => _cambiar(correosPromocion: v)),
           onTap: () {
             if (p != null && !_guardando) _cambiar(correosPromocion: !p.correosPromocion);
           },
         ),
       ],
+    );
+  }
+}
+
+// Tema de la app (#212, #307): los tres de los bocetos. Cada opción muestra su color para
+// reconocerla antes de elegirla.
+class _SelectorTema extends StatelessWidget {
+  const _SelectorTema();
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = context.watch<TemaProvider>();
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(color: AppColors.suave, borderRadius: BorderRadius.circular(14)),
+                child: Icon(Icons.palette_rounded, size: 20, color: AppColors.primario),
+              ),
+              const SizedBox(width: 14),
+              Text(
+                'Tema',
+                style: TextStyle(color: AppColors.texto, fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              for (final opcion in TemaApp.values) ...[
+                if (opcion != TemaApp.values.first) const SizedBox(width: 8),
+                Expanded(
+                  child: _OpcionTema(opcion: opcion, elegida: tema.actual == opcion, onTap: () => tema.elegir(opcion)),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OpcionTema extends StatelessWidget {
+  const _OpcionTema({required this.opcion, required this.elegida, required this.onTap});
+
+  final TemaApp opcion;
+  final bool elegida;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = opcion.paleta;
+    return Semantics(
+      button: true,
+      selected: elegida,
+      label: 'Tema ${opcion.nombre}',
+      excludeSemantics: true,
+      child: Material(
+        color: elegida ? AppColors.suave : AppColors.superficie,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: elegida ? AppColors.primario : AppColors.borde, width: elegida ? 1.5 : 1),
+        ),
+        child: InkWell(
+          key: Key('perfil_tema_${opcion.name}'),
+          borderRadius: BorderRadius.circular(16),
+          onTap: onTap,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 48),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 16,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(colors: [p.fondo, p.primario]),
+                      border: Border.all(color: AppColors.borde),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      opcion.nombre,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: elegida ? AppColors.texto : AppColors.textoSuave,
+                        fontSize: 13,
+                        fontWeight: elegida ? FontWeight.w600 : FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

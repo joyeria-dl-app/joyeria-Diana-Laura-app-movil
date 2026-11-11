@@ -291,7 +291,7 @@ class BotonDegradado extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: AppColors.degradado,
         borderRadius: BorderRadius.circular(18),
-        boxShadow: const [BoxShadow(color: Color(0x80CF819F), blurRadius: 30, offset: Offset(0, 16), spreadRadius: -12)],
+        boxShadow: [BoxShadow(color: AppColors.brillo.withValues(alpha: 0.5), blurRadius: 30, offset: Offset(0, 16), spreadRadius: -12)],
       ),
       child: Material(
         type: MaterialType.transparency,
