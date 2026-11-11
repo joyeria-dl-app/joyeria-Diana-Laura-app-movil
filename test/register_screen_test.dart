@@ -84,6 +84,19 @@ void main() {
     expect(iconoMayuscula.icon, Icons.check_rounded);
   });
 
+  testWidgets('Confirmar contraseña tiene su botón para mostrarla (#306)', (tester) async {
+    await _abrirRegistro(tester);
+
+    final campo = find.descendant(of: find.byKey(const Key('registro_confirmacion')), matching: find.byType(EditableText));
+    expect(tester.widget<EditableText>(campo).obscureText, isTrue);
+
+    await _tocar(tester, find.byKey(const Key('registro_ver_confirmacion')));
+    expect(tester.widget<EditableText>(campo).obscureText, isFalse);
+
+    await _tocar(tester, find.byKey(const Key('registro_ver_confirmacion')));
+    expect(tester.widget<EditableText>(campo).obscureText, isTrue);
+  });
+
   testWidgets('Con datos válidos pasa a la pregunta secreta y crea la cuenta', (tester) async {
     final servicio = await _abrirRegistro(tester);
 
