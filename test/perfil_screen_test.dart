@@ -158,7 +158,7 @@ void main() {
         expect(opcion(t), findsOneWidget);
       }
       expect(find.bySemanticsLabel('Tema Oscuro'), findsOneWidget);
-      expect(tester.getSemantics(find.bySemanticsLabel('Tema Oscuro')), containsSemantics(isSelected: true));
+      expect(tester.getSemantics(find.bySemanticsLabel('Tema Oscuro')), isSemantics(isSelected: true));
       expect(AppColors.fondo, Paleta.oscuraBoceto.fondo);
     });
 
@@ -175,7 +175,7 @@ void main() {
       expect(AppColors.fondo, const Color(0xFF0A0A0A));
       expect(AppColors.primario, const Color(0xFFC9956C));
       expect(await preferencia.leer(), TemaApp.dorado);
-      expect(tester.getSemantics(find.bySemanticsLabel('Tema Dorado')), containsSemantics(isSelected: true));
+      expect(tester.getSemantics(find.bySemanticsLabel('Tema Dorado')), isSemantics(isSelected: true));
     });
 
     testWidgets('Se puede pasar al claro y regresar al oscuro', (tester) async {

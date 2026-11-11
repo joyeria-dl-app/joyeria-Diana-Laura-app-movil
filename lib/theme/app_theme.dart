@@ -23,6 +23,12 @@ class Paleta {
     required this.sombra,
     required this.mancha1,
     required this.mancha2,
+    this.brillo = const Color(0xFFCF819F),
+    this.acento = const Color(0xFFE0679A),
+    this.acentoSuave = const Color(0xFFF4A6C6),
+    this.acentoOscuro = const Color(0xFF9E2F63),
+    this.velo = const Color(0xFF3C0832),
+    this.velo2 = const Color(0xFF78145A),
   });
 
   final bool oscura;
@@ -42,6 +48,14 @@ class Paleta {
   final Color sombra;
   final Color mancha1;
   final Color mancha2;
+  // Colores que antes estaban fijos en las pantallas (#307): resplandor de los botones, acentos
+  // rosas sobre foto, corazón de favoritos, etiqueta Personalizable y velo del banner de inicio.
+  final Color brillo;
+  final Color acento;
+  final Color acentoSuave;
+  final Color acentoOscuro;
+  final Color velo;
+  final Color velo2;
 
   static const oscuraBoceto = Paleta(
     oscura: true,
@@ -83,6 +97,12 @@ class Paleta {
     sombra: Color(0xCC000000),
     mancha1: Color(0xFF8A6446),
     mancha2: Color(0xFF4A3A2C),
+    brillo: Color(0xFFB07E57),
+    acento: Color(0xFFC9956C),
+    acentoSuave: Color(0xFFE8D5B7),
+    acentoOscuro: Color(0xFF7A5233),
+    velo: Color(0xFF1E140C),
+    velo2: Color(0xFF4A3220),
   );
 
   static const claraBoceto = Paleta(
@@ -132,6 +152,12 @@ class AppColors {
   static Color get sombra => _paleta.sombra;
   static Color get mancha1 => _paleta.mancha1;
   static Color get mancha2 => _paleta.mancha2;
+  static Color get brillo => _paleta.brillo;
+  static Color get acento => _paleta.acento;
+  static Color get acentoSuave => _paleta.acentoSuave;
+  static Color get acentoOscuro => _paleta.acentoOscuro;
+  static Color get velo => _paleta.velo;
+  static Color get velo2 => _paleta.velo2;
 
   // Iguales en los dos temas.
   static const exito = Color(0xFF2EBD85);
