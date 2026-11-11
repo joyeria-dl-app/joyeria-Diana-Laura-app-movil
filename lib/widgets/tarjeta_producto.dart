@@ -175,7 +175,7 @@ class _Corazon extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: AppColors.cristalBorde),
           ),
-          child: Icon(favorita ? Icons.favorite_rounded : Icons.favorite_border_rounded, size: 17, color: favorita ? const Color(0xFFF4A6C6) : Colors.white),
+          child: Icon(favorita ? Icons.favorite_rounded : Icons.favorite_border_rounded, size: 17, color: favorita ? AppColors.acentoSuave : Colors.white),
         ),
       ),
     );
@@ -190,14 +190,14 @@ class _EtiquetaPersonalizable extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(color: const Color(0xE6FFFFFF), borderRadius: BorderRadius.circular(20)),
-      child: const Row(
+      child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.brush_rounded, size: 13, color: Color(0xFF9E2F63)),
-          SizedBox(width: 4),
+          Icon(Icons.brush_rounded, size: 13, color: AppColors.acentoOscuro),
+          const SizedBox(width: 4),
           Text(
             'Personalizable',
-            style: TextStyle(color: Color(0xFF9E2F63), fontSize: 10.5, fontWeight: FontWeight.w600),
+            style: TextStyle(color: AppColors.acentoOscuro, fontSize: 10.5, fontWeight: FontWeight.w600),
           ),
         ],
       ),

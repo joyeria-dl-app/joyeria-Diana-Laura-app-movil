@@ -166,10 +166,7 @@ class _Servidor implements HttpClientAdapter {
         return _json(200, {'success': true, 'data': preferencias});
       case 'DELETE /auth/profile':
         if (conPendientes) {
-          return _json(409, {
-            'success': false,
-            'message': 'Tienes pedidos o apartados en curso. Cuando terminen o se cancelen podrás eliminar tu cuenta.',
-          });
+          return _json(409, {'success': false, 'message': 'Tienes pedidos o apartados en curso. Cuando terminen o se cancelen podrás eliminar tu cuenta.'});
         }
         return _json(200, {'success': true, 'message': 'Tu cuenta y tus datos personales se eliminaron'});
     }
@@ -300,11 +297,10 @@ void main() {
   testWidgets('Elige el tema claro y la preferencia queda guardada para la próxima vez', (tester) async {
     final app = await _abrir(tester);
     await _irAlPerfil(tester);
-    await _tocar(tester, find.byKey(const Key('perfil_tema')));
+    await _tocar(tester, find.byKey(const Key('perfil_tema_claro')));
 
     expect(AppColors.fondo, Paleta.claraBoceto.fondo);
-    expect(tester.widget<Switch>(find.byKey(const Key('perfil_tema'))).value, isFalse);
-    expect(await app.tema.leerOscuro(), isFalse);
+    expect(await app.tema.leer(), TemaApp.claro);
 
     // El resto de la app también cambia: Mis pedidos se abre ya con el fondo claro.
     await _tocar(tester, find.text('Mis pedidos'));

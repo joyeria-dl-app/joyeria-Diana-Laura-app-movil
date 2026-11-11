@@ -30,6 +30,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   int _paso = 1;
   bool _ocultar = true;
+  bool _ocultarConfirmacion = true;
   bool _aceptaAviso = false;
   bool _mostrarErrorAviso = false;
   bool _cargandoPreguntas = false;
@@ -280,7 +281,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
             controller: _confirmacion,
             hint: 'Confirma tu contraseña',
             icono: Icons.lock_reset_rounded,
-            oculto: true,
+            oculto: _ocultarConfirmacion,
+            sufijo: IconButton(
+              key: const Key('registro_ver_confirmacion'),
+              tooltip: _ocultarConfirmacion ? 'Mostrar contraseña' : 'Ocultar contraseña',
+              icon: Icon(_ocultarConfirmacion ? Icons.visibility_rounded : Icons.visibility_off_rounded, size: 21),
+              onPressed: () => setState(() => _ocultarConfirmacion = !_ocultarConfirmacion),
+            ),
             validator: (v) => Validaciones.confirmacion(v, _password.text),
           ),
           const SizedBox(height: 14),

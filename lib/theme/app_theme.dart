@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-// Las dos paletas de los bocetos (A3 Interfaces): la oscura (por defecto) y la clara de
-// data-theme="light" (#212). Cada valor es una variable del boceto: --bg, --s1s, --s2, --bd,
+// Las paletas de los bocetos (A3 Interfaces): la oscura (por defecto), la clara de
+// data-theme="light" (#212) y la dorada de data-theme="gold" (#307). Cada valor es una variable del boceto: --bg, --s1s, --s2, --bd,
 // --pri, --pri2, --pri3, --soft, --tx, --mu, --card, --glass, --glassb, --blob1 y --blob2.
 class Paleta {
   const Paleta({
@@ -23,6 +23,12 @@ class Paleta {
     required this.sombra,
     required this.mancha1,
     required this.mancha2,
+    this.brillo = const Color(0xFFCF819F),
+    this.acento = const Color(0xFFE0679A),
+    this.acentoSuave = const Color(0xFFF4A6C6),
+    this.acentoOscuro = const Color(0xFF9E2F63),
+    this.velo = const Color(0xFF3C0832),
+    this.velo2 = const Color(0xFF78145A),
   });
 
   final bool oscura;
@@ -42,6 +48,14 @@ class Paleta {
   final Color sombra;
   final Color mancha1;
   final Color mancha2;
+  // Colores que antes estaban fijos en las pantallas (#307): resplandor de los botones, acentos
+  // rosas sobre foto, corazón de favoritos, etiqueta Personalizable y velo del banner de inicio.
+  final Color brillo;
+  final Color acento;
+  final Color acentoSuave;
+  final Color acentoOscuro;
+  final Color velo;
+  final Color velo2;
 
   static const oscuraBoceto = Paleta(
     oscura: true,
@@ -61,6 +75,34 @@ class Paleta {
     sombra: Color(0x80000000),
     mancha1: Color(0xFFB8708F),
     mancha2: Color(0xFF6E5A8A),
+  );
+
+  // data-theme="gold": fondo negro y dorado (#307). Los botones con degradado usan el texto
+  // oscuro de AppColors.sobreDegradado, que contrasta igual sobre el dorado.
+  static const doradaBoceto = Paleta(
+    oscura: true,
+    fondo: Color(0xFF0A0A0A),
+    superficie: Color(0xFF141414),
+    superficie2: Color(0xFF1E1E1E),
+    borde: Color(0x29C9956C),
+    primario: Color(0xFFC9956C),
+    primario2: Color(0xFFB07E57),
+    lila: Color(0xFFE8D5B7),
+    suave: Color(0x24C9956C),
+    texto: Color(0xFFF5F0EB),
+    textoSuave: Color(0xFF9E9087),
+    tarjeta: Color(0xFF141414),
+    cristal: Color(0x99141414),
+    cristalBorde: Color(0x33C9956C),
+    sombra: Color(0xCC000000),
+    mancha1: Color(0xFF8A6446),
+    mancha2: Color(0xFF4A3A2C),
+    brillo: Color(0xFFB07E57),
+    acento: Color(0xFFC9956C),
+    acentoSuave: Color(0xFFE8D5B7),
+    acentoOscuro: Color(0xFF7A5233),
+    velo: Color(0xFF1E140C),
+    velo2: Color(0xFF4A3220),
   );
 
   static const claraBoceto = Paleta(
@@ -110,6 +152,12 @@ class AppColors {
   static Color get sombra => _paleta.sombra;
   static Color get mancha1 => _paleta.mancha1;
   static Color get mancha2 => _paleta.mancha2;
+  static Color get brillo => _paleta.brillo;
+  static Color get acento => _paleta.acento;
+  static Color get acentoSuave => _paleta.acentoSuave;
+  static Color get acentoOscuro => _paleta.acentoOscuro;
+  static Color get velo => _paleta.velo;
+  static Color get velo2 => _paleta.velo2;
 
   // Iguales en los dos temas.
   static const exito = Color(0xFF2EBD85);

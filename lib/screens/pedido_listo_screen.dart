@@ -66,7 +66,7 @@ class PedidoListoScreen extends StatelessWidget {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(colors: [AppColors.primario, AppColors.primario2]),
                       borderRadius: BorderRadius.circular(30),
-                      boxShadow: const [BoxShadow(color: Color(0x80CF819F), blurRadius: 30, offset: Offset(0, 16), spreadRadius: -12)],
+                      boxShadow: [BoxShadow(color: AppColors.brillo.withValues(alpha: 0.5), blurRadius: 30, offset: Offset(0, 16), spreadRadius: -12)],
                     ),
                     child: Icon(apartado ? Icons.bookmark_added_outlined : Icons.check_rounded, size: 44, color: Colors.white),
                   ),

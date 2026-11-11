@@ -40,7 +40,7 @@ Future<void> main() async {
   }
   if (conFirebase) await _iniciarCrashlytics();
   final preferencia = SecurePreferenciaTema();
-  final oscuro = await TemaProvider.leerInicial(preferencia);
+  final temaInicial = await TemaProvider.leerInicial(preferencia);
   // Con root la sesión vive solo mientras la app está abierta (#99).
   final conRoot = await revisarRoot();
   runApp(
@@ -48,7 +48,7 @@ Future<void> main() async {
       storage: conRoot ? MemorySessionStorage() : SecureSessionStorage(),
       mensajeria: conFirebase ? FirebaseMensajeria() : null,
       preferenciaTema: preferencia,
-      temaOscuro: oscuro,
+      temaInicial: temaInicial,
     ),
   );
   if (conFirebase) {
@@ -92,7 +92,7 @@ class JoyeriaApp extends StatelessWidget {
     this.mensajeria,
     this.perfilService,
     this.preferenciaTema,
-    this.temaOscuro = true,
+    this.temaInicial = TemaApp.oscuro,
     this.apiClient,
     this.zonasService,
     this.inicioService,
@@ -110,7 +110,7 @@ class JoyeriaApp extends StatelessWidget {
   final PerfilService? perfilService;
   // Sin preferencia (pruebas), el tema se recuerda solo mientras la app está abierta.
   final PreferenciaTema? preferenciaTema;
-  final bool temaOscuro;
+  final TemaApp temaInicial;
   // Cliente del backend; las pruebas pasan uno con el backend simulado.
   final ApiClient? apiClient;
   final ZonasService? zonasService;
@@ -138,17 +138,13 @@ class JoyeriaApp extends StatelessWidget {
         Provider<InicioService>.value(value: inicioService ?? fabrica.crearInicioService()),
         ChangeNotifierProvider<FavoritosProvider>(create: (_) => FavoritosProvider(favoritos)),
         ChangeNotifierProvider<CarritoProvider>(create: (_) => CarritoProvider(carrito)),
-        ChangeNotifierProvider<TemaProvider>(create: (_) => TemaProvider(preferenciaTema ?? MemoriaPreferenciaTema(), oscuro: temaOscuro)),
+        ChangeNotifierProvider<TemaProvider>(create: (_) => TemaProvider(preferenciaTema ?? MemoriaPreferenciaTema(), inicial: temaInicial)),
         ChangeNotifierProvider<AuthProvider>(
           create: (_) => AuthProvider(
             authService ?? fabrica.crearAuthService(storage),
             notificaciones: mensajeria == null
                 ? null
-                : NotificacionesService(
-                    api: api,
-                    mensajeria: mensajeria!,
-                    explicarPermiso: () => explicarPermisoNotificaciones(navegadorApp),
-                  ),
+                : NotificacionesService(api: api, mensajeria: mensajeria!, explicarPermiso: () => explicarPermisoNotificaciones(navegadorApp)),
             // #272: la sesión venció y no se pudo renovar: se lleva a iniciar sesión.
             alVencerSesion: () => navegadorApp.currentState?.pushNamedAndRemoveUntil(AppRoutes.login, (ruta) => ruta.isFirst),
           )..restaurarSesion(),
@@ -163,7 +159,7 @@ class JoyeriaApp extends StatelessWidget {
           // Sin animación entre temas: los colores fijos y los del tema cambian a la vez.
           themeAnimationDuration: Duration.zero,
           builder: (context, child) => ReconstruirConTema(
-            oscuro: tema.oscuro,
+            tema: tema.actual,
             child: dispositivoConRoot ? AvisoRoot(child: child!) : child!,
           ),
           initialRoute: AppRoutes.home,

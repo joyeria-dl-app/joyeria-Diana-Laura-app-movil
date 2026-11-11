@@ -182,6 +182,14 @@ void main() {
       expect(find.text('Por confirmar'), findsNothing);
     });
 
+    testWidgets('Un apartado vencido se muestra como Vencido, sin saldo ni fecha límite (#303)', (tester) async {
+      final vencido = Apartado.fromJson({..._detalleJson, 'estado': 'vencido'});
+      await _abrir(tester, _PedidosFalso(detalle: vencido), DetalleApartadoScreen(apartado: vencido));
+      expect(find.text('Vencido'), findsOneWidget);
+      expect(find.textContaining('Faltan'), findsNothing);
+      expect(find.textContaining('Liquidar antes'), findsNothing);
+    });
+
     testWidgets('Un apartado sin abonos lo dice', (tester) async {
       final sinAbonos = Apartado.fromJson({..._detalleJson, 'abonos': null});
       await _abrir(tester, _PedidosFalso(detalle: sinAbonos), DetalleApartadoScreen(apartado: sinAbonos));
