@@ -173,7 +173,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text('¿Nueva por aquí?', style: TextStyle(color: AppColors.textoSuave, fontSize: 13)),
+                          Text('¿No tienes cuenta?', style: TextStyle(color: AppColors.textoSuave, fontSize: 13)),
                           TextButton(
                             onPressed: () => Navigator.pushReplacementNamed(context, AppRoutes.register),
                             child: const Text('Crea tu cuenta', style: TextStyle(fontSize: 13)),

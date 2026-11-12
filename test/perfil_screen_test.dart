@@ -86,7 +86,7 @@ void main() {
     expect(find.text('AM'), findsOneWidget);
     expect(find.text('Ana Martínez'), findsOneWidget);
     expect(find.text('ana.martinez@correo.com'), findsOneWidget);
-    expect(find.text('Clienta desde oct 2026'), findsOneWidget);
+    expect(find.text('Cliente desde oct 2026'), findsOneWidget);
     expect(find.byTooltip('Ajustes'), findsOneWidget);
     expect(find.byKey(const Key('perfil_foto')), findsOneWidget);
   });
@@ -122,10 +122,10 @@ void main() {
     }
   });
 
-  testWidgets('Con un solo nombre usa su inicial y sin fecha no muestra Clienta desde', (tester) async {
+  testWidgets('Con un solo nombre usa su inicial y sin fecha no muestra Cliente desde', (tester) async {
     await _abrir(tester, _PerfilFalso(cuenta: Perfil.fromJson({'nombre': 'Valentina', 'email': 'vale@correo.com'})));
     expect(find.text('V'), findsOneWidget);
-    expect(find.textContaining('Clienta desde'), findsNothing);
+    expect(find.textContaining('Cliente desde'), findsNothing);
   });
 
   testWidgets('Sin sesión invita a iniciarla', (tester) async {

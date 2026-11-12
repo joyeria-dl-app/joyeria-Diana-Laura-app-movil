@@ -253,7 +253,7 @@ void main() {
 
     expect(find.text('Ana Martínez'), findsOneWidget);
     expect(find.text('ana.martinez@correo.com'), findsOneWidget);
-    expect(find.text('Clienta desde oct 2026'), findsOneWidget);
+    expect(find.text('Cliente desde oct 2026'), findsOneWidget);
     for (final (numero, nombre) in [('2', 'Pedidos'), ('1', 'Apartados'), ('0', 'Favoritos')]) {
       expect(find.text(numero), findsOneWidget, reason: nombre);
     }
