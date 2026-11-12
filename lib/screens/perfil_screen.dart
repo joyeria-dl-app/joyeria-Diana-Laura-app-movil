@@ -12,6 +12,7 @@ import '../theme/app_theme.dart';
 import '../utils/cerrar_sesion.dart';
 import '../utils/eliminar_cuenta.dart';
 import '../utils/fechas.dart';
+import '../widgets/invitacion_cuenta.dart';
 import '../widgets/documento_legal.dart';
 import '../widgets/barra_navegacion.dart';
 import '../widgets/estado_pedido.dart';
@@ -114,6 +115,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
                     boton: 'Iniciar sesión',
                     iconoBoton: Icons.login_rounded,
                     onPressed: () => Navigator.pushNamed(context, AppRoutes.login),
+                    extra: const InvitacionCrearCuenta(),
                   );
                 }
                 if (error != null) {
