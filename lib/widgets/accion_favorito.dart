@@ -25,6 +25,9 @@ Future<void> alternarFavorito(BuildContext context, Producto producto, {bool des
       SnackBar(
         content: Text(texto),
         action: accion == null ? null : SnackBarAction(label: accion, onPressed: alTocar!),
+        // Con botón, Flutter lo deja fijo hasta tocarlo; se cierra solo para no bloquear (#317).
+        persist: false,
+        showCloseIcon: true,
       ),
     );
 }

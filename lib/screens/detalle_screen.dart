@@ -80,6 +80,9 @@ class _DetalleScreenState extends State<DetalleScreen> {
         SnackBar(
           content: Text(texto),
           action: accion == null ? null : SnackBarAction(label: accion, onPressed: () => Navigator.pushNamed(context, ruta!)),
+          // Con botón, Flutter lo deja fijo hasta tocarlo; se cierra solo para no bloquear (#317).
+          persist: false,
+          showCloseIcon: true,
         ),
       );
   }
@@ -93,6 +96,9 @@ class _DetalleScreenState extends State<DetalleScreen> {
           SnackBar(
             content: const Text('Inicia sesión para personalizar una pieza'),
             action: SnackBarAction(label: 'Iniciar sesión', onPressed: () => Navigator.pushNamed(context, AppRoutes.login)),
+            // Con botón, Flutter lo deja fijo hasta tocarlo; se cierra solo para no bloquear (#317).
+            persist: false,
+            showCloseIcon: true,
           ),
         );
       return;
