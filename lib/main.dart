@@ -10,6 +10,7 @@ import 'providers/favoritos_provider.dart';
 import 'providers/tema_provider.dart';
 import 'routes/app_routes.dart';
 import 'screens/abrir_pedido_screen.dart';
+import 'services/legal_service.dart';
 import 'services/avisos_pedido.dart';
 import 'services/api_client.dart';
 import 'services/auth_service.dart';
@@ -96,6 +97,7 @@ class JoyeriaApp extends StatelessWidget {
     this.apiClient,
     this.zonasService,
     this.inicioService,
+    this.legalService,
   });
 
   final SessionStorage storage;
@@ -115,6 +117,7 @@ class JoyeriaApp extends StatelessWidget {
   final ApiClient? apiClient;
   final ZonasService? zonasService;
   final InicioService? inicioService;
+  final LegalService? legalService;
 
   @override
   Widget build(BuildContext context) {
@@ -136,6 +139,7 @@ class JoyeriaApp extends StatelessWidget {
         ),
         Provider<ZonasService>.value(value: zonasService ?? fabrica.crearZonasService()),
         Provider<InicioService>.value(value: inicioService ?? fabrica.crearInicioService()),
+        Provider<LegalService>.value(value: legalService ?? fabrica.crearLegalService()),
         ChangeNotifierProvider<FavoritosProvider>(create: (_) => FavoritosProvider(favoritos)),
         ChangeNotifierProvider<CarritoProvider>(create: (_) => CarritoProvider(carrito)),
         ChangeNotifierProvider<TemaProvider>(create: (_) => TemaProvider(preferenciaTema ?? MemoriaPreferenciaTema(), inicial: temaInicial)),
