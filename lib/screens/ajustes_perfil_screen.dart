@@ -69,6 +69,9 @@ class _AjustesPerfilScreenState extends State<AjustesPerfilScreen> {
             SnackBar(
               content: const Text('Inicia sesión para cambiar tus datos'),
               action: SnackBarAction(label: 'Iniciar sesión', onPressed: () => Navigator.pushNamed(context, AppRoutes.login)),
+              // Con botón, Flutter lo deja fijo hasta tocarlo; se cierra solo para no bloquear (#317).
+              persist: false,
+              showCloseIcon: true,
             ),
           );
       }

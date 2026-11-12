@@ -167,6 +167,22 @@ void main() {
     expect(find.text('Ver favoritos'), findsOneWidget);
   });
 
+  testWidgets('El aviso de favoritos se cierra solo y no obliga a tocar su botón (#317)', (tester) async {
+    final favoritos = _FavoritosFalso();
+    await _abrir(tester, _ServicioFalso(detalleFalso: _anillo()), favoritos: favoritos);
+
+    await tester.tap(find.bySemanticsLabel('Guardar en favoritos'));
+    await tester.pumpAndSettle();
+    expect(find.text('Guardada en tus favoritos'), findsOneWidget);
+    final aviso = tester.widget<SnackBar>(find.byType(SnackBar));
+    expect(aviso.persist, isFalse);
+    expect(aviso.showCloseIcon, isTrue);
+
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
+    expect(find.text('Guardada en tus favoritos'), findsNothing);
+  });
+
   testWidgets('Si ya era favorita aparece marcada y al tocarla se quita con Deshacer (7f)', (tester) async {
     final favoritos = _FavoritosFalso()..ids.add(58);
     await _abrir(tester, _ServicioFalso(detalleFalso: _anillo()), favoritos: favoritos);
