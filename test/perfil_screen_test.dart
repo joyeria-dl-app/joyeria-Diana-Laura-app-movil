@@ -131,6 +131,7 @@ void main() {
   testWidgets('Sin sesión invita a iniciarla', (tester) async {
     await _abrir(tester, _PerfilFalso(error: const PerfilException('Inicia sesión para ver tu perfil.', sinSesion: true)));
     expect(find.text('Inicia sesión para ver tu perfil'), findsOneWidget);
+    expect(find.byKey(const Key('invitacion_crear_cuenta')), findsOneWidget); // #322
     await tester.tap(find.text('Iniciar sesión'));
     await tester.pumpAndSettle();
     expect(find.text('Pantalla de login'), findsOneWidget);
