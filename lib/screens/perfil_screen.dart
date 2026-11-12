@@ -19,7 +19,7 @@ import 'ajustes_perfil_screen.dart';
 Future<XFile?> Function(ImageSource) elegirFotoPerfil = (origen) => ImagePicker().pickImage(source: origen, imageQuality: 85, maxWidth: 1080);
 
 // Mi perfil (HU-14, #50): boceto 10 "Perfil (P15)" de A3 Interfaces con los datos reales
-// de la cuenta. Del boceto, "Clienta frecuente" se muestra como "Clienta desde" (el segmento
+// de la cuenta. Del boceto, "Clienta frecuente" se muestra como "Cliente desde" (texto neutro, #319) (el segmento
 // no se guarda por cliente) y se agrega Mis personalizaciones (HU-13). El interruptor cambia
 // entre los temas oscuro, dorado y claro (#212, #307), el engrane abre Ajustes y la cámara cambia la foto (#213), y
 // cerrar sesión ya funciona (#52).
@@ -357,7 +357,7 @@ class _Identidad extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                perfil.nombre.isEmpty ? 'Clienta' : perfil.nombre,
+                perfil.nombre.isEmpty ? 'Mi cuenta' : perfil.nombre,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(color: AppColors.sobreDegradado, fontSize: 20, fontWeight: FontWeight.w700, letterSpacing: -0.5),
@@ -379,7 +379,7 @@ class _Identidad extends StatelessWidget {
                       Icon(Icons.workspace_premium_rounded, size: 13, color: AppColors.sobreDegradado),
                       const SizedBox(width: 4),
                       Text(
-                        'Clienta desde ${mesAnio(desde)}',
+                        'Cliente desde ${mesAnio(desde)}',
                         style: TextStyle(color: AppColors.sobreDegradado, fontSize: 10.5, fontWeight: FontWeight.w600),
                       ),
                     ],

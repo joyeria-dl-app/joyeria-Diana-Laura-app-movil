@@ -85,7 +85,7 @@ void main() {
     // CA-35 (HU-14): Mi perfil muestra el nombre, el correo y los números de la cuenta.
     await abrirPestana(tester, 'perfil');
     await esperar(tester, find.text('Mis pedidos'));
-    final nombre = servidor!.perfil.nombre.isEmpty ? 'Clienta' : servidor.perfil.nombre;
+    final nombre = servidor!.perfil.nombre.isEmpty ? 'Mi cuenta' : servidor.perfil.nombre;
     expect(find.text(nombre), findsWidgets);
     expect(find.textContaining(servidor.perfil.email), findsWidgets);
     expect(find.text('${servidor.resumen.pedidos}'), findsWidgets);

@@ -48,6 +48,13 @@ void main() {
     expect(find.text('Ingresa tu contraseña'), findsOneWidget);
   });
 
+  testWidgets('La invitación a crear cuenta no asume el género (#319)', (tester) async {
+    await _abrirLogin(tester);
+
+    expect(find.text('¿No tienes cuenta?'), findsOneWidget);
+    expect(find.text('¿Nueva por aquí?'), findsNothing);
+  });
+
   testWidgets('Con contraseña incorrecta muestra el error', (tester) async {
     await _abrirLogin(tester);
 

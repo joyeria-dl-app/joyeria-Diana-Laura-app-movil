@@ -21,5 +21,5 @@ int diasHasta(DateTime f, {DateTime? hoy}) {
   return d < 0 ? 0 : d;
 }
 
-// "oct 2026", para "Clienta desde".
+// "oct 2026", para "Cliente desde".
 String mesAnio(DateTime f) => '${_mesesCortos[f.month - 1]} ${f.year}';
