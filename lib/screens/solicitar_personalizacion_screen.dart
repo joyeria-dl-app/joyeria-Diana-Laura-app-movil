@@ -107,6 +107,9 @@ class _SolicitarPersonalizacionScreenState extends State<SolicitarPersonalizacio
             SnackBar(
               content: const Text('Inicia sesión para solicitar una personalización'),
               action: SnackBarAction(label: 'Iniciar sesión', onPressed: () => Navigator.pushNamed(context, AppRoutes.login)),
+              // Con botón, Flutter lo deja fijo hasta tocarlo; se cierra solo para no bloquear (#317).
+              persist: false,
+              showCloseIcon: true,
             ),
           );
       }

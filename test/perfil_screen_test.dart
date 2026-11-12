@@ -86,7 +86,7 @@ void main() {
     expect(find.text('AM'), findsOneWidget);
     expect(find.text('Ana Martínez'), findsOneWidget);
     expect(find.text('ana.martinez@correo.com'), findsOneWidget);
-    expect(find.text('Clienta desde oct 2026'), findsOneWidget);
+    expect(find.text('Cliente desde oct 2026'), findsOneWidget);
     expect(find.byTooltip('Ajustes'), findsOneWidget);
     expect(find.byKey(const Key('perfil_foto')), findsOneWidget);
   });
@@ -95,7 +95,8 @@ void main() {
     await _abrir(tester, _PerfilFalso(cuenta: _ana));
     for (final (numero, nombre) in [('3', 'Pedidos'), ('2', 'Apartados'), ('8', 'Favoritos')]) {
       expect(find.text(numero), findsOneWidget);
-      expect(find.text(nombre), findsOneWidget);
+      // Fuera de la barra de navegación, que también dice "Favoritos" (#318).
+      expect(find.descendant(of: find.byType(RefreshIndicator), matching: find.text(nombre)), findsOneWidget);
     }
   });
 
@@ -122,15 +123,16 @@ void main() {
     }
   });
 
-  testWidgets('Con un solo nombre usa su inicial y sin fecha no muestra Clienta desde', (tester) async {
+  testWidgets('Con un solo nombre usa su inicial y sin fecha no muestra Cliente desde', (tester) async {
     await _abrir(tester, _PerfilFalso(cuenta: Perfil.fromJson({'nombre': 'Valentina', 'email': 'vale@correo.com'})));
     expect(find.text('V'), findsOneWidget);
-    expect(find.textContaining('Clienta desde'), findsNothing);
+    expect(find.textContaining('Cliente desde'), findsNothing);
   });
 
   testWidgets('Sin sesión invita a iniciarla', (tester) async {
     await _abrir(tester, _PerfilFalso(error: const PerfilException('Inicia sesión para ver tu perfil.', sinSesion: true)));
     expect(find.text('Inicia sesión para ver tu perfil'), findsOneWidget);
+    expect(find.byKey(const Key('invitacion_crear_cuenta')), findsOneWidget); // #322
     await tester.tap(find.text('Iniciar sesión'));
     await tester.pumpAndSettle();
     expect(find.text('Pantalla de login'), findsOneWidget);

@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 
+import 'package:joyeria_diana_laura/utils/mapas.dart';
 import 'package:joyeria_diana_laura/models/zona_entrega.dart';
 import 'package:joyeria_diana_laura/screens/zonas_entrega_screen.dart';
 import 'package:joyeria_diana_laura/services/api_client.dart';
@@ -90,6 +91,11 @@ void main() {
     expect(_abiertos.single.toString(), 'https://wa.me/527713321421?text=Hola%2C+%C2%BFhacen+entregas+en+mi+zona%3F');
   });
 
+  test('La dirección para Maps va sin S/N, Col. ni C.P. (#320)', () {
+    expect(destinoParaMapas(_completa.direccion!), 'Calle Lázaro Cárdenas, El Zapote, 43000, Huejutla de Reyes, Hidalgo');
+    expect(destinoParaMapas('Av. Juárez 12, Centro, Huejutla'), 'Av. Juárez 12, Centro, Huejutla');
+  });
+
   testWidgets('Cómo llegar abre el mapa con la dirección de la tienda', (tester) async {
     await _abrir(tester, _ZonasFalso());
     await tester.scrollUntilVisible(find.text('Cómo llegar'), 200);
@@ -97,7 +103,7 @@ void main() {
     await tester.pump();
 
     expect(_abiertos.single.host, 'www.google.com');
-    expect(_abiertos.single.queryParameters['destination'], _completa.direccion);
+    expect(_abiertos.single.queryParameters['destination'], 'Calle Lázaro Cárdenas, El Zapote, 43000, Huejutla de Reyes, Hidalgo');
   });
 
   testWidgets('Si la tienda no tiene zonas activas lo dice y deja la tienda para recoger', (tester) async {

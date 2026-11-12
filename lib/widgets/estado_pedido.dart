@@ -232,8 +232,10 @@ class _Punto extends StatelessWidget {
 
 // Cuadro vacío con ícono, título, texto y botón (9b y 10b, como 6c del carrito).
 class AvisoVacio extends StatelessWidget {
-  const AvisoVacio({super.key, required this.icono, required this.titulo, required this.texto, this.boton, this.iconoBoton, this.onPressed});
+  const AvisoVacio({super.key, required this.icono, required this.titulo, required this.texto, this.boton, this.iconoBoton, this.onPressed, this.extra});
   final IconData icono;
+  // Debajo del botón; p. ej. la invitación a crear cuenta (#322).
+  final Widget? extra;
   final String titulo;
   final String texto;
   final String? boton;
@@ -270,6 +272,7 @@ class AvisoVacio extends StatelessWidget {
               ),
             ),
             if (boton != null) ...[const SizedBox(height: 22), BotonDegradado(texto: boton!, icono: iconoBoton, onPressed: onPressed)],
+            ?extra,
           ],
         ),
       ),

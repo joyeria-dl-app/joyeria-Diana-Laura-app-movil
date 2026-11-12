@@ -10,8 +10,8 @@ import '../theme/app_theme.dart';
 
 enum Seccion { inicio, catalogo, carrito, favoritos, perfil }
 
-// Barra flotante de vidrio de los bocetos (.nav.glass). La sección activa se
-// muestra como píldora con degradado, ícono relleno y nombre.
+// Barra flotante de vidrio de los bocetos de Figma: cada sección con su ícono y su nombre debajo,
+// para que se entienda sin adivinar (#318). La activa va en una píldora con degradado.
 class BarraNavegacion extends StatelessWidget {
   const BarraNavegacion({super.key, required this.actual});
 
@@ -44,7 +44,7 @@ class BarraNavegacion extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 70,
+      height: 72,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
@@ -63,16 +63,17 @@ class BarraNavegacion extends StatelessWidget {
               border: Border.all(color: AppColors.cristalBorde),
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 for (final seccion in Seccion.values)
-                  _Boton(
-                    key: Key('nav_${seccion.name}'),
-                    seccion: seccion,
-                    activa: seccion == actual,
-                    // Boceto P5: piezas del carrito en un globo sobre la bolsa.
-                    contador: seccion == Seccion.carrito ? context.watch<CarritoProvider?>()?.piezas ?? 0 : 0,
-                    onTap: () => _ir(context, seccion),
+                  Expanded(
+                    child: _Boton(
+                      key: Key('nav_${seccion.name}'),
+                      seccion: seccion,
+                      activa: seccion == actual,
+                      // Boceto P5: piezas del carrito en un globo sobre la bolsa.
+                      contador: seccion == Seccion.carrito ? context.watch<CarritoProvider?>()?.piezas ?? 0 : 0,
+                      onTap: () => _ir(context, seccion),
+                    ),
                   ),
               ],
             ),
@@ -102,43 +103,49 @@ class _Boton extends StatelessWidget {
       child: GestureDetector(
         onTap: onTap,
         behavior: HitTestBehavior.opaque,
-        child: activa
-            ? Container(
-                height: 46,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(18),
-                  gradient: LinearGradient(
-                    begin: Alignment(-0.6, -1),
-                    end: Alignment(0.6, 1),
-                    colors: [AppColors.primario, AppColors.primario2, AppColors.lila],
-                  ),
-                  boxShadow: [BoxShadow(color: AppColors.brillo.withValues(alpha: 0.35), blurRadius: 18, spreadRadius: -10)],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(relleno, size: 19, color: AppColors.sobreDegradado),
-                    const SizedBox(width: 8),
-                    Text(
-                      nombre,
-                      style: TextStyle(color: AppColors.sobreDegradado, fontSize: 12.5, fontWeight: FontWeight.w600),
-                    ),
-                  ],
-                ),
-              )
-            : SizedBox(
-                width: 46,
-                height: 46,
-                child: Stack(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 7),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOut,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              gradient: activa
+                  ? LinearGradient(
+                      begin: const Alignment(-0.6, -1),
+                      end: const Alignment(0.6, 1),
+                      colors: [AppColors.primario, AppColors.primario2, AppColors.lila],
+                    )
+                  : null,
+              boxShadow: activa ? [BoxShadow(color: AppColors.brillo.withValues(alpha: 0.35), blurRadius: 18, spreadRadius: -10)] : null,
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Stack(
                   clipBehavior: Clip.none,
-                  alignment: Alignment.center,
                   children: [
-                    Icon(vacio, size: 24, color: AppColors.textoSuave),
-                    if (contador > 0) Positioned(top: 4, right: 2, child: _Globo(contador)),
+                    Icon(activa ? relleno : vacio, size: 22, color: activa ? AppColors.sobreDegradado : AppColors.textoSuave),
+                    if (contador > 0) Positioned(top: -6, right: -12, child: _Globo(contador)),
                   ],
                 ),
-              ),
+                const SizedBox(height: 3),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    nombre,
+                    maxLines: 1,
+                    style: TextStyle(
+                      color: activa ? AppColors.sobreDegradado : AppColors.textoSuave,
+                      fontSize: 10.5,
+                      fontWeight: activa ? FontWeight.w700 : FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

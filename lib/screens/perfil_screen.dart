@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
+import '../services/legal_service.dart';
 import '../models/perfil.dart';
 import '../providers/tema_provider.dart';
 import '../routes/app_routes.dart';
@@ -11,6 +12,8 @@ import '../theme/app_theme.dart';
 import '../utils/cerrar_sesion.dart';
 import '../utils/eliminar_cuenta.dart';
 import '../utils/fechas.dart';
+import '../widgets/invitacion_cuenta.dart';
+import '../widgets/documento_legal.dart';
 import '../widgets/barra_navegacion.dart';
 import '../widgets/estado_pedido.dart';
 import 'ajustes_perfil_screen.dart';
@@ -19,7 +22,7 @@ import 'ajustes_perfil_screen.dart';
 Future<XFile?> Function(ImageSource) elegirFotoPerfil = (origen) => ImagePicker().pickImage(source: origen, imageQuality: 85, maxWidth: 1080);
 
 // Mi perfil (HU-14, #50): boceto 10 "Perfil (P15)" de A3 Interfaces con los datos reales
-// de la cuenta. Del boceto, "Clienta frecuente" se muestra como "Clienta desde" (el segmento
+// de la cuenta. Del boceto, "Clienta frecuente" se muestra como "Cliente desde" (texto neutro, #319) (el segmento
 // no se guarda por cliente) y se agrega Mis personalizaciones (HU-13). El interruptor cambia
 // entre los temas oscuro, dorado y claro (#212, #307), el engrane abre Ajustes y la cámara cambia la foto (#213), y
 // cerrar sesión ya funciona (#52).
@@ -112,6 +115,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
                     boton: 'Iniciar sesión',
                     iconoBoton: Icons.login_rounded,
                     onPressed: () => Navigator.pushNamed(context, AppRoutes.login),
+                    extra: const InvitacionCrearCuenta(),
                   );
                 }
                 if (error != null) {
@@ -357,7 +361,7 @@ class _Identidad extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                perfil.nombre.isEmpty ? 'Clienta' : perfil.nombre,
+                perfil.nombre.isEmpty ? 'Mi cuenta' : perfil.nombre,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(color: AppColors.sobreDegradado, fontSize: 20, fontWeight: FontWeight.w700, letterSpacing: -0.5),
@@ -379,7 +383,7 @@ class _Identidad extends StatelessWidget {
                       Icon(Icons.workspace_premium_rounded, size: 13, color: AppColors.sobreDegradado),
                       const SizedBox(width: 4),
                       Text(
-                        'Clienta desde ${mesAnio(desde)}',
+                        'Cliente desde ${mesAnio(desde)}',
                         style: TextStyle(color: AppColors.sobreDegradado, fontSize: 10.5, fontWeight: FontWeight.w600),
                       ),
                     ],
@@ -463,6 +467,19 @@ class _Opciones extends StatelessWidget {
           _Renglon(icono: Icons.local_shipping_rounded, texto: 'Zonas de entrega', onTap: () => Navigator.pushNamed(context, AppRoutes.zonasEntrega)),
           const _SelectorTema(),
           const _AvisosCuenta(),
+          // Legal (#321): los documentos que se aceptaron al crear la cuenta.
+          _Renglon(
+            key: const Key('perfil_terminos'),
+            icono: Icons.gavel_rounded,
+            texto: DocumentoLegal.terminos.nombre,
+            onTap: () => mostrarDocumentoLegal(context, DocumentoLegal.terminos),
+          ),
+          _Renglon(
+            key: const Key('perfil_privacidad'),
+            icono: Icons.privacy_tip_outlined,
+            texto: DocumentoLegal.privacidad.nombre,
+            onTap: () => mostrarDocumentoLegal(context, DocumentoLegal.privacidad),
+          ),
           _Renglon(icono: Icons.logout_rounded, texto: 'Cerrar sesión', peligro: true, onTap: () => cerrarSesionConConfirmacion(context)),
           _Renglon(
             key: const Key('perfil_eliminar_cuenta'),

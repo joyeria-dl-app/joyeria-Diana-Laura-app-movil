@@ -6,6 +6,7 @@ import '../providers/carrito_provider.dart';
 import '../routes/app_routes.dart';
 import '../theme/app_theme.dart';
 import '../utils/formato.dart';
+import '../widgets/invitacion_cuenta.dart';
 import '../widgets/barra_navegacion.dart';
 import '../widgets/decoracion.dart';
 import '../widgets/resumen_carrito.dart';
@@ -117,6 +118,7 @@ class _CarritoScreenState extends State<CarritoScreen> {
         boton: 'Iniciar sesión',
         iconoBoton: Icons.login_rounded,
         onPressed: () => Navigator.pushNamed(context, AppRoutes.login),
+        extra: const InvitacionCrearCuenta(),
       );
     }
     // 6e.
@@ -420,8 +422,17 @@ class _Cargando extends StatelessWidget {
 
 // Estados 6c, 6d y 6e: cuadro rosa suave con ícono, título y botón.
 class _Aviso extends StatelessWidget {
-  const _Aviso({required this.icono, required this.titulo, required this.texto, required this.boton, required this.iconoBoton, required this.onPressed});
+  const _Aviso({
+    required this.icono,
+    required this.titulo,
+    required this.texto,
+    required this.boton,
+    required this.iconoBoton,
+    required this.onPressed,
+    this.extra,
+  });
   final IconData icono;
+  final Widget? extra;
   final String titulo;
   final String texto;
   final String boton;
@@ -488,6 +499,7 @@ class _Aviso extends StatelessWidget {
               ),
             ),
           ),
+          ?extra,
         ],
       ),
     );

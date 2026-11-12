@@ -3,9 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../services/legal_service.dart';
 import '../providers/auth_provider.dart';
 import '../routes/app_routes.dart';
 import '../theme/app_theme.dart';
+import '../widgets/documento_legal.dart';
 import '../widgets/boton_primario.dart';
 import '../widgets/campo_texto.dart';
 import '../widgets/decoracion.dart';
@@ -173,7 +175,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text('¿Nueva por aquí?', style: TextStyle(color: AppColors.textoSuave, fontSize: 13)),
+                          Text('¿No tienes cuenta?', style: TextStyle(color: AppColors.textoSuave, fontSize: 13)),
                           TextButton(
                             onPressed: () => Navigator.pushReplacementNamed(context, AppRoutes.register),
                             child: const Text('Crea tu cuenta', style: TextStyle(fontSize: 13)),
@@ -190,7 +192,20 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      // Consultables sin cuenta (#321).
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          for (final doc in DocumentoLegal.values)
+                            TextButton(
+                              key: Key('login_${doc.pagina}'),
+                              onPressed: () => mostrarDocumentoLegal(context, doc),
+                              style: TextButton.styleFrom(foregroundColor: AppColors.textoSuave),
+                              child: Text(doc.nombre, style: const TextStyle(fontSize: 11.5)),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
                     ],
                   ),
                 ),

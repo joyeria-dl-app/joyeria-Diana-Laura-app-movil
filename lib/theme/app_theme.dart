@@ -202,6 +202,20 @@ class AppTheme {
         elevation: 0,
         systemOverlayStyle: p.oscura ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
       ),
+      // Avisos flotantes encima de la barra de navegación (que va dentro del cuerpo de cada
+      // pantalla), con los colores del tema y esquinas redondeadas (#317).
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        insetPadding: const EdgeInsets.fromLTRB(16, 0, 16, 108),
+        backgroundColor: p.superficie2,
+        contentTextStyle: TextStyle(color: p.texto, fontFamily: 'Poppins', fontSize: 13.5),
+        actionTextColor: p.primario,
+        closeIconColor: p.textoSuave,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: p.borde),
+        ),
+      ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: p.superficie,

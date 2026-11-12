@@ -142,6 +142,7 @@ void main() {
     await _abrir(tester, _ServicioFalso([], error: const CarritoException('Inicia sesión', sinSesion: true)));
 
     expect(find.text('Inicia sesión para usar tu carrito'), findsOneWidget);
+    expect(find.byKey(const Key('invitacion_crear_cuenta')), findsOneWidget); // #322
     expect(find.text('Iniciar sesión'), findsOneWidget);
     expect(find.bySemanticsLabel('Carrito'), findsOneWidget);
   });
