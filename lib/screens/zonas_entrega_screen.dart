@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../utils/mapas.dart';
 import '../models/zona_entrega.dart';
 import '../services/zonas_service.dart';
 import '../theme/app_theme.dart';
@@ -151,11 +152,7 @@ class _Contenido extends StatelessWidget {
           if (horario != null) TarjetaInfo(icono: Icons.schedule_rounded, titulo: 'Horario', texto: horario),
           if (direccion != null) ...[
             const SizedBox(height: 12),
-            _Chip(
-              icono: Icons.directions_outlined,
-              texto: 'Cómo llegar',
-              onTap: () => onAbrir(Uri.https('www.google.com', '/maps/dir/', {'api': '1', 'destination': direccion})),
-            ),
+            _Chip(icono: Icons.directions_outlined, texto: 'Cómo llegar', onTap: () => onAbrir(enlaceComoLlegar(direccion))),
           ],
         ],
       ],
