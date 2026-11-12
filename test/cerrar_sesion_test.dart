@@ -107,6 +107,9 @@ Future<(AuthProvider, CarritoProvider, FavoritosProvider, _AuthFalso)> _abrir(Wi
 Future<void> _tocarCerrarSesion(WidgetTester tester) async {
   final boton = find.text('Cerrar sesión');
   await tester.ensureVisible(boton);
+  // Con la sección Legal (#321) el renglón queda al fondo, debajo de la barra de navegación.
+  await tester.drag(find.byType(Scrollable).first, const Offset(0, -300));
+  await tester.pumpAndSettle();
   await tester.tap(boton);
   await tester.pumpAndSettle();
 }

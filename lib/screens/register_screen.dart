@@ -1,10 +1,13 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../services/legal_service.dart';
 import '../providers/auth_provider.dart';
 import '../routes/app_routes.dart';
 import '../theme/app_theme.dart';
 import '../utils/validaciones.dart';
+import '../widgets/documento_legal.dart';
 import '../widgets/boton_primario.dart';
 import '../widgets/campo_texto.dart';
 import '../widgets/decoracion.dart';
@@ -30,6 +33,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   int _paso = 1;
   bool _ocultar = true;
+  late final _verTerminos = TapGestureRecognizer()..onTap = () => mostrarDocumentoLegal(context, DocumentoLegal.terminos);
+  late final _verPrivacidad = TapGestureRecognizer()..onTap = () => mostrarDocumentoLegal(context, DocumentoLegal.privacidad);
   bool _ocultarConfirmacion = true;
   bool _aceptaAviso = false;
   bool _mostrarErrorAviso = false;
@@ -46,6 +51,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   void dispose() {
+    _verTerminos.dispose();
+    _verPrivacidad.dispose();
     for (final c in [_nombre, _email, _password, _confirmacion, _preguntaPersonalizada, _respuesta]) {
       c.dispose();
     }
@@ -298,20 +305,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
               _aceptaAviso = v;
               if (v) _mostrarErrorAviso = false;
             }),
+            // Los dos documentos se abren en una hoja sin salir del registro (#321).
             etiqueta: Text.rich(
               TextSpan(
-                text: 'Acepto el ',
+                text: 'Acepto los ',
                 style: TextStyle(color: AppColors.texto, fontSize: 12.5, fontWeight: FontWeight.w500),
                 children: [
                   TextSpan(
+                    text: 'términos y condiciones',
+                    style: TextStyle(color: AppColors.primario, fontWeight: FontWeight.w600, decoration: TextDecoration.underline),
+                    recognizer: _verTerminos,
+                  ),
+                  const TextSpan(text: ' y el '),
+                  TextSpan(
                     text: 'aviso de privacidad',
-                    style: TextStyle(color: AppColors.primario, fontWeight: FontWeight.w600),
+                    style: TextStyle(color: AppColors.primario, fontWeight: FontWeight.w600, decoration: TextDecoration.underline),
+                    recognizer: _verPrivacidad,
                   ),
                 ],
               ),
             ),
           ),
-          if (_mostrarErrorAviso) const _MensajeError('Debes aceptar el aviso de privacidad'),
+          if (_mostrarErrorAviso) const _MensajeError('Debes aceptar los términos y el aviso de privacidad'),
         ],
       ),
     );

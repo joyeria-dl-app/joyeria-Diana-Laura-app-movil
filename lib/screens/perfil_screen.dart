@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
+import '../services/legal_service.dart';
 import '../models/perfil.dart';
 import '../providers/tema_provider.dart';
 import '../routes/app_routes.dart';
@@ -11,6 +12,7 @@ import '../theme/app_theme.dart';
 import '../utils/cerrar_sesion.dart';
 import '../utils/eliminar_cuenta.dart';
 import '../utils/fechas.dart';
+import '../widgets/documento_legal.dart';
 import '../widgets/barra_navegacion.dart';
 import '../widgets/estado_pedido.dart';
 import 'ajustes_perfil_screen.dart';
@@ -463,6 +465,19 @@ class _Opciones extends StatelessWidget {
           _Renglon(icono: Icons.local_shipping_rounded, texto: 'Zonas de entrega', onTap: () => Navigator.pushNamed(context, AppRoutes.zonasEntrega)),
           const _SelectorTema(),
           const _AvisosCuenta(),
+          // Legal (#321): los documentos que se aceptaron al crear la cuenta.
+          _Renglon(
+            key: const Key('perfil_terminos'),
+            icono: Icons.gavel_rounded,
+            texto: DocumentoLegal.terminos.nombre,
+            onTap: () => mostrarDocumentoLegal(context, DocumentoLegal.terminos),
+          ),
+          _Renglon(
+            key: const Key('perfil_privacidad'),
+            icono: Icons.privacy_tip_outlined,
+            texto: DocumentoLegal.privacidad.nombre,
+            onTap: () => mostrarDocumentoLegal(context, DocumentoLegal.privacidad),
+          ),
           _Renglon(icono: Icons.logout_rounded, texto: 'Cerrar sesión', peligro: true, onTap: () => cerrarSesionConConfirmacion(context)),
           _Renglon(
             key: const Key('perfil_eliminar_cuenta'),

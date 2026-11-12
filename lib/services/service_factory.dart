@@ -3,6 +3,7 @@ import 'auth_service.dart';
 import 'carrito_service.dart';
 import 'favorito_service.dart';
 import 'inicio_service.dart';
+import 'legal_service.dart';
 import 'pedido_service.dart';
 import 'perfil_service.dart';
 import 'personalizacion_service.dart';
@@ -26,4 +27,5 @@ class ServiceFactory {
       PerfilService(api: _api, pedidos: pedidos, favoritos: favoritos);
   ZonasService crearZonasService() => ZonasService(api: _api);
   InicioService crearInicioService() => InicioService(api: _api);
+  LegalService crearLegalService() => LegalService(api: _api);
 }
