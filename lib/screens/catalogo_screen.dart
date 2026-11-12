@@ -196,7 +196,9 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
                   ),
                   ..._contenido(),
                   // Espacio para que la última fila no quede debajo de la barra.
-                  const SliverToBoxAdapter(child: SizedBox(height: 110)),
+                  // Espacio para que la paginación quede completa encima de la barra flotante y del
+                  // área de gestos del teléfono (#318).
+                  SliverToBoxAdapter(child: SizedBox(height: 140 + MediaQuery.paddingOf(context).bottom)),
                 ],
               ),
             ),

@@ -95,7 +95,8 @@ void main() {
     await _abrir(tester, _PerfilFalso(cuenta: _ana));
     for (final (numero, nombre) in [('3', 'Pedidos'), ('2', 'Apartados'), ('8', 'Favoritos')]) {
       expect(find.text(numero), findsOneWidget);
-      expect(find.text(nombre), findsOneWidget);
+      // Fuera de la barra de navegación, que también dice "Favoritos" (#318).
+      expect(find.descendant(of: find.byType(RefreshIndicator), matching: find.text(nombre)), findsOneWidget);
     }
   });
 
