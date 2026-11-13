@@ -1,25 +1,5 @@
-# Pruebas de la versión anterior (v0.3.0) que ya no aplican porque el comportamiento cambió a propósito.
+# Pruebas de la versión anterior (v1.0.3) que ya no aplican porque el comportamiento cambió a propósito.
 # El paso "pruebas de la versión anterior" de pruebas-regresion.yml no falla por ellas; falla por cualquier
 # otra prueba vieja que se rompa. Formato: archivo | nombre de la prueba | motivo (issue) | prueba actual.
 # Al publicar una versión nueva esta lista se vacía: la versión anterior pasa a ser la recién publicada.
-catalogo_screen_test.dart | Muestra las piezas con su nombre y precio | Catálogo por secciones (#254) y páginas numeradas (#279); el servidor simulado de v0.3.0 no tiene ese formato | test/catalogo_screen_test.dart
-catalogo_screen_test.dart | La barra inferior marca el catálogo como sección activa | Catálogo por secciones (#254) | test/catalogo_screen_test.dart
-catalogo_screen_test.dart | Marca las piezas agotadas y tacha el precio con descuento | Catálogo por secciones (#254) | test/catalogo_screen_test.dart
-catalogo_screen_test.dart | Pide la siguiente página al bajar hasta el final | Ya no se carga al bajar: páginas numeradas de 6 (#279) | test/catalogo_screen_test.dart
-catalogo_screen_test.dart | Si no hay conexión muestra el error y permite reintentar | Catálogo por secciones (#254) | test/catalogo_screen_test.dart
-catalogo_screen_test.dart | Sin piezas muestra un aviso | Catálogo por secciones (#254): el aviso cambió | test/catalogo_screen_test.dart
-catalogo_screen_test.dart | Al elegir una categoría filtra las piezas y la usa como título | La categoría aparece en el círculo y en el título de la sección (#254) | test/catalogo_screen_test.dart
-catalogo_screen_test.dart | Al reintentar sin conexión también vuelven las categorías | La categoría aparece en el círculo y en la sección (#254) | test/catalogo_screen_test.dart
-catalogo_screen_test.dart | Con un filtro activo las páginas siguientes siguen siendo de esa categoría | Páginas numeradas (#279) | test/catalogo_screen_test.dart
-catalogo_screen_test.dart | Una categoría sin piezas muestra el aviso y conserva la fila de categorías | Catálogo por secciones (#254) | test/catalogo_screen_test.dart
-catalogo_screen_test.dart | Si fallan las categorías el catálogo se sigue mostrando | Catálogo por secciones (#254) | test/catalogo_screen_test.dart
-catalogo_screen_test.dart | Cuando ya no hay más páginas muestra el total exacto | El contador ahora dice "21 piezas · página 1 de 4" (#279) | test/catalogo_screen_test.dart
-catalogo_screen_test.dart | Una pieza agotada no muestra la etiqueta Personalizable | Catálogo por secciones (#254) | test/catalogo_screen_test.dart
-catalogo_screen_test.dart | Al tocar una pieza abre su detalle | Catálogo por secciones (#254) | test/catalogo_screen_test.dart
-favoritos_flujo_test.dart | Marcar el corazón en el catálogo la guarda y aparece en Favoritos | Catálogo por secciones (#254); el servidor simulado de v0.3.0 no tiene ese formato | test/favoritos_flujo_test.dart
-favoritos_flujo_test.dart | Lo guardado en el sitio web aparece en Favoritos y marcado en el catálogo | Catálogo por secciones (#254) | test/favoritos_flujo_test.dart
-producto_service_test.dart | Pide la primera página del catálogo | Páginas de 6 piezas en lugar de 20 (#269, #279) | test/producto_service_test.dart
-producto_service_test.dart | Filtra por categoría y pide la página indicada | Páginas de 6 piezas en lugar de 20 (#269, #279) | test/producto_service_test.dart
-widget_test.dart | La app abre en la pantalla de inicio | Inicio rediseñado con los bocetos (HU-14, #212) | test/widget_test.dart
-login_screen_test.dart | Con datos correctos llega al inicio y saluda al usuario | El saludo cambió de "Hola, Ana" a "Buenos días" con el nombre (#212) | test/login_screen_test.dart
-seguridad_test.dart | Configuración de Android La app solo se conecta por HTTPS | La URL del servidor pasó de api_client.dart a app_config.dart; sigue siendo HTTPS | test/seguridad_test.dart
+inicio_screen_test.dart | Para ti muestra las piezas del catálogo con su precio, primero las que tienen existencias | Para ti ahora es una cuadrícula de 2 columnas: la segunda pieza puede quedar en la misma columna, más abajo (#341) | test/inicio_screen_test.dart
