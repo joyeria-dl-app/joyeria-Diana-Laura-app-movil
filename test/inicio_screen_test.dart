@@ -207,9 +207,21 @@ void main() {
     expect(find.text('Para ti'), findsOneWidget);
     expect(find.text(r'$449.50'), findsOneWidget);
     expect(find.text(r'$890'), findsOneWidget);
-    final promesa = tester.getTopLeft(find.text('Anillo de promesa')).dx;
-    final agotado = tester.getTopLeft(find.text('Anillo agotado')).dx;
-    expect(promesa, lessThan(agotado));
+    // #341: cuadrícula de 2 columnas; se lee de izquierda a derecha y de arriba abajo.
+    final promesa = tester.getTopLeft(find.text('Anillo de promesa'));
+    final agotado = tester.getTopLeft(find.text('Anillo agotado'));
+    expect(promesa.dy < agotado.dy || (promesa.dy == agotado.dy && promesa.dx < agotado.dx), isTrue);
+  });
+
+  testWidgets('Sin sesión, Iniciar sesión está en el encabezado y al final se invita a visitar la tienda (#341)', (tester) async {
+    await _abrir(tester, conSesion: false);
+    expect(find.byKey(const Key('inicio_entrar')), findsOneWidget);
+    expect(find.byKey(const Key('inicio_invitacion')), findsOneWidget);
+    expect(find.byKey(const Key('inicio_para_ti')), findsOneWidget);
+
+    await tester.scrollUntilVisible(find.byKey(const Key('inicio_visitanos')), 300, scrollable: find.byType(Scrollable).first);
+    await _tocar(tester, find.byKey(const Key('inicio_visitanos')));
+    expect(find.byType(ZonasEntregaScreen), findsOneWidget);
   });
 
   testWidgets('El buscador abre el catálogo listo para escribir y busca por nombre', (tester) async {
