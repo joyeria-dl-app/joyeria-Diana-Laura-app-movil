@@ -195,6 +195,7 @@ void main() {
       '/accounts:sendOobCode': _Respuesta(200, {}),
     };
     const backendOk = {
+      '/auth/enviar-verificacion': _Respuesta(200, {'success': true}),
       '/auth/sync-user/movil': _Respuesta(200, {'success': true}),
       '/security/set-security-question': _Respuesta(200, {'success': true}),
     };
@@ -207,10 +208,11 @@ void main() {
 
       await registrar(service);
 
-      expect(firebaseFalso.peticiones.map((p) => p.path), ['/accounts:signUp', '/accounts:update', '/accounts:sendOobCode']);
-      expect(firebaseFalso.peticiones[2].data, {'requestType': 'VERIFY_EMAIL', 'idToken': 'token-nuevo'});
-      expect(backendFalso.peticiones.map((p) => p.path), ['/auth/sync-user/movil', '/security/set-security-question']);
-      expect(backendFalso.peticiones[1].data, {
+      // El correo de verificación lo manda el backend con el diseño de la tienda, como en la web.
+      expect(firebaseFalso.peticiones.map((p) => p.path), ['/accounts:signUp', '/accounts:update']);
+      expect(backendFalso.peticiones.map((p) => p.path), ['/auth/enviar-verificacion', '/auth/sync-user/movil', '/security/set-security-question']);
+      expect(backendFalso.peticiones[0].data, {'idToken': 'token-nuevo'});
+      expect(backendFalso.peticiones[2].data, {
         'email': 'ana@correo.com',
         'questionType': '2',
         'customQuestion': '',
@@ -218,6 +220,19 @@ void main() {
         'idToken': 'token-nuevo',
       });
       expect(await storage.leerToken(), isNull, reason: 'no se abre sesión hasta verificar el correo');
+    });
+
+    test('Si el backend no puede mandar el correo, Firebase manda el de respaldo', () async {
+      final service = crear(firebaseOk, {
+        '/auth/enviar-verificacion': const _Respuesta(503, {'success': false, 'message': 'Correo no configurado'}),
+        '/auth/sync-user/movil': const _Respuesta(200, {'success': true}),
+        '/security/set-security-question': const _Respuesta(200, {'success': true}),
+      });
+
+      await registrar(service);
+
+      expect(firebaseFalso.peticiones.map((p) => p.path), ['/accounts:signUp', '/accounts:update', '/accounts:sendOobCode']);
+      expect(firebaseFalso.peticiones[2].data, {'requestType': 'VERIFY_EMAIL', 'idToken': 'token-nuevo'});
     });
 
     test('Si el correo ya existe muestra un mensaje claro y no llama al backend', () async {

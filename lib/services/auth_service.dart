@@ -177,7 +177,18 @@ class AuthService {
 
     try {
       await _firebase.post('/accounts:update', queryParameters: {'key': _apiKey}, data: {'idToken': idToken, 'displayName': nombre.trim()});
-      await _firebase.post('/accounts:sendOobCode', queryParameters: {'key': _apiKey}, data: {'requestType': 'VERIFY_EMAIL', 'idToken': idToken});
+      // El mismo correo de bienvenida que manda la web (con el diseño de la tienda y los 3 pasos).
+      // Si el backend no lo puede mandar, se usa el correo simple de Firebase para no dejar la cuenta sin enlace.
+      var enviado = false;
+      try {
+        final r = await _api.dio.post('/auth/enviar-verificacion', data: {'idToken': idToken});
+        enviado = r.data is Map && (r.data as Map)['success'] == true;
+      } on DioException {
+        enviado = false;
+      }
+      if (!enviado) {
+        await _firebase.post('/accounts:sendOobCode', queryParameters: {'key': _apiKey}, data: {'requestType': 'VERIFY_EMAIL', 'idToken': idToken});
+      }
     } on DioException {
       throw const AuthException('Tu cuenta se creó, pero no pudimos enviar el correo de verificación. Intenta iniciar sesión más tarde.');
     }
