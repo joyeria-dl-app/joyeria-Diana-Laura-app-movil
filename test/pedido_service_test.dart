@@ -336,6 +336,29 @@ void main() {
     );
   });
 
+  test('El abono con Mercado Pago se registra y luego pide el pago con regreso a la app', () async {
+    final servicio = crear({
+      'POST /apartados/7/solicitar-abono': {
+        'success': true,
+        'data': {'abono_id': 31, 'requiere_pago_externo': true, 'metodo': 'mercadopago'},
+      },
+      'POST /apartados/pago/mercadopago/abono': {
+        'success': true,
+        'data': {'preference_id': 'pref-31', 'init_point': 'https://mp.test/pagar'},
+      },
+    });
+    final abonoId = await servicio.solicitarAbonoEnLinea(
+      7,
+      monto: 290.16,
+      metodo: const MetodoPago(id: 3, nombre: 'Mercado Pago', codigo: 'mercadopago', enLinea: true),
+    );
+    expect(abonoId, 31);
+    await servicio.preferenciaAbono(abonoId);
+
+    expect(backend.peticiones.map((p) => p.path), ['/apartados/7/solicitar-abono', '/apartados/pago/mercadopago/abono']);
+    expect(cuerpo(1), {'abono_id': 31, 'origen': 'app'});
+  });
+
   test('Sin conexión avisa que revise su conexión', () async {
     final servicio = crear({}, status: 500);
     expect(servicio.misApartados(), throwsA(isA<PedidoException>().having((e) => e.mensaje, 'mensaje', contains('Revisa tu conexión'))));
