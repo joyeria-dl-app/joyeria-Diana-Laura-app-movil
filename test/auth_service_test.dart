@@ -231,4 +231,39 @@ void main() {
       expect(backendFalso.peticiones, isEmpty);
     });
   });
+
+  test('Con el correo sin confirmar avisa y permite reenviar el enlace con el diseño de la tienda', () async {
+    final service = crear(
+      {
+        '/accounts:signInWithPassword': const _Respuesta(200, {'idToken': 'id-token'}),
+      },
+      {
+        '/auth/login/movil': const _Respuesta(401, {'success': false, 'message': '📧 Tu email no está verificado.'}),
+        '/auth/enviar-verificacion': const _Respuesta(200, {'success': true}),
+      },
+    );
+
+    await expectLater(
+      service.iniciarSesion('ana@correo.com', 'Secreta#123'),
+      throwsA(isA<AuthException>().having((e) => e.sinVerificar, 'sinVerificar', isTrue).having((e) => e.mensaje, 'mensaje', contains('confirmas tu correo'))),
+    );
+    expect(await storage.leerToken(), isNull);
+
+    expect(await service.reenviarVerificacion('ana@correo.com', 'Secreta#123'), isFalse);
+    final envio = backendFalso.peticiones.last;
+    expect(envio.path, '/auth/enviar-verificacion');
+    expect(envio.data, {'idToken': 'id-token'});
+  });
+
+  test('Al reenviar, si el correo ya estaba confirmado lo indica', () async {
+    final service = crear(
+      {
+        '/accounts:signInWithPassword': const _Respuesta(200, {'idToken': 'id-token'}),
+      },
+      {
+        '/auth/enviar-verificacion': const _Respuesta(200, {'success': true, 'yaVerificado': true}),
+      },
+    );
+    expect(await service.reenviarVerificacion('ana@correo.com', 'Secreta#123'), isTrue);
+  });
 }

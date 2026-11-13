@@ -11,8 +11,10 @@ const String firebaseApiKey = String.fromEnvironment('FIREBASE_API_KEY');
 const String _intentoFallido = 'wrong_password_to_trigger_failure';
 
 class AuthException implements Exception {
-  const AuthException(this.mensaje);
+  const AuthException(this.mensaje, {this.sinVerificar = false});
   final String mensaje;
+  // La cuenta existe pero el correo aún no se confirma: la app ofrece reenviar el enlace.
+  final bool sinVerificar;
 
   @override
   String toString() => mensaje;
@@ -42,7 +44,14 @@ class AuthService {
     try {
       respuesta = await _api.dio.post('/auth/login/movil', data: {'idToken': idToken});
     } on DioException catch (e) {
-      throw AuthException(_mensajeBackend(e));
+      final mensaje = _mensajeBackend(e);
+      if (mensaje.toLowerCase().contains('no está verificado')) {
+        throw const AuthException(
+          'Aún no confirmas tu correo. Abre el enlace que te enviamos o pide uno nuevo.',
+          sinVerificar: true,
+        );
+      }
+      throw AuthException(mensaje);
     }
 
     final data = respuesta.data as Map<String, dynamic>;
@@ -239,6 +248,20 @@ class AuthService {
       return (data['error']['message'] as String?)?.split(' ').first;
     }
     return null;
+  }
+
+  // Vuelve a mandar el correo de verificación con el diseño de la tienda (el mismo de la web).
+  // Devuelve true si el correo ya estaba confirmado.
+  Future<bool> reenviarVerificacion(String email, String password) async {
+    final (idToken, _) = await _validarConFirebase(email.trim(), password);
+    try {
+      final respuesta = await _api.dio.post('/auth/enviar-verificacion', data: {'idToken': idToken});
+      final data = respuesta.data as Map<String, dynamic>;
+      if (data['success'] != true) throw AuthException(data['message'] as String? ?? 'No se pudo enviar el correo.');
+      return data['yaVerificado'] == true;
+    } on DioException {
+      throw const AuthException('No se pudo enviar el correo. Revisa tu conexión e intenta de nuevo.');
+    }
   }
 
   String _mensajeBackend(DioException e) {
