@@ -12,6 +12,7 @@ import '../utils/formato.dart';
 import '../widgets/decoracion.dart';
 import '../widgets/pasos_pedido.dart';
 import 'pedido_listo_screen.dart';
+import 'seguimiento_screen.dart' show abrirWhatsApp;
 
 // Color de los avisos del servidor en los bocetos (--warn).
 const _aviso = Color(0xFFF6A723);
@@ -283,7 +284,15 @@ class _ConfirmarPedidoScreenState extends State<ConfirmarPedidoScreen> {
           const SizedBox(height: 8),
           _enZona
               ? _Nota(icono: Icons.check_circle_outline_rounded, texto: 'Entregamos en tu zona.', color: AppColors.texto)
-              : _Nota(icono: Icons.info_outline_rounded, texto: 'Por ahora solo entregamos en ${_lista(_zonas)}.', color: _aviso),
+              : _FueraDeZona(
+                  ciudad: _direccion!.ciudad,
+                  zonas: _zonas,
+                  onRecoger: () => _elegirDomicilio(false),
+                  onWhatsApp: () => abrirWhatsApp(
+                    context,
+                    'Hola, quiero un pedido a domicilio en ${_direccion!.ciudad.trim()}. ¿Podrían enviarlo o darme de alta esa zona?',
+                  ),
+                ),
         ],
         // HU-16 (#59): la lista de zonas con los datos de la tienda.
         Align(
@@ -796,6 +805,71 @@ class _Subtitulo extends StatelessWidget {
     texto,
     style: TextStyle(color: AppColors.textoSuave, fontSize: 12.5, fontWeight: FontWeight.w500),
   );
+}
+
+// #339: fuera de zona no se levanta el pedido, pero se dan salidas: recoger en tienda o pedirlo por WhatsApp.
+class _FueraDeZona extends StatelessWidget {
+  const _FueraDeZona({required this.ciudad, required this.zonas, required this.onRecoger, required this.onWhatsApp});
+  final String ciudad;
+  final List<String> zonas;
+  final VoidCallback onRecoger;
+  final VoidCallback onWhatsApp;
+
+  @override
+  Widget build(BuildContext context) {
+    final lugar = ciudad.trim().isEmpty ? 'tu zona' : ciudad.trim();
+    return Container(
+      key: const Key('confirmar_fuera_de_zona'),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: _aviso.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: _aviso.withValues(alpha: 0.45)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.location_off_outlined, size: 18, color: _aviso),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Aún no entregamos a domicilio en $lugar',
+                  style: TextStyle(color: AppColors.texto, fontSize: 13.5, fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Por ahora entregamos en ${_lista(zonas)}. Tomamos nota de tu ubicación para darla de alta pronto. Tu carrito se queda guardado; cuando demos de alta tu zona podrás pedirlo a domicilio.',
+            style: TextStyle(color: AppColors.textoSuave, fontSize: 12, height: 1.35),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              FilledButton.icon(
+                key: const Key('confirmar_recoger_tienda'),
+                onPressed: onRecoger,
+                icon: const Icon(Icons.storefront_outlined, size: 18),
+                label: const Text('Recoger en tienda'),
+              ),
+              OutlinedButton.icon(
+                key: const Key('confirmar_whatsapp_zona'),
+                onPressed: onWhatsApp,
+                icon: const Icon(Icons.chat_outlined, size: 18),
+                label: const Text('Escríbenos por WhatsApp'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _Nota extends StatelessWidget {
