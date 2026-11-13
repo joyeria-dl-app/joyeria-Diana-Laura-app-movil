@@ -119,6 +119,33 @@ void main() {
     expect(categorias.single.imagen, 'https://img.test/a.jpg');
   });
 
+  test('Las categorías se piden una vez y se reutilizan (Inicio y Catálogo)', () async {
+    final service = crear({
+      '/products/categorias': {
+        'success': true,
+        'data': [
+          {'id': 1, 'nombre': 'Anillos', 'activo': true, 'categoria_padre_id': null},
+        ],
+      },
+    });
+
+    await service.categorias();
+    await service.categorias();
+
+    expect(backend.peticiones.where((p) => p.path == '/products/categorias').length, 1);
+  });
+
+  test('Si las categorías fallan, la siguiente vez se vuelven a pedir', () async {
+    final service = crear({
+      '/products/categorias': {'success': false, 'message': 'error'},
+    }, status: 500);
+
+    await expectLater(service.categorias(), throwsA(isA<ProductoException>()));
+    await expectLater(service.categorias(), throwsA(isA<ProductoException>()));
+
+    expect(backend.peticiones.where((p) => p.path == '/products/categorias').length, 2);
+  });
+
   test('Si el servidor falla muestra un mensaje entendible', () async {
     final service = crear({
       '/products/filter': {'success': false, 'message': 'error interno'},

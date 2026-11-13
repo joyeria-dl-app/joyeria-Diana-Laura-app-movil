@@ -23,10 +23,13 @@ class AuthProvider extends ChangeNotifier {
   Usuario? _usuario;
   bool _cargando = false;
   String? _error;
+  bool _sinVerificar = false;
 
   Usuario? get usuario => _usuario;
   bool get cargando => _cargando;
   String? get error => _error;
+  // El último intento falló porque el correo no está confirmado.
+  bool get sinVerificar => _sinVerificar;
   bool get autenticado => _usuario != null;
 
   Future<void> restaurarSesion() async {
@@ -38,6 +41,7 @@ class AuthProvider extends ChangeNotifier {
   Future<bool> iniciarSesion(String email, String password, {bool recordar = true}) async {
     _cargando = true;
     _error = null;
+    _sinVerificar = false;
     notifyListeners();
     try {
       _usuario = await _service.iniciarSesion(email, password, recordar: recordar);
@@ -45,10 +49,27 @@ class AuthProvider extends ChangeNotifier {
       return true;
     } on AuthException catch (e) {
       _error = e.mensaje;
+      _sinVerificar = e.sinVerificar;
       return false;
     } finally {
       _cargando = false;
       notifyListeners();
+    }
+  }
+
+  // Tras "correo sin confirmar": manda otro enlace. Devuelve el texto para avisar al cliente.
+  Future<String> reenviarVerificacion(String email, String password) async {
+    try {
+      final yaVerificado = await _service.reenviarVerificacion(email, password);
+      if (yaVerificado) {
+        _error = null;
+        _sinVerificar = false;
+        notifyListeners();
+        return 'Tu correo ya está confirmado. Toca Iniciar sesión.';
+      }
+      return 'Te enviamos un nuevo enlace a ${email.trim()}. Revisa también tu carpeta de spam.';
+    } on AuthException catch (e) {
+      return e.mensaje;
     }
   }
 

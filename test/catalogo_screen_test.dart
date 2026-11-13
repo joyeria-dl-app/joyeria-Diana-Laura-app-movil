@@ -225,7 +225,12 @@ void main() {
 
     expect(find.text('Nuestras joyas'), findsOneWidget);
     // Sin filtro cada categoría aparece en su círculo y como título de su sección (#254).
-    expect(find.text('Esclavas'), findsNWidgets(2));
+    // La pieza destacada (#341) baja las secciones: se desplaza para ver la de Esclavas.
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -500));
+    await tester.pumpAndSettle();
+    expect(find.text('Esclavas', skipOffstage: false), findsNWidgets(2));
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, 500));
+    await tester.pumpAndSettle();
 
     await tester.tap(find.text('Anillos').first);
     await tester.pumpAndSettle();
@@ -355,10 +360,27 @@ void main() {
 
     expect(find.text('3 categorías'), findsOneWidget);
     expect(find.text('Anillo de promesa'), findsOneWidget);
-    expect(find.text('Collar de perlas'), findsOneWidget);
-    expect(find.text('Ver todo'), findsNWidgets(2));
+    // Las secciones se piden al acercarse; con la pieza destacada y la tarjeta más alta (#341)
+    // las siguientes quedan más abajo.
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -500));
+    await tester.pumpAndSettle();
+    expect(find.text('Collar de perlas', skipOffstage: false), findsOneWidget);
+    expect(find.text('Ver todo', skipOffstage: false), findsNWidgets(2));
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -900));
+    await tester.pumpAndSettle();
     // Cada sección pidió solo sus piezas; la cuadrícula general no se pidió.
     expect(servicio.categoriasPedidas.toSet(), {1, 2, 3});
+  });
+
+  testWidgets('La pieza destacada y la primera sección comparten una sola petición', (tester) async {
+    final servicio = _PorCategoria({
+      1: [Producto(id: 1, nombre: 'Anillo de promesa', precioVenta: 449.5, stock: 3)],
+      2: [Producto(id: 2, nombre: 'Collar de perlas', precioVenta: 890, stock: 2)],
+    });
+    await _abrir(tester, servicio);
+
+    expect(find.byKey(const Key('catalogo_destacada')), findsOneWidget);
+    expect(servicio.categoriasPedidas.where((c) => c == 1).length, 1);
   });
 
   testWidgets('Ver todo de una sección abre esa categoría en cuadrícula', (tester) async {
