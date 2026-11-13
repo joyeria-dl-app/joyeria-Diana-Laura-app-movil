@@ -180,6 +180,16 @@ class _Encabezado extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
       child: Row(
         children: [
+          // Igual que las demás pantallas: flecha para regresar (#337).
+          if (Navigator.canPop(context)) ...[
+            BotonCristal(
+              key: const Key('carrito_regresar'),
+              icono: Icons.arrow_back_rounded,
+              descripcion: 'Regresar',
+              onPressed: () => Navigator.maybePop(context),
+            ),
+            const SizedBox(width: 12),
+          ],
           Expanded(
             child: antetitulo == null
                 ? const Column(
