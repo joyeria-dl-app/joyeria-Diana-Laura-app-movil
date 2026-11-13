@@ -121,6 +121,26 @@ void main() {
       }
     });
 
+    // #360: el manifiesto declara cada permiso que usa la app con un comentario que lo justifica.
+    test('Cada permiso del manifiesto tiene su justificación', () {
+      const usados = [
+        'android.permission.INTERNET',
+        'android.permission.ACCESS_NETWORK_STATE',
+        'android.permission.POST_NOTIFICATIONS',
+        'com.google.android.c2dm.permission.RECEIVE',
+        'android.permission.WAKE_LOCK',
+        'android.permission.VIBRATE',
+      ];
+      final declarados = RegExp(r'<uses-permission android:name="([^"]+)"').allMatches(manifiesto).map((m) => m.group(1)).toList();
+      expect(declarados, unorderedEquals(usados));
+      for (final permiso in usados) {
+        final i = manifiesto.indexOf('<uses-permission android:name="$permiso"');
+        final comentario = manifiesto.lastIndexOf('<!--', i);
+        final corto = permiso.split('.').last;
+        expect(manifiesto.substring(comentario, i), contains(corto), reason: 'Falta la justificación de $corto');
+      }
+    });
+
     test('Solo se exporta la pantalla principal y no es depurable', () {
       expect(RegExp('android:exported="true"').allMatches(manifiesto), hasLength(1));
       expect(manifiesto, isNot(contains('android:debuggable="true"')));

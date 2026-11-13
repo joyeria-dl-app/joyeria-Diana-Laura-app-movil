@@ -1,4 +1,27 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- PERMISOS (#360). La app solo pide estos permisos. No usa cámara, almacenamiento, ubicación
+         ni contactos: la foto del perfil se elige con el selector de fotos del sistema, que no
+         necesita permiso.
+
+         INTERNET (normal, no se pide al usuario): consultar el catálogo, el carrito, los pedidos y
+         los apartados en el servidor de la tienda, e iniciar sesión con Firebase. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- ACCESS_NETWORK_STATE (normal): saber si el teléfono tiene conexión para mostrar "Sin
+         conexión" y el botón Reintentar en lugar de un error. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <!-- POST_NOTIFICATIONS (se pide en tiempo de ejecución, Android 13 o superior): mostrar los
+         avisos del pedido (confirmado, en camino, entregado). Antes de pedirlo, la app explica
+         para qué sirve en un diálogo (#276); si la clienta lo rechaza, la app funciona igual y
+         puede desactivar los avisos en Mi perfil (#274). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- com.google.android.c2dm.permission.RECEIVE (normal): recibir los avisos del pedido que
+         manda el servidor por Firebase Cloud Messaging. -->
+    <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE"/>
+    <!-- WAKE_LOCK (normal): que el aviso de un pedido llegue aunque la pantalla esté apagada. -->
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <!-- VIBRATE (normal): que el teléfono vibre al llegar un aviso del pedido, según el canal
+         Pedidos. -->
+    <uses-permission android:name="android.permission.VIBRATE"/>
     <application
         android:label="Joyería Diana Laura"
         android:name="${applicationName}"
