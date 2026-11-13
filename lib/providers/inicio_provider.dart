@@ -45,11 +45,28 @@ class InicioProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // La primera página del catálogo, primero las que tienen existencias.
+  // Hasta cuántas páginas del catálogo se revisan para llenar "Para ti" con piezas disponibles.
+  static const paginasParaTi = 3;
+  // Con menos de estas piezas disponibles se sigue buscando en la página siguiente.
+  static const minimoDisponibles = 4;
+
+  // Solo piezas con existencias: se revisan las primeras páginas del catálogo hasta juntar
+  // suficientes. Si no hay ninguna disponible se muestran las agotadas para no dejar la sección vacía.
   Future<List<Producto>> _destacadas() async {
-    final piezas = await _productos.productos();
-    final conExistencias = piezas.where((p) => !p.agotado);
-    return [...conExistencias, ...piezas.where((p) => p.agotado)].take(maxDestacadas).toList();
+    final vistas = <int>{};
+    final disponibles = <Producto>[];
+    final agotadas = <Producto>[];
+    for (var pagina = 0; pagina < paginasParaTi; pagina++) {
+      final piezas = await _productos.productos(pagina: pagina);
+      var nuevas = 0;
+      for (final p in piezas) {
+        if (!vistas.add(p.id)) continue;
+        nuevas++;
+        (p.agotado ? agotadas : disponibles).add(p);
+      }
+      if (disponibles.length >= minimoDisponibles || nuevas == 0 || piezas.length < ProductoService.porPagina) break;
+    }
+    return (disponibles.isNotEmpty ? disponibles : agotadas).take(maxDestacadas).toList();
   }
 
   Future<T?> _opcional<T>(Future<T> Function() consulta) async {

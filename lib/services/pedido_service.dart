@@ -114,6 +114,23 @@ class PedidoService {
     );
   }
 
+  // Abono que se pagará con Mercado Pago: lo registra como el sitio web y devuelve su id para
+  // abrir el pago.
+  Future<int> solicitarAbonoEnLinea(int apartadoId, {required double monto, required MetodoPago metodo}) async {
+    final data = await _pedir(
+      () => _api.dio.post('/apartados/$apartadoId/solicitar-abono', data: {'monto': monto.toStringAsFixed(2), 'metodo_pago_id': metodo.id}),
+    );
+    final id = data is Map ? (data['abono_id'] as num?)?.toInt() : null;
+    if (id == null) throw const PedidoException('No se pudo preparar tu abono. Intenta de nuevo.');
+    return id;
+  }
+
+  // Abono siguiente con Mercado Pago, igual que el sitio web; al terminar regresa a la app.
+  Future<PreferenciaPago> preferenciaAbono(int abonoId) async {
+    final data = await _pedir(() => _api.dio.post('/apartados/pago/mercadopago/abono', data: {'abono_id': abonoId, 'origen': 'app'}));
+    return PreferenciaPago.fromJson(data as Map<String, dynamic>);
+  }
+
   // WhatsApp de la tienda dado de alta en el panel (por ejemplo "527713321421").
   Future<String?> whatsappTienda() async {
     final data = await _pedir(() => _api.dio.get('/content/info-empresa'));

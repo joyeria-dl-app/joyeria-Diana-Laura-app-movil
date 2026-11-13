@@ -50,6 +50,18 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  bool _reenviando = false;
+
+  Future<void> _reenviar() async {
+    setState(() => _reenviando = true);
+    final texto = await context.read<AuthProvider>().reenviarVerificacion(_email.text, _password.text);
+    if (!mounted) return;
+    setState(() => _reenviando = false);
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(texto)));
+  }
+
   Future<void> _enviar() async {
     if (!_formKey.currentState!.validate()) return;
     final ok = await context.read<AuthProvider>().iniciarSesion(_email.text, _password.text, recordar: _recordar);
@@ -137,6 +149,19 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ],
                         ),
+                        // Sin el correo confirmado no hay forma de entrar: se ofrece otro enlace.
+                        if (auth.sinVerificar)
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: TextButton.icon(
+                              key: const Key('login_reenviar_verificacion'),
+                              onPressed: _reenviando ? null : _reenviar,
+                              icon: _reenviando
+                                  ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primario))
+                                  : const Icon(Icons.mark_email_unread_outlined, size: 18),
+                              label: const Text('Reenviar correo de verificación'),
+                            ),
+                          ),
                       ],
                       Padding(
                         padding: const EdgeInsets.fromLTRB(4, 8, 0, 8),

@@ -30,6 +30,8 @@ class _MisApartadosScreenState extends State<MisApartadosScreen> {
   PedidoException? _error;
   // Apartado cuyo pago inicial se abrió en Mercado Pago: al volver se muestra el resultado.
   Apartado? _pagando;
+  // Con un abono en Mercado Pago se guarda lo pagado antes, para saber al volver si ya se acreditó.
+  double? _pagadoAntesDelAbono;
   StreamSubscription<Uri>? _enlaces;
   late final AppLifecycleListener _ciclo = AppLifecycleListener(
     onResume: () async {
@@ -67,16 +69,34 @@ class _MisApartadosScreenState extends State<MisApartadosScreen> {
     if (!abierta) _enlaces?.cancel();
   }
 
-  // HU-12 (#43): el pago inicial quedó aprobado si el apartado ya no lo espera.
+  // Abono siguiente con Mercado Pago: el abono ya quedó registrado y aquí se abre el pago.
+  Future<void> _pagarAbono(Apartado a, int abonoId) async {
+    final servicio = context.read<PedidoService>();
+    _enlaces?.cancel();
+    _enlaces = enlacesDeRegreso().listen((uri) {
+      final regreso = RegresoPago.desde(uri);
+      if (regreso != null && regreso.tipo == 'apartado' && regreso.id == a.id) _mostrarResultado(regreso.pago);
+    });
+    final abierta = await abrirPagoMercadoPago(context, () => servicio.preferenciaAbono(abonoId));
+    _pagando = abierta ? a : null;
+    _pagadoAntesDelAbono = abierta ? a.montoPagado : null;
+    if (!abierta) _enlaces?.cancel();
+  }
+
+  // HU-12 (#43): el pago inicial quedó aprobado si el apartado ya no lo espera; un abono, si
+  // subió lo pagado.
   Future<void> _mostrarResultado(String? regreso) async {
     final a = _pagando;
     if (a == null) return;
+    final antes = _pagadoAntesDelAbono;
     _pagando = null;
+    _pagadoAntesDelAbono = null;
     await _enlaces?.cancel();
     await _cargar();
     if (!mounted) return;
     final nuevo = _apartados?.where((x) => x.id == a.id).firstOrNull ?? a;
-    final resultado = resultadoDelPago(pagadoEnServidor: nuevo.estado != 'pendiente_pago', regreso: regreso);
+    final pagado = antes != null ? nuevo.montoPagado > antes + 0.009 : nuevo.estado != 'pendiente_pago';
+    final resultado = resultadoDelPago(pagadoEnServidor: pagado, regreso: regreso);
     if (resultado == null) {
       _avisar('No vimos tu pago. Si ya pagaste, en unos momentos se verá aquí.');
       return;
@@ -87,7 +107,9 @@ class _MisApartadosScreenState extends State<MisApartadosScreen> {
         builder: (_) => ResultadoPagoScreen(resultado: resultado, folio: nuevo.folio, monto: nuevo.montoPagado, apartado: true),
       ),
     );
-    if (reintentar == true && mounted) await _pagarInicial(nuevo);
+    // Un abono fallido sigue registrado en la tienda; reintentar abre de nuevo el pago inicial solo
+    // cuando era el pago inicial.
+    if (reintentar == true && mounted && antes == null) await _pagarInicial(nuevo);
   }
 
   Future<void> _cargar() async {
@@ -127,7 +149,7 @@ class _MisApartadosScreenState extends State<MisApartadosScreen> {
     try {
       final opciones = await servicio.opciones();
       if (!mounted) return;
-      final enviado = await showModalBottomSheet<bool>(
+      final enviado = await showModalBottomSheet<Object>(
         context: context,
         isScrollControlled: true,
         backgroundColor: AppColors.fondo,
@@ -137,7 +159,9 @@ class _MisApartadosScreenState extends State<MisApartadosScreen> {
           child: HojaAbono(apartados: abonables, metodos: opciones.metodos),
         ),
       );
-      if (enviado == true) {
+      if (enviado case (final Apartado apartado, final int abonoId)) {
+        if (mounted) await _pagarAbono(apartado, abonoId);
+      } else if (enviado == true) {
         _avisar('Recibimos tu abono. La tienda lo confirmará en breve.');
         _cargar();
       }
@@ -507,6 +531,12 @@ class _HojaAbonoState extends State<HojaAbono> {
       _error = null;
     });
     try {
+      // Con Mercado Pago la pantalla abre el pago con el abono recién registrado.
+      if (metodo.codigo == 'mercadopago') {
+        final abonoId = await servicio.solicitarAbonoEnLinea(_apartado.id, monto: _monto, metodo: metodo);
+        if (mounted) Navigator.pop(context, (_apartado, abonoId));
+        return;
+      }
       await servicio.solicitarAbono(_apartado.id, monto: _monto, metodo: metodo, comprobante: bytes, nombreArchivo: nombre);
       if (mounted) Navigator.pop(context, true);
     } on PedidoException catch (e) {
@@ -529,13 +559,16 @@ class _HojaAbonoState extends State<HojaAbono> {
   String _detalle(MetodoPago m) => switch (m.codigo) {
     'efectivo' => 'Pagas en la tienda y ahí lo registran',
     'transferencia' => 'Subes la foto de tu comprobante',
-    _ => 'Pago en línea muy pronto en la app',
+    'mercadopago' => 'Tarjeta, OXXO o saldo; te llevamos a Mercado Pago',
+    _ => 'Por ahora solo en el sitio web',
   };
 
   @override
   Widget build(BuildContext context) {
     final metodo = _metodo;
-    final enLinea = metodo?.enLinea ?? false;
+    final mercadoPago = metodo?.codigo == 'mercadopago';
+    // Mercado Pago ya se paga desde la app; otras pasarelas (PayPal) solo en el sitio web.
+    final enLinea = (metodo?.enLinea ?? false) && !mercadoPago;
     final transferencia = metodo?.codigo == 'transferencia';
     return SafeArea(
       child: SingleChildScrollView(
@@ -597,8 +630,16 @@ class _HojaAbonoState extends State<HojaAbono> {
               Opacity(
                 opacity: metodo == null || enLinea ? 0.5 : 1,
                 child: BotonDegradado(
-                  texto: transferencia ? 'Subir comprobante y enviar' : 'Avisar que pagaré en tienda',
-                  icono: transferencia ? Icons.upload_file_outlined : Icons.storefront_outlined,
+                  texto: mercadoPago
+                      ? 'Pagar con Mercado Pago'
+                      : transferencia
+                      ? 'Subir comprobante y enviar'
+                      : 'Avisar que pagaré en tienda',
+                  icono: mercadoPago
+                      ? Icons.open_in_new_rounded
+                      : transferencia
+                      ? Icons.upload_file_outlined
+                      : Icons.storefront_outlined,
                   ancho: true,
                   onPressed: metodo == null || enLinea ? null : _enviar,
                 ),

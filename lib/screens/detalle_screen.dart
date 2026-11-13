@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../models/producto.dart';
 import '../providers/auth_provider.dart';
@@ -115,12 +116,23 @@ class _DetalleScreenState extends State<DetalleScreen> {
     );
   }
 
-  // Compartir y tallas se conectan en HU-13.
-  void _pronto() {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(const SnackBar(content: Text('Disponible muy pronto')));
+  // Página pública de la pieza en el sitio web: se abre sin iniciar sesión.
+  static const _sitio = 'https://joyeria-diana-laura.vercel.app';
+
+  // Abre el menú de compartir del teléfono (WhatsApp, Messenger, copiar…) con el nombre, el precio
+  // y el enlace de la pieza.
+  Future<void> _compartir() async {
+    final d = _detalle;
+    if (d == null) return;
+    final p = d.producto;
+    await SharePlus.instance.share(
+      ShareParams(
+        subject: p.nombre,
+        text: 'Mira esta pieza de Joyería Diana Laura: ${p.nombre} · ${formatoPrecio(p.precioFinal)}\n$_sitio/producto-publico/${p.id}',
+      ),
+    );
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -172,7 +184,6 @@ class _DetalleScreenState extends State<DetalleScreen> {
                   (final DetalleProducto d, _) => _Contenido(
                     detalle: d,
                     resenas: _resenas,
-                    onPronto: _pronto,
                     onAgregar: () => _agregar(d),
                     onPersonalizar: () => _personalizar(d),
                   ),
@@ -192,7 +203,7 @@ class _DetalleScreenState extends State<DetalleScreen> {
                     children: [
                       _BotonFoto(icono: Icons.arrow_back_rounded, descripcion: 'Regresar', onTap: () => Navigator.pop(context)),
                       const Spacer(),
-                      _BotonFoto(icono: Icons.ios_share_rounded, descripcion: 'Compartir', onTap: _pronto),
+                      _BotonFoto(icono: Icons.ios_share_rounded, descripcion: 'Compartir', onTap: _compartir),
                       const SizedBox(width: 8),
                       // Bocetos 7f y 7g: vidrio con contorno, o blanco con corazón rosa si es favorita.
                       Builder(
@@ -322,10 +333,9 @@ class _Hoja extends StatelessWidget {
 }
 
 class _Contenido extends StatelessWidget {
-  const _Contenido({required this.detalle, required this.resenas, required this.onPronto, required this.onAgregar, required this.onPersonalizar});
+  const _Contenido({required this.detalle, required this.resenas, required this.onAgregar, required this.onPersonalizar});
   final DetalleProducto detalle;
   final ({double promedio, int total}) resenas;
-  final VoidCallback onPronto;
   final VoidCallback onAgregar;
   final VoidCallback onPersonalizar;
 
@@ -397,21 +407,9 @@ class _Contenido extends StatelessWidget {
               // La talla solo aparece si la pieza la tiene registrada.
               if (detalle.medidas case final medida?) ...[
                 const SizedBox(height: 14),
-                Row(
-                  children: [
-                    Text(
-                      'Talla',
-                      style: TextStyle(color: AppColors.texto, fontSize: 12, fontWeight: FontWeight.w600),
-                    ),
-                    const Spacer(),
-                    GestureDetector(
-                      onTap: onPronto,
-                      child: Text(
-                        'Guía de tallas',
-                        style: TextStyle(color: AppColors.primario, fontSize: 11.5, fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                  ],
+                Text(
+                  'Talla',
+                  style: TextStyle(color: AppColors.texto, fontSize: 12, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 8),
                 Align(
@@ -722,3 +720,4 @@ class _Aviso extends StatelessWidget {
     );
   }
 }
+
