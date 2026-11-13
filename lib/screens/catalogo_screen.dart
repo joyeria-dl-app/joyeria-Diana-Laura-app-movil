@@ -130,10 +130,25 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
     await _cargarPagina(_pagina);
   }
 
+  // Primera página de cada categoría, pedida una sola vez: la usan su sección y la pieza destacada,
+  // que antes repetían la misma petición y hacían más lenta la primera carga.
+  final Map<int, Future<List<Producto>>> _piezasPorCategoria = {};
+
+  Future<List<Producto>> _piezasDe(Categoria categoria) => _piezasPorCategoria.putIfAbsent(categoria.id, () {
+    final pedido = context.read<ProductoService>().productos(categoriaId: categoria.id);
+    // Si falla se olvida, para que "Reintentar" vuelva a pedirla.
+    pedido.catchError((Object _) {
+      _piezasPorCategoria.remove(categoria.id);
+      return const <Producto>[];
+    });
+    return pedido;
+  });
+
   Future<void> _recargar() async {
     if (_categorias.isEmpty) _cargarCategorias();
     setState(() {
       _consulta++;
+      _piezasPorCategoria.clear();
       _productos.clear();
       _pagina = 0;
       _total = null;
@@ -222,12 +237,15 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
   List<Widget> _contenido() {
     if (_porSecciones) {
       return [
-        SliverToBoxAdapter(child: _Destacada(key: ValueKey('destacada_$_consulta'), categoria: _categorias.first)),
+        SliverToBoxAdapter(child: _Destacada(key: ValueKey('destacada_$_consulta'), piezas: () => _piezasDe(_categorias.first))),
         SliverList.builder(
           itemCount: _categorias.length,
           // Cada sección se construye (y pide sus piezas) al acercarse a la pantalla.
           itemBuilder: (_, i) =>
-              _SeccionCategoria(key: ValueKey('seccion_${_categorias[i].id}_$_consulta'), categoria: _categorias[i], onVerTodo: () => _elegir(_categorias[i])),
+              _SeccionCategoria(key: ValueKey('seccion_${_categorias[i].id}_$_consulta'), categoria: _categorias[i],
+                piezas: () => _piezasDe(_categorias[i]),
+                onVerTodo: () => _elegir(_categorias[i]),
+              ),
         ),
       ];
     }
@@ -576,8 +594,9 @@ class _Aviso extends StatelessWidget {
 // Sección de una categoría (#254): título, "Ver todo" y una fila con sus primeras piezas. Pide sus
 // piezas al construirse, es decir, cuando el usuario llega a ella.
 class _SeccionCategoria extends StatefulWidget {
-  const _SeccionCategoria({super.key, required this.categoria, required this.onVerTodo});
+  const _SeccionCategoria({super.key, required this.categoria, required this.piezas, required this.onVerTodo});
   final Categoria categoria;
+  final Future<List<Producto>> Function() piezas;
   final VoidCallback onVerTodo;
 
   static const anchoTarjeta = 170.0;
@@ -605,7 +624,7 @@ class _SeccionCategoriaState extends State<_SeccionCategoria> with AutomaticKeep
     setState(() => _error = false);
     try {
       // Solo la primera página (6 piezas): el resto se ve con "Ver todo" (#269).
-      final piezas = await context.read<ProductoService>().productos(categoriaId: widget.categoria.id);
+      final piezas = await widget.piezas();
       if (mounted) setState(() => _piezas = piezas);
     } on ProductoException {
       if (mounted) setState(() => _error = true);
@@ -770,8 +789,8 @@ class _NumeroPagina extends StatelessWidget {
 // Boceto P5: tarjeta grande con foto, como el banner del Inicio, con la pieza más reciente que
 // tenga existencias. Si no hay ninguna disponible no se muestra.
 class _Destacada extends StatefulWidget {
-  const _Destacada({super.key, required this.categoria});
-  final Categoria categoria;
+  const _Destacada({super.key, required this.piezas});
+  final Future<List<Producto>> Function() piezas;
 
   @override
   State<_Destacada> createState() => _DestacadaState();
@@ -788,7 +807,7 @@ class _DestacadaState extends State<_Destacada> {
 
   Future<void> _cargar() async {
     try {
-      final piezas = await context.read<ProductoService>().productos(categoriaId: widget.categoria.id);
+      final piezas = await widget.piezas();
       final disponibles = piezas.where((p) => !p.agotado).toList();
       if (!mounted || disponibles.isEmpty) return;
       setState(() => _pieza = disponibles.firstWhere((p) => p.esNuevo, orElse: () => disponibles.first));

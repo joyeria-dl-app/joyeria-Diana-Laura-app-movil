@@ -372,6 +372,17 @@ void main() {
     expect(servicio.categoriasPedidas.toSet(), {1, 2, 3});
   });
 
+  testWidgets('La pieza destacada y la primera sección comparten una sola petición', (tester) async {
+    final servicio = _PorCategoria({
+      1: [Producto(id: 1, nombre: 'Anillo de promesa', precioVenta: 449.5, stock: 3)],
+      2: [Producto(id: 2, nombre: 'Collar de perlas', precioVenta: 890, stock: 2)],
+    });
+    await _abrir(tester, servicio);
+
+    expect(find.byKey(const Key('catalogo_destacada')), findsOneWidget);
+    expect(servicio.categoriasPedidas.where((c) => c == 1).length, 1);
+  });
+
   testWidgets('Ver todo de una sección abre esa categoría en cuadrícula', (tester) async {
     final servicio = _PorCategoria({
       1: [Producto(id: 1, nombre: 'Anillo de promesa', precioVenta: 449.5, stock: 3)],
