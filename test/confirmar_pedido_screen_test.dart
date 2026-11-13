@@ -147,6 +147,35 @@ void main() {
     expect(find.text('A domicilio'), findsOneWidget);
   });
 
+  testWidgets('Fuera de zona avisa, toma nota y deja recoger en tienda (#339)', (tester) async {
+    await _abrir(tester);
+
+    await tester.tap(find.text('A domicilio'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.widgetWithText(TextFormField, 'Calle'), 'Hidalgo');
+    await tester.enterText(find.widgetWithText(TextFormField, 'Número'), '5');
+    await tester.enterText(find.widgetWithText(TextFormField, 'Colonia'), 'Centro');
+    await tester.enterText(find.widgetWithText(TextFormField, 'C.P.'), '42000');
+    await tester.enterText(find.widgetWithText(TextFormField, 'Ciudad'), 'Pachuca');
+    await tester.tap(find.text('Usar esta dirección'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('confirmar_fuera_de_zona')), findsOneWidget);
+    expect(find.text('Aún no entregamos a domicilio en Pachuca'), findsOneWidget);
+    expect(find.textContaining('Tomamos nota de tu ubicación para darla de alta pronto.'), findsOneWidget);
+    expect(find.textContaining('Tu carrito se queda guardado'), findsOneWidget);
+    expect(find.byKey(const Key('confirmar_whatsapp_zona')), findsOneWidget);
+    expect(find.text('Por ahora solo entregamos en Huejutla, San Felipe, Jaltocan, Tampico y Tehuetlan.'), findsNothing);
+
+    await tester.ensureVisible(find.byKey(const Key('confirmar_recoger_tienda')));
+    await tester.tap(find.byKey(const Key('confirmar_recoger_tienda')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('confirmar_fuera_de_zona')), findsNothing);
+    expect(find.text('Efectivo en tienda'), findsOneWidget);
+    expect(find.text('\$1,160.64'), findsOneWidget);
+  });
+
   testWidgets('8d y 8f: aparta con el 50% y el plan semanal', (tester) async {
     final pedidos = await _abrir(tester);
 
