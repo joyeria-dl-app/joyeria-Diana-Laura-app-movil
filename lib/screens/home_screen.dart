@@ -82,10 +82,11 @@ class _InicioState extends State<_Inicio> {
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: usuario == null ? const _EncabezadoSinCuenta() : _Saludo(nombre: usuario.nombre),
                   ),
-                  const SizedBox(height: 18),
-                  const Padding(padding: EdgeInsets.symmetric(horizontal: 20), child: TituloDegradado('Encuentra tu brillo perfecto', tamano: 28)),
-                  if (usuario == null) ...[const SizedBox(height: 16), const Padding(padding: EdgeInsets.symmetric(horizontal: 20), child: _Invitacion())],
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
+                  const Padding(padding: EdgeInsets.symmetric(horizontal: 20), child: TituloDegradado('Encuentra tu brillo perfecto', tamano: 26)),
+                  // #341: invitación compacta (Iniciar sesión ya está en el encabezado).
+                  if (usuario == null) ...[const SizedBox(height: 12), const Padding(padding: EdgeInsets.symmetric(horizontal: 20), child: _Invitacion())],
+                  const SizedBox(height: 14),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: CampoBusqueda(
@@ -94,6 +95,14 @@ class _InicioState extends State<_Inicio> {
                     ),
                   ),
                   ..._contenido(inicio),
+                  // #341: la tienda física al final del Inicio.
+                  if (!inicio.sinConexion) ...[
+                    const SizedBox(height: 16),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: _Visitanos(onTap: () => Navigator.pushNamed(context, AppRoutes.zonasEntrega)),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -108,6 +117,13 @@ class _InicioState extends State<_Inicio> {
       ),
     );
   }
+
+  Widget _pieza(Producto pieza) => _PiezaDestacada(
+    producto: pieza,
+    favorita: context.watch<FavoritosProvider?>()?.esFavorita(pieza.id) ?? false,
+    onFavorito: () => alternarFavorito(context, pieza),
+    onTap: () => Navigator.push(context, MaterialPageRoute<void>(builder: (_) => DetalleScreen(productoId: pieza.id))),
+  );
 
   List<Widget> _contenido(InicioProvider inicio) {
     if (inicio.cargando && inicio.destacadas.isEmpty && inicio.banners.isEmpty) {
@@ -124,16 +140,17 @@ class _InicioState extends State<_Inicio> {
       if (inicio.categorias.isNotEmpty) ...[
         const SizedBox(height: 16),
         SizedBox(
-          height: 38,
+          height: 92,
           child: ListView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 20),
             children: [
-              _Chip(texto: 'Todo', icono: Icons.auto_awesome_rounded, activa: true, onTap: _abrirCatalogo),
+              _Circulo(texto: 'Todo', todo: true, onTap: _abrirCatalogo),
               for (final categoria in inicio.categorias) ...[
-                const SizedBox(width: 8),
-                _Chip(
+                const SizedBox(width: 12),
+                _Circulo(
                   texto: categoria.nombreVisible,
+                  foto: categoria.imagen,
                   onTap: () => _abrirCatalogo(argumento: categoria),
                 ),
               ],
@@ -156,22 +173,24 @@ class _InicioState extends State<_Inicio> {
             ],
           ),
         ),
-        SizedBox(
-          height: _PiezaDestacada.alto,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            itemCount: inicio.destacadas.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 12),
-            itemBuilder: (_, i) {
-              final pieza = inicio.destacadas[i];
-              return _PiezaDestacada(
-                producto: pieza,
-                favorita: context.watch<FavoritosProvider?>()?.esFavorita(pieza.id) ?? false,
-                onFavorito: () => alternarFavorito(context, pieza),
-                onTap: () => Navigator.push(context, MaterialPageRoute<void>(builder: (_) => DetalleScreen(productoId: pieza.id))),
-              );
-            },
+        // #341: cuadrícula de 2 columnas (hasta 6 piezas) en lugar de una fila pequeña.
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Column(
+            key: const Key('inicio_para_ti'),
+            children: [
+              for (var i = 0; i < inicio.destacadas.length && i < 6; i += 2) ...[
+                if (i > 0) const SizedBox(height: 12),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: _pieza(inicio.destacadas[i])),
+                    const SizedBox(width: 12),
+                    Expanded(child: i + 1 < inicio.destacadas.length ? _pieza(inicio.destacadas[i + 1]) : const SizedBox()),
+                  ],
+                ),
+              ],
+            ],
           ),
         ),
       ],
@@ -242,55 +261,113 @@ class _EncabezadoSinCuenta extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Align(alignment: Alignment.centerLeft, child: Antetitulo('Joyería Diana Laura'));
+    // #341: Iniciar sesión queda arriba y compacto; debajo del título va una invitación compacta.
+    return Row(
+      children: [
+        const Expanded(child: Antetitulo('Joyería Diana Laura')),
+        FilledButton(
+          key: const Key('inicio_entrar'),
+          style: FilledButton.styleFrom(minimumSize: const Size(0, 40), padding: const EdgeInsets.symmetric(horizontal: 16)),
+          onPressed: () => Navigator.pushNamed(context, AppRoutes.login),
+          child: const FittedBox(fit: BoxFit.scaleDown, child: Text('Iniciar sesión', maxLines: 1)),
+        ),
+      ],
+    );
   }
 }
 
-// Sin sesión: invitación a entrar o crear la cuenta; el resto del Inicio se ve igual.
+// #341: invitación compacta de una línea (Iniciar sesión ya está en el encabezado).
 class _Invitacion extends StatelessWidget {
   const _Invitacion();
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(18, 16, 18, 10),
+      key: const Key('inicio_invitacion'),
+      padding: const EdgeInsets.fromLTRB(16, 14, 12, 4),
       decoration: BoxDecoration(
         color: AppColors.tarjeta,
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(color: AppColors.borde),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Inicia sesión para guardar favoritos, apartar piezas y seguir tus pedidos.',
-            style: TextStyle(color: AppColors.textoSuave, fontSize: 13, height: 1.4),
-          ),
-          const SizedBox(height: 14),
-          // En teléfonos de 360 dp (Moto G6) el texto no cabe con el relleno normal del botón: se reduce
-          // el relleno y, si aún no cabe, la letra se achica en lugar de partirse en dos líneas.
           Row(
             children: [
               Expanded(
-                child: FilledButton(
-                  style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 12)),
-                  onPressed: () => Navigator.pushNamed(context, AppRoutes.login),
-                  child: const FittedBox(fit: BoxFit.scaleDown, child: Text('Iniciar sesión', maxLines: 1)),
+                child: Text(
+                  '¿Aún no tienes cuenta? Créala para apartar, guardar favoritos y seguir tus pedidos.',
+                  style: TextStyle(color: AppColors.textoSuave, fontSize: 12.5, height: 1.35),
                 ),
               ),
               const SizedBox(width: 10),
-              Expanded(
-                child: OutlinedButton(
-                  style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 12)),
-                  onPressed: () => Navigator.pushNamed(context, AppRoutes.register),
-                  child: const FittedBox(fit: BoxFit.scaleDown, child: Text('Crear cuenta', maxLines: 1)),
-                ),
+              // En 360 dp (Moto G6) el texto no se parte: relleno corto y letra que se achica si hace falta.
+              OutlinedButton(
+                style: OutlinedButton.styleFrom(minimumSize: const Size(0, 40), padding: const EdgeInsets.symmetric(horizontal: 14)),
+                onPressed: () => Navigator.pushNamed(context, AppRoutes.register),
+                child: const FittedBox(fit: BoxFit.scaleDown, child: Text('Crear cuenta', maxLines: 1)),
               ),
             ],
           ),
           // El catálogo es público, como "explora sin cuenta" en los bocetos.
-          TextButton(onPressed: () => Navigator.pushNamed(context, AppRoutes.catalogo), child: const Text('Explorar sin cuenta')),
+          TextButton(
+            style: TextButton.styleFrom(padding: EdgeInsets.zero, visualDensity: VisualDensity.compact),
+            onPressed: () => Navigator.pushNamed(context, AppRoutes.catalogo),
+            child: const Text('Explorar sin cuenta'),
+          ),
         ],
+      ),
+    );
+  }
+}
+
+// #341: la tienda física al final del Inicio.
+class _Visitanos extends StatelessWidget {
+  const _Visitanos({required this.onTap});
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        key: const Key('inicio_visitanos'),
+        borderRadius: BorderRadius.circular(22),
+        onTap: onTap,
+        child: Ink(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(22),
+            gradient: LinearGradient(colors: [AppColors.primario.withValues(alpha: 0.22), AppColors.lila.withValues(alpha: 0.14)]),
+            border: Border.all(color: AppColors.cristalBorde),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(color: AppColors.cristal, borderRadius: BorderRadius.circular(16)),
+                child: Icon(Icons.storefront_outlined, color: AppColors.primario),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '¿Quieres verla en persona?',
+                      style: TextStyle(color: AppColors.texto, fontSize: 14, fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 2),
+                    Text('Visítanos en la tienda · Cómo llegar', style: TextStyle(color: AppColors.textoSuave, fontSize: 12)),
+                  ],
+                ),
+              ),
+              Icon(Icons.arrow_forward_rounded, color: AppColors.texto, size: 20),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -432,37 +509,42 @@ class _Banner extends StatelessWidget {
   }
 }
 
-// Chip de categoría del boceto (.chip y .chip.on).
-class _Chip extends StatelessWidget {
-  const _Chip({required this.texto, required this.onTap, this.icono, this.activa = false});
+// #341: categoría en círculo con su foto, como en el catálogo.
+class _Circulo extends StatelessWidget {
+  const _Circulo({required this.texto, required this.onTap, this.foto, this.todo = false});
   final String texto;
-  final IconData? icono;
-  final bool activa;
+  final String? foto;
   final VoidCallback onTap;
+  // "Todo" lleva el degradado; una categoría sin foto, el diamante sobre fondo liso.
+  final bool todo;
 
   @override
   Widget build(BuildContext context) {
-    final color = activa ? Colors.white : AppColors.texto;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(19),
+    final relleno = DecoratedBox(
+      decoration: BoxDecoration(gradient: todo ? AppColors.degradado : null, color: todo ? null : AppColors.superficie2),
+      child: Center(child: Icon(todo ? Icons.auto_awesome_rounded : Icons.diamond_outlined, size: 24, color: todo ? Colors.white : AppColors.textoSuave)),
+    );
+    return Semantics(
+      button: true,
+      label: texto,
+      excludeSemantics: true,
+      child: GestureDetector(
         onTap: onTap,
-        child: Ink(
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(19),
-            gradient: activa ? AppColors.degradado : null,
-            color: activa ? null : AppColors.cristal,
-            border: activa ? null : Border.all(color: AppColors.cristalBorde),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
+        behavior: HitTestBehavior.opaque,
+        child: SizedBox(
+          width: 64,
+          child: Column(
             children: [
-              if (icono != null) ...[Icon(icono, size: 15, color: color), const SizedBox(width: 6)],
+              ClipRRect(
+                borderRadius: BorderRadius.circular(22),
+                child: SizedBox(width: 64, height: 64, child: (foto == null || foto!.isEmpty) ? relleno : FotoRed(foto!, error: relleno)),
+              ),
+              const SizedBox(height: 6),
               Text(
                 texto,
-                style: TextStyle(color: color, fontSize: 12.5, fontWeight: FontWeight.w600),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 11.5, color: AppColors.texto),
               ),
             ],
           ),
@@ -472,7 +554,7 @@ class _Chip extends StatelessWidget {
   }
 }
 
-// Boceto P5 ("Para ti"): tarjeta de 150 px con foto de 118, corazón, nombre y precio.
+// Boceto P5 ("Para ti"): foto cuadrada, corazón, nombre y precio; en #341 llena su columna de la cuadrícula.
 class _PiezaDestacada extends StatelessWidget {
   const _PiezaDestacada({required this.producto, required this.favorita, required this.onFavorito, required this.onTap});
   final Producto producto;
@@ -489,7 +571,7 @@ class _PiezaDestacada extends StatelessWidget {
       child: Center(child: Icon(Icons.diamond_outlined, size: 32, color: AppColors.textoSuave)),
     );
     return SizedBox(
-      width: 150,
+      width: double.infinity,
       child: Material(
         color: AppColors.tarjeta,
         clipBehavior: Clip.antiAlias,
@@ -502,8 +584,8 @@ class _PiezaDestacada extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              SizedBox(
-                height: 118,
+              AspectRatio(
+                aspectRatio: 1,
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
@@ -536,7 +618,7 @@ class _PiezaDestacada extends StatelessWidget {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
