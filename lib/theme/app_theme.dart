@@ -200,7 +200,7 @@ class AppTheme {
         backgroundColor: Colors.transparent,
         foregroundColor: p.texto,
         elevation: 0,
-        systemOverlayStyle: p.oscura ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
+        systemOverlayStyle: estiloSistema(clara: p.oscura),
       ),
       // Avisos flotantes encima de la barra de navegación (que va dentro del cuerpo de cada
       // pantalla), con los colores del tema y esquinas redondeadas (#317).
@@ -239,3 +239,12 @@ class AppTheme {
     );
   }
 }
+
+// Barra del sistema transparente y sin la franja de contraste: en teléfonos con los tres botones
+// solo se ven los botones sobre el fondo de la app, debajo de la barra flotante.
+SystemUiOverlayStyle estiloSistema({required bool clara}) => (clara ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark).copyWith(
+  systemNavigationBarColor: const Color(0x00000000),
+  systemNavigationBarDividerColor: const Color(0x00000000),
+  systemNavigationBarContrastEnforced: false,
+  systemNavigationBarIconBrightness: clara ? Brightness.light : Brightness.dark,
+);

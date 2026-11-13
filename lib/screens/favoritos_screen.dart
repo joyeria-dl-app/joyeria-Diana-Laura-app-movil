@@ -51,12 +51,7 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
               ],
             ),
           ),
-          const Positioned(
-            left: 16,
-            right: 16,
-            bottom: 16,
-            child: SafeArea(top: false, child: BarraNavegacion(actual: Seccion.favoritos)),
-          ),
+          BarraNavegacion.posicionada(context, Seccion.favoritos),
         ],
       ),
     );

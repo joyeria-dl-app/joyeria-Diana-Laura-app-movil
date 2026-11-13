@@ -217,6 +217,7 @@ void main() {
     await _abrir(tester, conSesion: false);
     expect(find.byKey(const Key('inicio_entrar')), findsOneWidget);
     expect(find.byKey(const Key('inicio_invitacion')), findsOneWidget);
+    await tester.scrollUntilVisible(find.byKey(const Key('inicio_para_ti')), 300, scrollable: find.byType(Scrollable).first);
     expect(find.byKey(const Key('inicio_para_ti')), findsOneWidget);
 
     await tester.scrollUntilVisible(find.byKey(const Key('inicio_visitanos')), 300, scrollable: find.byType(Scrollable).first);

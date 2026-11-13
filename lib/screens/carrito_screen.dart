@@ -91,15 +91,16 @@ class _CarritoScreenState extends State<CarritoScreen> {
               ],
             ),
           ),
-          Positioned(
-            left: conPiezas ? 0 : 16,
-            right: conPiezas ? 0 : 16,
-            bottom: conPiezas ? 0 : 16,
-            // Con piezas, la barra de navegación se cambia por el total (6a).
-            child: conPiezas
-                ? BarraPagar(total: carrito.total, onPagar: () => Navigator.pushNamed(context, AppRoutes.confirmarPedido))
-                : const SafeArea(top: false, child: BarraNavegacion(actual: Seccion.carrito)),
-          ),
+          // Con piezas, la barra de navegación se cambia por el total (6a).
+          if (conPiezas)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: BarraPagar(total: carrito.total, onPagar: () => Navigator.pushNamed(context, AppRoutes.confirmarPedido)),
+            )
+          else
+            BarraNavegacion.posicionada(context, Seccion.carrito),
         ],
       ),
     );

@@ -41,26 +41,42 @@ class BarraNavegacion extends StatelessWidget {
     }
   }
 
+  // Teléfonos con los tres botones del sistema (círculo, triángulo, cuadrado): su franja mide
+  // unos 48 px; con gestos, unos 24. Con botones la barra se pega abajo y los envuelve, para que no
+  // se vean dos barras encimadas.
+  static bool conBotones(BuildContext context) => MediaQuery.viewPaddingOf(context).bottom > 32;
+
+  // La barra ya acomodada en el Stack de cada pantalla.
+  static Widget posicionada(BuildContext context, Seccion actual) {
+    if (conBotones(context)) return Positioned(left: 0, right: 0, bottom: 0, child: BarraNavegacion(actual: actual));
+    return Positioned(left: 16, right: 16, bottom: 16, child: SafeArea(top: false, child: BarraNavegacion(actual: actual)));
+  }
+
   @override
   Widget build(BuildContext context) {
+    final pegada = conBotones(context);
+    final abajo = MediaQuery.viewPaddingOf(context).bottom;
+    final radio = pegada ? const BorderRadius.vertical(top: Radius.circular(28)) : BorderRadius.circular(28);
     return Container(
-      height: 72,
+      height: pegada ? 72 + abajo : 72,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: radio,
         boxShadow: [
           BoxShadow(color: AppColors.sombra, blurRadius: 40, offset: Offset(0, 20), spreadRadius: -10),
           BoxShadow(color: AppColors.brillo.withValues(alpha: 0.35), blurRadius: 18, spreadRadius: -10),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: radio,
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
           child: Container(
+            padding: EdgeInsets.only(bottom: pegada ? abajo : 0),
             decoration: BoxDecoration(
-              color: AppColors.cristal,
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(color: AppColors.cristalBorde),
+              // Pegada abajo lleva el fondo más sólido para que los botones del sistema se lean.
+              color: pegada ? Color.alphaBlend(AppColors.cristal, AppColors.fondo.withValues(alpha: 0.85)) : AppColors.cristal,
+              borderRadius: radio,
+              border: pegada ? Border(top: BorderSide(color: AppColors.cristalBorde)) : Border.all(color: AppColors.cristalBorde),
             ),
             child: Row(
               children: [
