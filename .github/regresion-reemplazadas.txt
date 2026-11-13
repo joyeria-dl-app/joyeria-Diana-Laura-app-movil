@@ -2,7 +2,7 @@
 # El paso "pruebas de la versión anterior" de pruebas-regresion.yml no falla por ellas; falla por cualquier
 # otra prueba vieja que se rompa. Formato: archivo | nombre de la prueba | motivo (issue) | prueba actual.
 # Al publicar una versión nueva esta lista se vacía: la versión anterior pasa a ser la recién publicada.
-inicio_screen_test.dart | Para ti muestra las piezas del catálogo con su precio, primero las que tienen existencias | Para ti ahora es una cuadrícula de 2 columnas: la segunda pieza puede quedar en la misma columna, más abajo (#341) | test/inicio_screen_test.dart
+inicio_screen_test.dart | Para ti muestra las piezas del catálogo con su precio, primero las que tienen existencias | Para ti ahora es una cuadrícula de 2 columnas (#341) y ya no recomienda piezas agotadas | test/inicio_screen_test.dart
 catalogo_screen_test.dart | Sin filtro organiza las piezas por secciones de categoría y omite las vacías | La tarjeta de producto es más alta (foto como en los bocetos P6/P7): la tercera sección se pide al desplazarse (#341) | test/catalogo_screen_test.dart
 catalogo_screen_test.dart | Al elegir una categoría filtra las piezas y la usa como título | La pieza destacada arriba de las secciones (boceto P5) baja la sección de Esclavas: se desplaza para verla (#341) | test/catalogo_screen_test.dart
 auth_service_test.dart | Registro Crea la cuenta, envía la verificación y guarda la pregunta secreta con el token | El correo de verificación ahora lo manda el backend con el diseño de la tienda (como en la web); Firebase solo queda de respaldo | test/auth_service_test.dart

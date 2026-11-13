@@ -166,7 +166,8 @@ class TarjetaProducto extends StatelessWidget {
   // Nuevo (verde, como "Al corriente") o Quedan N (naranja, como "2 días").
   Widget? get _estado {
     if (producto.agotado) return null;
-    if (producto.stock <= 3) return _Estado(texto: 'Quedan ${producto.stock}', icono: Icons.local_fire_department_rounded, color: const Color(0xFFFFB547));
+    // El mismo límite que el detalle de la pieza: "Quedan N" con 5 o menos.
+    if (producto.stock <= 5) return _Estado(texto: 'Quedan ${producto.stock}', icono: Icons.local_fire_department_rounded, color: const Color(0xFFFFB547));
     if (producto.esNuevo) return const _Estado(texto: 'Nuevo', icono: Icons.auto_awesome_rounded, color: Color(0xFF4ADE80));
     return null;
   }

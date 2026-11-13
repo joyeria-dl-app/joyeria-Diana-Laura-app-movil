@@ -201,16 +201,14 @@ void main() {
     expect(find.text('Anillo de promesa'), findsNothing);
   });
 
-  testWidgets('Para ti muestra las piezas del catálogo con su precio, primero las que tienen existencias', (tester) async {
+  testWidgets('Para ti muestra solo las piezas con existencias, con su precio', (tester) async {
     await _abrir(tester);
 
     expect(find.text('Para ti'), findsOneWidget);
     expect(find.text(r'$449.50'), findsOneWidget);
     expect(find.text(r'$890'), findsOneWidget);
-    // #341: cuadrícula de 2 columnas; se lee de izquierda a derecha y de arriba abajo.
-    final promesa = tester.getTopLeft(find.text('Anillo de promesa'));
-    final agotado = tester.getTopLeft(find.text('Anillo agotado'));
-    expect(promesa.dy < agotado.dy || (promesa.dy == agotado.dy && promesa.dx < agotado.dx), isTrue);
+    // Una pieza agotada no se recomienda en el Inicio.
+    expect(find.text('Anillo agotado'), findsNothing);
   });
 
   testWidgets('Sin sesión, Iniciar sesión está en el encabezado y al final se invita a visitar la tienda (#341)', (tester) async {
