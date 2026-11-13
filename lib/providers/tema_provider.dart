@@ -132,5 +132,5 @@ class _ReconstruirConTemaState extends State<ReconstruirConTema> {
   // Íconos de la barra de estado legibles sobre el fondo de cada tema. Las pantallas con foto o
   // degradado arriba ponen su propio AnnotatedRegion, que tiene prioridad.
   Widget build(BuildContext context) =>
-      AnnotatedRegion<SystemUiOverlayStyle>(value: widget.tema.paleta.oscura ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark, child: widget.child);
+      AnnotatedRegion<SystemUiOverlayStyle>(value: estiloSistema(clara: widget.tema.paleta.oscura), child: widget.child);
 }

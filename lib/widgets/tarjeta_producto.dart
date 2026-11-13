@@ -16,9 +16,18 @@ class TarjetaProducto extends StatelessWidget {
   // Sin él no se muestra el corazón.
   final VoidCallback? onFavorito;
 
-  static const altoFoto = 168.0;
+  static const altoFoto = 170.0;
   // Foto + nombre + precio; lo usa la cuadrícula para dar el alto de cada tarjeta.
-  static const alto = altoFoto + 72;
+  static const alto = altoFoto + 108;
+
+  // Categoría y material debajo del nombre ("Anillos · Plata .925").
+  String? get _detalle {
+    final partes = [producto.categoriaNombre, producto.material].whereType<String>().map((t) => t.trim()).where((t) => t.isNotEmpty).toList();
+    if (partes.isEmpty) return null;
+    final primera = partes.first;
+    partes[0] = primera[0].toUpperCase() + primera.substring(1);
+    return partes.join(' · ');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,12 +48,38 @@ class TarjetaProducto extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Boceto P6/P7: foto grande a las orillas, con un velo oscuro abajo para las etiquetas.
               Expanded(
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
                     _Foto(url: producto.imagen, apagada: producto.agotado),
-                    if (producto.personalizable && !producto.agotado) const Positioned(top: 10, left: 10, child: _EtiquetaPersonalizable()),
+                    const DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Color(0x00000000), Color(0x00000000), Color(0x8C000000)],
+                          stops: [0, 0.55, 1],
+                        ),
+                      ),
+                    ),
+                    if (!producto.agotado && (producto.tieneDescuento || producto.personalizable))
+                      Positioned(
+                        top: 10,
+                        left: 10,
+                        right: onFavorito != null ? 50 : 10,
+                        child: Wrap(
+                          spacing: 4,
+                          runSpacing: 4,
+                          children: [
+                            if (producto.tieneDescuento) _Pildora(texto: _descuento, degradado: true),
+                            if (producto.personalizable) const _EtiquetaPersonalizable(),
+                          ],
+                        ),
+                      ),
+                    // Estado de la pieza con el color de las píldoras de Mis apartados (P12).
+                    if (_estado != null) Positioned(left: 10, bottom: 10, child: _estado!),
                     if (producto.agotado) const Center(child: _Agotado()),
                     if (onFavorito != null)
                       Positioned(
@@ -56,7 +91,7 @@ class TarjetaProducto extends StatelessWidget {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -64,28 +99,56 @@ class TarjetaProducto extends StatelessWidget {
                       producto.nombre,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: AppColors.texto, fontSize: 12.5, fontWeight: FontWeight.w500),
+                      style: TextStyle(color: AppColors.texto, fontSize: 13, fontWeight: FontWeight.w600, letterSpacing: -0.2),
                     ),
-                    const SizedBox(height: 4),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          formatoPrecio(producto.precioFinal),
-                          style: TextStyle(color: AppColors.primario, fontSize: 16, fontWeight: FontWeight.w700, letterSpacing: -0.3),
+                    if (_detalle != null) ...[
+                      const SizedBox(height: 5),
+                      // Píldora rosa como la categoría en el carrito (P9).
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                        decoration: BoxDecoration(color: AppColors.suave, borderRadius: BorderRadius.circular(20)),
+                        child: Text(
+                          _detalle!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(color: AppColors.primario, fontSize: 10, fontWeight: FontWeight.w600),
                         ),
-                        if (producto.tieneDescuento) ...[
-                          const SizedBox(width: 6),
-                          Flexible(
-                            child: Text(
-                              formatoPrecio(producto.precioVenta),
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(color: AppColors.textoSuave, fontSize: 11, decoration: TextDecoration.lineThrough),
-                            ),
+                      ),
+                    ],
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Precio en etiqueta colgante, como en el detalle de la web.
+                              _EtiquetaPrecio(texto: formatoPrecio(producto.precioFinal)),
+                              const SizedBox(height: 3),
+                              if (producto.tieneDescuento)
+                                Text(
+                                  formatoPrecio(producto.precioVenta),
+                                  style: TextStyle(color: AppColors.textoSuave, fontSize: 10.5, decoration: TextDecoration.lineThrough),
+                                )
+                              else
+                                _Estrellas(promedio: producto.promedioResenas),
+                            ],
                           ),
-                        ],
-                        const Spacer(),
-                        _Estrellas(promedio: producto.promedioResenas),
+                        ),
+                        // Botón con la flecha, como el del banner del Inicio (P5).
+                        ExcludeSemantics(
+                          child: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              gradient: producto.agotado ? null : AppColors.degradado,
+                              color: producto.agotado ? AppColors.superficie2 : null,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(Icons.arrow_outward_rounded, size: 17, color: producto.agotado ? AppColors.textoSuave : Colors.white),
+                          ),
+                        ),
                       ],
                     ),
                   ],
@@ -94,6 +157,47 @@ class TarjetaProducto extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  String get _descuento => '-${((1 - producto.precioFinal / producto.precioVenta) * 100).round()}%';
+
+  // Nuevo (verde, como "Al corriente") o Quedan N (naranja, como "2 días").
+  Widget? get _estado {
+    if (producto.agotado) return null;
+    if (producto.stock <= 3) return _Estado(texto: 'Quedan ${producto.stock}', icono: Icons.local_fire_department_rounded, color: const Color(0xFFFFB547));
+    if (producto.esNuevo) return const _Estado(texto: 'Nuevo', icono: Icons.auto_awesome_rounded, color: Color(0xFF4ADE80));
+    return null;
+  }
+}
+
+// Píldora de estado: fondo oscuro translúcido y texto del color del estado.
+class _Estado extends StatelessWidget {
+  const _Estado({required this.texto, required this.icono, required this.color});
+  final String texto;
+  final IconData icono;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      decoration: BoxDecoration(
+        color: Color.alphaBlend(color.withValues(alpha: 0.18), const Color(0xCC14080F)),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.45)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icono, size: 12, color: color),
+          const SizedBox(width: 3),
+          Text(
+            texto,
+            style: TextStyle(color: color, fontSize: 10.5, fontWeight: FontWeight.w700),
+          ),
+        ],
       ),
     );
   }
@@ -171,11 +275,12 @@ class _Corazon extends StatelessWidget {
           width: 34,
           height: 34,
           decoration: BoxDecoration(
-            color: AppColors.cristal,
+            color: favorita ? Colors.white : AppColors.cristal,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.cristalBorde),
+            border: Border.all(color: favorita ? Colors.white : AppColors.cristalBorde),
           ),
-          child: Icon(favorita ? Icons.favorite_rounded : Icons.favorite_border_rounded, size: 17, color: favorita ? AppColors.acentoSuave : Colors.white),
+          // Boceto P7: favorita en cuadro blanco con el corazón rosa.
+          child: Icon(favorita ? Icons.favorite_rounded : Icons.favorite_border_rounded, size: 17, color: favorita ? AppColors.primario : Colors.white),
         ),
       ),
     );
@@ -205,6 +310,30 @@ class _EtiquetaPersonalizable extends StatelessWidget {
   }
 }
 
+// Píldora del descuento sobre la foto, con el degradado de la marca.
+class _Pildora extends StatelessWidget {
+  const _Pildora({required this.texto, this.degradado = false});
+  final String texto;
+  final bool degradado;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = degradado ? Colors.white : AppColors.acentoOscuro;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      decoration: BoxDecoration(
+        gradient: degradado ? AppColors.degradado : null,
+        color: degradado ? null : const Color(0xE6FFFFFF),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        texto,
+        style: TextStyle(color: color, fontSize: 10.5, fontWeight: FontWeight.w700),
+      ),
+    );
+  }
+}
+
 class _Agotado extends StatelessWidget {
   const _Agotado();
 
@@ -216,6 +345,72 @@ class _Agotado extends StatelessWidget {
       child: const Text(
         'Agotado',
         style: TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.w600),
+      ),
+    );
+  }
+}
+
+// Etiqueta de precio colgando de su hilo (web: .pdp-precios), con el agujero a la izquierda.
+class _EtiquetaPrecio extends StatelessWidget {
+  const _EtiquetaPrecio({required this.texto});
+  final String texto;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8, left: 2),
+      child: Transform.rotate(
+        angle: -0.044,
+        alignment: Alignment.topLeft,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 3, 10, 4),
+              decoration: BoxDecoration(
+                color: AppColors.suave,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(5),
+                  bottomLeft: Radius.circular(5),
+                  topRight: Radius.circular(12),
+                  bottomRight: Radius.circular(12),
+                ),
+                border: Border.all(color: AppColors.primario.withValues(alpha: 0.35)),
+                boxShadow: [BoxShadow(color: AppColors.sombra, blurRadius: 10, offset: const Offset(0, 4), spreadRadius: -4)],
+              ),
+              child: Text(
+                texto,
+                style: TextStyle(color: AppColors.primario, fontSize: 15, fontWeight: FontWeight.w700, letterSpacing: -0.3),
+              ),
+            ),
+            // Agujero de la etiqueta.
+            Positioned(
+              left: 7,
+              top: 0,
+              bottom: 0,
+              child: Center(
+                child: Container(
+                  width: 7,
+                  height: 7,
+                  decoration: BoxDecoration(
+                    color: AppColors.tarjeta,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.primario.withValues(alpha: 0.6), width: 1.2),
+                  ),
+                ),
+              ),
+            ),
+            // Hilo que sale del agujero.
+            Positioned(
+              left: 9,
+              top: -9,
+              child: Transform.rotate(
+                angle: -0.25,
+                child: Container(width: 1.4, height: 18, color: AppColors.primario.withValues(alpha: 0.55)),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -104,8 +104,10 @@ class TituloDegradado extends StatelessWidget {
 
 // Texto pequeño en mayúsculas con degradado rosa a lila (.eyebrow), por ejemplo "CATÁLOGO".
 class Antetitulo extends StatelessWidget {
-  const Antetitulo(this.texto, {super.key});
+  const Antetitulo(this.texto, {super.key, this.tamano = 11});
   final String texto;
+  // 11 normal; el nombre de la tienda en el Inicio va más grande.
+  final double tamano;
 
   @override
   Widget build(BuildContext context) {
@@ -113,7 +115,7 @@ class Antetitulo extends StatelessWidget {
       shaderCallback: (r) => LinearGradient(colors: [AppColors.primario, AppColors.lila]).createShader(r),
       child: Text(
         texto.toUpperCase(),
-        style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 2),
+        style: TextStyle(color: Colors.white, fontSize: tamano, fontWeight: tamano > 11 ? FontWeight.w700 : FontWeight.w600, letterSpacing: tamano > 11 ? 2.4 : 2),
       ),
     );
   }

@@ -12,6 +12,8 @@ import '../widgets/decoracion.dart';
 import '../widgets/tarjeta_producto.dart';
 import 'detalle_screen.dart';
 import '../widgets/foto_red.dart';
+import '../utils/formato.dart';
+import '../utils/fotos.dart';
 
 // Catálogo de piezas (boceto P6). En una categoría o búsqueda muestra páginas numeradas de 6 piezas (#279).
 // Desde el Inicio (#244) el catálogo se abre ya filtrado por una categoría o con el buscador listo.
@@ -203,12 +205,7 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
               ),
             ),
           ),
-          const Positioned(
-            left: 16,
-            right: 16,
-            bottom: 16,
-            child: SafeArea(top: false, child: BarraNavegacion(actual: Seccion.catalogo)),
-          ),
+          BarraNavegacion.posicionada(context, Seccion.catalogo),
         ],
       ),
     );
@@ -225,6 +222,7 @@ class _CatalogoScreenState extends State<CatalogoScreen> {
   List<Widget> _contenido() {
     if (_porSecciones) {
       return [
+        SliverToBoxAdapter(child: _Destacada(key: ValueKey('destacada_$_consulta'), categoria: _categorias.first)),
         SliverList.builder(
           itemCount: _categorias.length,
           // Cada sección se construye (y pide sus piezas) al acercarse a la pantalla.
@@ -420,7 +418,25 @@ class _Encabezado extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
               // Mientras falten páginas por cargar no se conoce el total exacto.
-              child: Text(contador!, style: TextStyle(color: AppColors.textoSuave, fontSize: 12)),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                decoration: BoxDecoration(
+                  color: AppColors.cristal,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppColors.cristalBorde),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.diamond_outlined, size: 14, color: AppColors.primario),
+                    const SizedBox(width: 6),
+                    Text(
+                      contador!,
+                      style: TextStyle(color: AppColors.texto, fontSize: 12, fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                ),
+              ),
             ),
         ],
       ),
@@ -437,9 +453,10 @@ class _CirculoCategoria extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final sinFoto = ColoredBox(
-      color: AppColors.superficie2,
-      child: Center(child: Icon(Icons.diamond_outlined, size: 26, color: AppColors.textoSuave)),
+    // Sin foto: el degradado de la marca en lugar del gris, como "Todo" en el Inicio.
+    final sinFoto = DecoratedBox(
+      decoration: BoxDecoration(gradient: AppColors.degradado),
+      child: const Center(child: Icon(Icons.diamond_outlined, size: 26, color: Colors.white)),
     );
     final url = categoria.imagen;
     return Semantics(
@@ -460,7 +477,8 @@ class _CirculoCategoria extends StatelessWidget {
                 padding: const EdgeInsets.all(2),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: activa ? AppColors.primario : Colors.transparent, width: 2),
+                  border: Border.all(color: activa ? AppColors.primario : AppColors.cristalBorde, width: 2),
+                  boxShadow: activa ? [BoxShadow(color: AppColors.primario.withValues(alpha: 0.45), blurRadius: 16, spreadRadius: -4)] : null,
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(20),
@@ -609,10 +627,27 @@ class _SeccionCategoriaState extends State<_SeccionCategoria> with AutomaticKeep
             padding: const EdgeInsets.fromLTRB(20, 0, 12, 6),
             child: Row(
               children: [
+                // Barra con el degradado de la marca junto al título de la sección.
+                Container(
+                  width: 4,
+                  height: 22,
+                  decoration: BoxDecoration(gradient: AppColors.degradado, borderRadius: BorderRadius.circular(2)),
+                ),
+                const SizedBox(width: 10),
                 Expanded(
-                  child: Text(
-                    widget.categoria.nombreVisible,
-                    style: TextStyle(color: AppColors.texto, fontSize: 18, fontWeight: FontWeight.w700, letterSpacing: -0.4),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.categoria.nombreVisible,
+                        style: TextStyle(color: AppColors.texto, fontSize: 18, fontWeight: FontWeight.w700, letterSpacing: -0.4),
+                      ),
+                      if (piezas != null)
+                        Text(
+                          piezas.length >= 6 ? 'Lo más nuevo' : '${piezas.length} ${piezas.length == 1 ? 'pieza' : 'piezas'}',
+                          style: TextStyle(color: AppColors.textoSuave, fontSize: 11.5),
+                        ),
+                    ],
                   ),
                 ),
                 TextButton(onPressed: widget.onVerTodo, child: const Text('Ver todo')),
@@ -725,6 +760,124 @@ class _NumeroPagina extends StatelessWidget {
           child: Text(
             '${numero + 1}',
             style: TextStyle(color: activa ? Colors.white : AppColors.texto, fontSize: 14, fontWeight: FontWeight.w600),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Boceto P5: tarjeta grande con foto, como el banner del Inicio, con la pieza más reciente que
+// tenga existencias. Si no hay ninguna disponible no se muestra.
+class _Destacada extends StatefulWidget {
+  const _Destacada({super.key, required this.categoria});
+  final Categoria categoria;
+
+  @override
+  State<_Destacada> createState() => _DestacadaState();
+}
+
+class _DestacadaState extends State<_Destacada> {
+  Producto? _pieza;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargar();
+  }
+
+  Future<void> _cargar() async {
+    try {
+      final piezas = await context.read<ProductoService>().productos(categoriaId: widget.categoria.id);
+      final disponibles = piezas.where((p) => !p.agotado).toList();
+      if (!mounted || disponibles.isEmpty) return;
+      setState(() => _pieza = disponibles.firstWhere((p) => p.esNuevo, orElse: () => disponibles.first));
+    } catch (_) {
+      // Sin la destacada el catálogo sigue completo.
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final pieza = _pieza;
+    if (pieza == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+      child: Semantics(
+        button: true,
+        label: 'Pieza destacada: ${pieza.nombre}, ${formatoPrecio(pieza.precioFinal)}',
+        excludeSemantics: true,
+        child: GestureDetector(
+          key: const Key('catalogo_destacada'),
+          onTap: () => Navigator.push(context, MaterialPageRoute<void>(builder: (_) => DetalleScreen(productoId: pieza.id))),
+          child: Container(
+            height: 190,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(28),
+              boxShadow: [BoxShadow(color: AppColors.sombra, blurRadius: 40, offset: const Offset(0, 18), spreadRadius: -12)],
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                if (pieza.imagen != null) FotoRed(pieza.imagen!, ancho: anchoFotoGrande) else DecoratedBox(decoration: BoxDecoration(gradient: AppColors.degradado)),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: [AppColors.primario.withValues(alpha: 0.92), AppColors.lila.withValues(alpha: 0.55), const Color(0x00000000)],
+                      stops: const [0, 0.55, 1],
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(color: const Color(0x33FFFFFF), borderRadius: BorderRadius.circular(20)),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.auto_awesome_rounded, size: 13, color: Colors.white),
+                            const SizedBox(width: 4),
+                            Text(pieza.esNuevo ? 'Recién llegada' : 'Destacada', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
+                          ],
+                        ),
+                      ),
+                      const Spacer(),
+                      SizedBox(
+                        width: 190,
+                        // RichText: el nombre ya aparece en su sección y así no se cuenta dos veces al buscarlo por texto.
+                        child: RichText(
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          text: TextSpan(
+                            text: pieza.nombre,
+                            style: const TextStyle(fontFamily: 'Poppins', color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700, letterSpacing: -0.5, height: 1.1),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(formatoPrecio(pieza.precioFinal), style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                ),
+                Positioned(
+                  right: 14,
+                  bottom: 14,
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+                    child: Icon(Icons.arrow_outward_rounded, color: AppColors.primario),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

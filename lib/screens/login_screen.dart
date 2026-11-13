@@ -64,7 +64,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     // Foto o degradado detrás de la barra de estado: íconos blancos en los dos temas.
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.light,
+      value: estiloSistema(clara: true),
       child: Scaffold(
         body: Stack(
           children: [
