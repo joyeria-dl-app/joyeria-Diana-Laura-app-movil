@@ -158,4 +158,37 @@ void main() {
 
     expect(find.text('Anillo corazón'), findsOneWidget);
   });
+
+  testWidgets('Tiene flecha para regresar a la pantalla anterior (#337)', (tester) async {
+    await tester.pumpWidget(
+      ChangeNotifierProvider(
+        create: (_) => CarritoProvider(_ServicioFalso([_anillo])),
+        child: MaterialApp(
+          theme: AppTheme.oscuro(),
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: TextButton(
+                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CarritoScreen())),
+                child: const Text('Detalle de la pieza'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Detalle de la pieza'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('carrito_regresar')), findsOneWidget);
+    expect(find.byTooltip('Regresar'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('carrito_regresar')));
+    await tester.pumpAndSettle();
+    expect(find.text('Detalle de la pieza'), findsOneWidget);
+    expect(find.byType(CarritoScreen), findsNothing);
+  });
+
+  testWidgets('Como primera pantalla no muestra la flecha', (tester) async {
+    await _abrir(tester, _ServicioFalso([_anillo]));
+    expect(find.byKey(const Key('carrito_regresar')), findsNothing);
+  });
 }
