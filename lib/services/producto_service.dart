@@ -57,7 +57,26 @@ class ProductoService {
   }
 
   // El backend también devuelve las categorías desactivadas desde el panel.
-  Future<List<Categoria>> categorias() async {
+  // Las categorías casi no cambian y las piden el Inicio y el Catálogo uno tras otro: se guardan
+  // unos minutos para que abrir el catálogo haga un solo viaje al servidor (#352). Si fallan, se olvidan.
+  static const vigenciaCategorias = Duration(minutes: 5);
+  Future<List<Categoria>>? _categorias;
+  DateTime? _categoriasHasta;
+
+  Future<List<Categoria>> categorias() {
+    final guardadas = _categorias;
+    if (guardadas != null && DateTime.now().isBefore(_categoriasHasta!)) return guardadas;
+    final pedido = _pedirCategorias();
+    _categorias = pedido;
+    _categoriasHasta = DateTime.now().add(vigenciaCategorias);
+    pedido.catchError((Object _) {
+      if (identical(_categorias, pedido)) _categorias = null;
+      return const <Categoria>[];
+    });
+    return pedido;
+  }
+
+  Future<List<Categoria>> _pedirCategorias() async {
     final lista = await _obtener('/products/categorias');
     return lista.cast<Map<String, dynamic>>().where((c) => c['activo'] == true && c['categoria_padre_id'] == null).map(Categoria.fromJson).toList();
   }
